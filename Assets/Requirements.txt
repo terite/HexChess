@@ -1,0 +1,7 @@
+X Spawn hexes
+Outline hexes
+Save hex layout
+Load hex layout
+X Recolor hexes
+Recolor outline
+Turn hexes on/off
