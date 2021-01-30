@@ -1,6 +1,7 @@
 ﻿using Sirenix.OdinInspector;
 using UnityEngine;
 using Extensions;
+using System.Collections.Generic;
 
 public struct HexGrid
 {
@@ -13,6 +14,8 @@ public struct HexGrid
     [SerializeField, MinMaxSlider(-64, 64, true)] private Vector2 hexHeightVariance;
     [ShowInInspector, ReadOnly] public float minHeight => hexHeightVariance.x;
     [ShowInInspector, ReadOnly] public float maxHeight => hexHeightVariance.y;
+
+    [SerializeField] private List<Color> colors;
     
     // These 2 calculations are the same, thanks to our Extensions class.
     public float Apothem =>
