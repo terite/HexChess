@@ -9,7 +9,7 @@ public struct HexGrid
     [ShowInInspector, ReadOnly] public int maxRow => rows - 1;
     public int rows;
     [ShowInInspector, ReadOnly] public int maxCol => cols - 1;
-    public int radius;
+    public float radius;
     public float height;
     [SerializeField, MinMaxSlider(-64, 64, true)] private Vector2 hexHeightVariance;
     [ShowInInspector, ReadOnly] public float minHeight => hexHeightVariance.x;

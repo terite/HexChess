@@ -60,7 +60,7 @@ public class HexSpawner : SerializedMonoBehaviour
         }
     }
 
-    public Color GetColor(int row) => row % 2 == 0 
+    public Color GetColor(int row) => row % 2 == 0  
         ? hexGrid.colors[(Mathf.FloorToInt(row/2) + 1) % 3]
         : hexGrid.colors[Mathf.FloorToInt(row/2) % 3];
 
