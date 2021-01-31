@@ -58,3 +58,5 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+/Assets/Meshes/Chess_Pieces.blend1
+/Assets/Meshes/Chess_Pieces.blend1.meta
