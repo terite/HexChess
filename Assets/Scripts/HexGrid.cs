@@ -15,7 +15,7 @@ public struct HexGrid
     [ShowInInspector, ReadOnly] public float minHeight => hexHeightVariance.x;
     [ShowInInspector, ReadOnly] public float maxHeight => hexHeightVariance.y;
 
-    [SerializeField] private List<Color> colors;
+    public List<Color> colors;
     
     // These 2 calculations are the same, thanks to our Extensions class.
     public float Apothem =>

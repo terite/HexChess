@@ -28,6 +28,9 @@ public class HexSpawner : SerializedMonoBehaviour
             hexes.Add(new List<Hex>());
             for(int col = 0; col < hexGrid.cols; col++)
             {
+                if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+                    continue;
+
                 GameObject newGo = Instantiate(
                     original: hexPrefab,
                     position: new Vector3(
@@ -50,11 +53,16 @@ public class HexSpawner : SerializedMonoBehaviour
                 newHex.AssignIndex(new Index(row, col));
 
                 hexes[row].Add(newHex);
-                float randShade = UnityEngine.Random.Range(0f,1f);
-                newHex.SetColor(new Color(randShade, randShade, randShade));
+                newHex.SetColor(GetColor(row));
+                // float randShade = UnityEngine.Random.Range(0f,1f);
+                // newHex.SetColor(new Color(randShade, randShade, randShade));
             }
         }
     }
+
+    public Color GetColor(int row) => row % 2 == 0 
+        ? hexGrid.colors[(Mathf.FloorToInt(row/2) + 1) % 3]
+        : hexGrid.colors[Mathf.FloorToInt(row/2) % 3];
 
     private float Get_X_Offset(int row) => row % 2 == 0 ? hexGrid.radius * 1.5f : 0f;
 
@@ -81,8 +89,12 @@ public class HexSpawner : SerializedMonoBehaviour
         return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
     }
 
-    private Hex GetHexIfInBounds(int row, int col) => 
-        hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+    private Hex GetHexIfInBounds(int row, int col)
+    {
+        if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+            return null;
+        return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+    }
 
     private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction)
     {
