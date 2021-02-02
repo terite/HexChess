@@ -20,4 +20,9 @@ public class BoardManager : SerializedMonoBehaviour
             GameObject newPiece = Instantiate(prefabs[kvp.Key], hexLoc + Vector3.up, Quaternion.identity);
         }
     }
+
+    private void SetBoardState(BoardState newState)
+    {
+
+    }
 }

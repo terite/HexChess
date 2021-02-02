@@ -10413,7 +10413,10 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes:
-    - Name: startingPositions
+    - Name: startingState
+      Entry: 7
+      Data: BoardState, Assembly-CSharp
+    - Name: piecePositions
       Entry: 7
       Data: 0|UnityEngine.Rendering.SerializedDictionary`2[[System.ValueTuple`2[[Team,
         Assembly-CSharp],[PieceType, Assembly-CSharp]], mscorlib],[System.ValueTuple`2[[System.Int32,
@@ -11647,6 +11650,12 @@ MonoBehaviour:
     - Name: 
       Entry: 13
       Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: currentMove
+      Entry: 3
+      Data: 0
     - Name: 
       Entry: 8
       Data: 
