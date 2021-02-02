@@ -22,7 +22,7 @@ public class BoardManager : SerializedMonoBehaviour
             // If the piece already exists, move it
             if(activePieces.ContainsKey(pieceAtLocation.Key))
             {
-                activePieces[pieceAtLocation.Key].transform.position = hexLoc;
+                activePieces[pieceAtLocation.Key].transform.position = hexLoc + Vector3.up;
                 continue;
             }
 
