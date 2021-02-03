@@ -17,11 +17,8 @@ public struct HexGrid
 
     public List<Color> colors;
     
-    // These 2 calculations are the same, thanks to our Extensions class.
     public float Apothem =>
        (radius.Sqr() - (radius * 0.5f).Sqr()).Sqrt();
-    // public float Apothem =>
-    //     Mathf.Sqrt(Mathf.Pow(radius, 2f) - Mathf.Pow(radius * 0.5f, 2f));
 
     public bool IsInBounds(int row, int col) => row * (row - maxRow) <= 0 && col * (col - maxCol) <= 0;
 }

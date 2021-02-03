@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Extensions;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEditor;
@@ -54,8 +55,6 @@ public class HexSpawner : SerializedMonoBehaviour
 
                 hexes[row].Add(newHex);
                 newHex.SetColor(GetColor(row));
-                // float randShade = UnityEngine.Random.Range(0f,1f);
-                // newHex.SetColor(new Color(randShade, randShade, randShade));
             }
         }
     }
