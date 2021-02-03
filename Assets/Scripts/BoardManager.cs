@@ -17,19 +17,19 @@ public class BoardManager : SerializedMonoBehaviour
         foreach(KeyValuePair<(Team, PieceType), (int, int)> pieceAtLocation in newState.piecePositions)
         {
             (int row, int col) = pieceAtLocation.Value;
-            Vector3 hexLoc = boardSpawner.hexes[row][col].transform.position;
+            Vector3 piecePosition = boardSpawner.hexes[row][col].transform.position + Vector3.up;
 
             // If the piece already exists, move it
             if(activePieces.ContainsKey(pieceAtLocation.Key))
             {
-                activePieces[pieceAtLocation.Key].transform.position = hexLoc + Vector3.up;
+                activePieces[pieceAtLocation.Key].transform.position = piecePosition;
                 continue;
             }
 
             // Spawn a new piece at the proper location
             activePieces.Add(
                 pieceAtLocation.Key, 
-                Instantiate(piecePrefabs[pieceAtLocation.Key], hexLoc + Vector3.up, Quaternion.identity)
+                Instantiate(piecePrefabs[pieceAtLocation.Key], piecePosition, Quaternion.identity)
             );
         }
     }
