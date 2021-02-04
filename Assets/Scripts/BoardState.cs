@@ -1,9 +1,16 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using Sirenix.OdinInspector;
 
 public struct BoardState
 {
     public Team currentMove;
-    public Dictionary<(Team, PieceType), (int, int)> piecePositions;
+    public Dictionary<(Team, PieceType), Index> piecePositions;
+    public BidirectionalDictionary<(Team, PieceType), Index> bidPiecePositions;
+
+    [Button]
+    public void CopyDict()
+    {
+        foreach(KeyValuePair<(Team, PieceType), Index> kvp in piecePositions)
+            bidPiecePositions.Add(kvp);
+    }
 }

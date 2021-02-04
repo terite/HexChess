@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6383956437820335700}
   - component: {fileID: -4611151022402285658}
-  m_Layer: 0
+  - component: {fileID: 2380682318258561514}
+  - component: {fileID: 3158600659237850398}
+  m_Layer: 7
   m_Name: Black_Queen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,7 +46,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b163d964e25c06e41aea99148c0a0014, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  team: 1
+  team: 2
+  type: 0
+  location:
+    row: 0
+    col: 0
+--- !u!65 &2380682318258561514
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7206994967256601419}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.1, y: 2.3977299, z: 1.1}
+  m_Center: {x: 0, y: 1.1988649, z: 0}
+--- !u!54 &3158600659237850398
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7206994967256601419}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &8249943257925947100
 GameObject:
   m_ObjectHideFlags: 0
@@ -56,7 +91,7 @@ GameObject:
   - component: {fileID: 4543317551666321259}
   - component: {fileID: 9169773051914538459}
   - component: {fileID: 95684857994451601}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}

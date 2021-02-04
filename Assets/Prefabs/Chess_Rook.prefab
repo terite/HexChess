@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8492160291499646530}
   - component: {fileID: -8055025522995693476}
-  m_Layer: 0
+  - component: {fileID: 7723054933066905974}
+  - component: {fileID: 4108703287782055929}
+  m_Layer: 7
   m_Name: Chess_Rook
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,6 +46,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b163d964e25c06e41aea99148c0a0014, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  team: 1
+  type: 0
+  location:
+    row: 0
+    col: 0
+--- !u!65 &7723054933066905974
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3352632292239124641}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.1, y: 1.8340812, z: 1.1}
+  m_Center: {x: 0, y: 0.9170406, z: 0}
+--- !u!54 &4108703287782055929
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3352632292239124641}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &7660083049964648016
 GameObject:
   m_ObjectHideFlags: 0
@@ -55,7 +91,7 @@ GameObject:
   - component: {fileID: 7955428361595386823}
   - component: {fileID: 7063484450363978505}
   - component: {fileID: 5808755822714436274}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}

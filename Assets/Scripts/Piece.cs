@@ -5,6 +5,8 @@ using UnityEngine;
 public class Piece : MonoBehaviour
 {
     public Team team;
+    public PieceType type;
+    public Index location;
 }
 
 public enum PieceType {

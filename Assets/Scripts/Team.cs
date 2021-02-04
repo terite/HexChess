@@ -1,5 +1,1 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public enum Team { White, Black }
+public enum Team {None = 0, White = 1, Black = 2}

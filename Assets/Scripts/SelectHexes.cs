@@ -7,6 +7,8 @@ public class SelectHexes : MonoBehaviour
     Mouse mouse => Mouse.current;
     Camera cam;
 
+    [SerializeField] private LayerMask layerMask;
+
     private void Awake() => cam = Camera.main;
 
     public void LeftClick(CallbackContext context)
@@ -14,7 +16,7 @@ public class SelectHexes : MonoBehaviour
         if(!context.performed)
             return;
         
-        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit))
+        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
         {
             if(hit.collider == null)
                 return;

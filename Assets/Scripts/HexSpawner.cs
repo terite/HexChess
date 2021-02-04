@@ -88,7 +88,7 @@ public class HexSpawner : SerializedMonoBehaviour
         return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
     }
 
-    private Hex GetHexIfInBounds(int row, int col)
+    public Hex GetHexIfInBounds(int row, int col)
     {
         if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
             return null;

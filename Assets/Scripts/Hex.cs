@@ -55,7 +55,7 @@ public class Hex : SerializedMonoBehaviour
     [Button(ButtonSizes.Medium, ButtonStyle.FoldoutButton)]
     public void SetOutlineColor(Color color)
     {
-        
+        meshRenderer.material.SetColor("_EdgeColor", color);
     }
 
     private void Select()
@@ -128,4 +128,7 @@ public struct Index
         row = _row;
         col = _col;
     }
+
+    public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
+    public static bool operator !=(Index a, Index b) => !(a==b);
 }
