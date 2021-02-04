@@ -43,7 +43,7 @@ public class BoardManager : SerializedMonoBehaviour
 
     public Team GetCurrentTurn() => turnHistory[turnHistory.Count - 1].currentMove;
 
-    public List<Hex> GetMoves(Piece piece)
+    public List<Hex> GetMovesOnCurrentBoardState(Piece piece)
     {
         List<Hex> hexList = new List<Hex>();
 

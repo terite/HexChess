@@ -35,7 +35,7 @@ public class SelectPiece : MonoBehaviour
 
                 // Select new piece
                 selectedPiece = piece;
-                pieceMoves = boardManager.GetMoves(piece);
+                pieceMoves = boardManager.GetMovesOnCurrentBoardState(piece);
                 foreach(Hex hex in pieceMoves)
                     hex.ToggleSelect();
                 
