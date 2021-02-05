@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Knight : MonoBehaviour, IPiece
 {
+    public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
     public PieceType type { get{ return _type; } set{ _type = value; } }

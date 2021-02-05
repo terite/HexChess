@@ -44,6 +44,28 @@ public class SelectPiece : MonoBehaviour
                 Hex selectedHex = boardSpawner.GetHexIfInBounds(selectedLocation.row, selectedLocation.col);
                 selectedHex.ToggleSelect();
                 selectedHex.SetOutlineColor(selectedPieceColor);
+                return;
+            }
+
+            Hex hitHex = hit.collider.GetComponent<Hex>();
+            if(hitHex != null && selectedPiece != null)
+            {
+                if(pieceMoves.Contains(hitHex))
+                {
+                    Index pieceStartLoc = selectedPiece.location;
+
+                    boardManager.SubmitMove(selectedPiece, hitHex);
+
+                    foreach(Hex hex in pieceMoves)
+                        hex.ToggleSelect();
+                    pieceMoves = Enumerable.Empty<Hex>();
+
+                    Hex selectedHex = boardSpawner.GetHexIfInBounds(pieceStartLoc.row, pieceStartLoc.col);
+                    selectedHex.SetOutlineColor(Color.green);
+                    selectedHex.ToggleSelect();
+                    
+                    selectedPiece = null;
+                }
             }
         }
     }

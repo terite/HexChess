@@ -8,8 +8,9 @@ public struct BoardState
     public BidirectionalDictionary<(Team, PieceType), Index> bidPiecePositions;
 
     [Button]
-    public void CopyDict()
+    public void CopyToBiDict()
     {
+        bidPiecePositions.Clear();
         foreach(KeyValuePair<(Team, PieceType), Index> kvp in piecePositions)
             bidPiecePositions.Add(kvp);
     }

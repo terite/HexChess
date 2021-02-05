@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Rook : MonoBehaviour, IPiece
 {
+    public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
     public PieceType type { get{ return _type; } set{ _type = value; } }
@@ -45,6 +46,9 @@ public class Rook : MonoBehaviour, IPiece
     private bool CanMove(HexSpawner board, BoardState boardState, int row, int col, ref List<Hex> possible)
     {
         Hex hex = board.GetHexIfInBounds(row, col);
+        if(hex == null)
+            return false;
+            
         if(boardState.bidPiecePositions.ContainsKey(hex.hexIndex))
         {
             (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[hex.hexIndex];

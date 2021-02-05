@@ -13,7 +13,7 @@ public class BoardManager : SerializedMonoBehaviour
 
     private void Awake() => SetBoardState(turnHistory[0]);
 
-    private void SetBoardState(BoardState newState)
+    public void SetBoardState(BoardState newState)
     {
         foreach(KeyValuePair<(Team, PieceType), Index> pieceAtLocation in newState.bidPiecePositions)
         {
@@ -41,4 +41,35 @@ public class BoardManager : SerializedMonoBehaviour
 
     public Team GetCurrentTurn() => turnHistory[turnHistory.Count - 1].currentMove;
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
+
+    public void SubmitMove(IPiece piece, Hex targetLocation)
+    {
+        BoardState currentState = GetCurrentBoardState();
+        if(currentState.bidPiecePositions.Contains(targetLocation.hexIndex))
+        {
+            (Team occupyingTeam, PieceType occupyingType) = currentState.bidPiecePositions[targetLocation.hexIndex];
+            // take enemy pice, if needed
+            if(occupyingTeam != piece.team)
+            {
+                IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
+
+                // Problem
+                currentState.bidPiecePositions.Remove((occupyingTeam, occupyingType));
+
+                activePieces.Remove((occupyingTeam, occupyingType));
+                Destroy(occupyingPiece.obj);
+            }
+        }
+
+        // move piece
+        piece.MoveTo(targetLocation);
+
+        // update boardstate
+        // Problem
+        BidirectionalDictionary<(Team, PieceType), Index> allPositions = currentState.bidPiecePositions;
+        allPositions[(piece.team, piece.type)] = targetLocation.hexIndex;
+        currentState.bidPiecePositions = allPositions;
+        currentState.currentMove = currentState.currentMove == Team.White ? Team.Black : Team.White;
+        turnHistory.Add(currentState);
+    }
 }

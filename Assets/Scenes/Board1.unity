@@ -6651,7 +6651,7 @@ MonoBehaviour:
   boardSpawner: {fileID: 155833291}
   layerMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 192
   selectedPieceColor: {r: 0, g: 0.8734226, b: 1, a: 0}
 --- !u!21 &643554739
 Material:

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Queen : MonoBehaviour, IPiece
 {
+    public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
     public PieceType type { get{ return _type; } set{ _type = value; } }
@@ -39,7 +40,7 @@ public class Queen : MonoBehaviour, IPiece
         for(int col = location.col + 1; col <= boardSpawner.hexGrid.cols - 2 + location.row % 2; col++)
             if(!CanMove(boardSpawner, boardState, location.row, col, ref possible))
                 break;
-                
+
         // Top Left
         for(
             (int row, int col, int i) = (location.row + 1, location.col - offset, 0); 

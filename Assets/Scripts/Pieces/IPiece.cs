@@ -4,6 +4,7 @@ using UnityEngine;
 
 public interface IPiece
 {
+    GameObject obj {get; set;}
     Team team {get; set;}
     PieceType type {get; set;}
     Index location {get; set;}
