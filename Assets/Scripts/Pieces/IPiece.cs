@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece : MonoBehaviour
+public interface IPiece
 {
-    public Team team;
-    public PieceType type;
-    public Index location;
+    Team team {get; set;}
+    PieceType type {get; set;}
+    Index location {get; set;}
+    List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState);
+    void MoveTo(Hex hex);
+    void Init(Team team, PieceType type, Index startingLocation);
 }
 
 public enum PieceType {

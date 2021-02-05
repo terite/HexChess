@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
+using System.Linq;
 
 public class SelectPiece : MonoBehaviour
 {
@@ -11,8 +12,8 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private HexSpawner boardSpawner;
     [SerializeField] private LayerMask layerMask;
     [SerializeField] private Color selectedPieceColor;
-    private Piece selectedPiece;
-    List<Hex> pieceMoves = new List<Hex>();
+    private IPiece selectedPiece;
+    IEnumerable<Hex> pieceMoves;
 
     private void Awake() => cam = Camera.main;
     public void LeftClick(CallbackContext context)
@@ -25,7 +26,7 @@ public class SelectPiece : MonoBehaviour
             if(hit.collider == null)
                 return;
             
-            Piece piece = hit.collider.GetComponent<Piece>();
+            IPiece piece = hit.collider.GetComponent<IPiece>();
             if(piece != null && piece.team == boardManager.GetCurrentTurn())
             {
                 if(selectedPiece == piece)
@@ -33,9 +34,9 @@ public class SelectPiece : MonoBehaviour
 
                 DeselectPiece();
 
-                // Select new piece
+                // Select new piece and highlight all of the places it can move to on the current board state
                 selectedPiece = piece;
-                pieceMoves = boardManager.GetMovesOnCurrentBoardState(piece);
+                pieceMoves = piece.GetAllPossibleMoves(boardSpawner, boardManager.GetCurrentBoardState());
                 foreach(Hex hex in pieceMoves)
                     hex.ToggleSelect();
                 
@@ -53,6 +54,7 @@ public class SelectPiece : MonoBehaviour
             return;
         DeselectPiece();
     }
+
     public void DeselectPiece()
     {
         if(selectedPiece == null)
@@ -60,7 +62,7 @@ public class SelectPiece : MonoBehaviour
 
         foreach(Hex hex in pieceMoves)
             hex.ToggleSelect();
-        pieceMoves.Clear();
+        pieceMoves = Enumerable.Empty<Hex>();
 
         Index selectedLocation = selectedPiece.location;
         Hex selectedHex = boardSpawner.GetHexIfInBounds(selectedLocation.row, selectedLocation.col);

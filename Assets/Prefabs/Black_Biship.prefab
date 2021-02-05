@@ -43,14 +43,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 346215209983185513}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b163d964e25c06e41aea99148c0a0014, type: 3}
+  m_Script: {fileID: 11500000, guid: c5ca006f3cf98084ebb6827dbaf343f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  team: 2
-  type: 0
-  location:
-    row: 0
-    col: 0
 --- !u!65 &3102347992987104332
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -114,7 +114,6 @@ public class HexSpawner : SerializedMonoBehaviour
         }
         return (0, 0);
     }
-
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};
