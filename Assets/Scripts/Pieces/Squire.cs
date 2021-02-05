@@ -32,7 +32,10 @@ public class Squire : MonoBehaviour, IPiece
         for(int i = possible.Count - 1; i >= 0; i--)
         {
             if(possible[i] == null)
+            {
                 possible.RemoveAt(i);
+                continue;
+            }
             if(boardState.bidPiecePositions.ContainsKey(possible[i].hexIndex))
             {
                 (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[possible[i].hexIndex];

@@ -20,7 +20,39 @@ public class Knight : MonoBehaviour, IPiece
 
     public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        throw new System.NotImplementedException();
+        List<Hex> possible = new List<Hex>();
+        int offset = location.row % 2 == 0 ? 1 : -1;
+
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 5, location.col));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 5, location.col + offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 4, location.col + offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 4, location.col - offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 1, location.col + (2 * offset)));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 1, location.col - offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 1, location.col - offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 1, location.col + (2 * offset)));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 4, location.col - offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 4, location.col + offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 5, location.col + offset));
+        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 5, location.col));
+
+        for(int i = possible.Count - 1; i >= 0; i--)
+        {
+            if(possible[i] == null)
+            {
+                possible.RemoveAt(i);
+                continue;
+            }
+            
+            if(boardState.bidPiecePositions.ContainsKey(possible[i].hexIndex))
+            {
+                (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[possible[i].hexIndex];
+                if(occupyingTeam == team)
+                    possible.RemoveAt(i);
+            }
+        }
+
+        return possible;
     }
 
     public void MoveTo(Hex hex)
