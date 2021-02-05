@@ -94,6 +94,7 @@ public class HexSpawner : SerializedMonoBehaviour
             return null;
         return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
     }
+    public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
 
     private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction)
     {

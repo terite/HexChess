@@ -2,14 +2,33 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Sirenix.Serialization;
+using UnityEngine;
 
 public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IEnumerable<KeyValuePair<T, K>>, IEnumerable, IDictionary<T, K>, IReadOnlyCollection<KeyValuePair<T, K>>, IReadOnlyDictionary<T, K>, ICollection, IDictionary, IDeserializationCallback, ISerializable
 {
     private Dictionary<T, K> forwardDict = new Dictionary<T, K>();
     private Dictionary<K, T> backwardsDict = new Dictionary<K, T>();
 
-    public K this[T key] { get => forwardDict[key]; set{} }
-    public T this[K key] { get => backwardsDict[key]; set{} }
+    public BidirectionalDictionary(){}
+    public BidirectionalDictionary(BidirectionalDictionary<T, K> fromDict)
+    {
+        foreach(KeyValuePair<T, K> pair in fromDict)
+            Add(pair);
+    }
+    protected BidirectionalDictionary(SerializationInfo info, StreamingContext context)
+    {
+        forwardDict = (Dictionary<T, K>)info.GetValue("forward", typeof(Dictionary<T, K>));
+        backwardsDict = (Dictionary<K, T>)info.GetValue("backwards", typeof(Dictionary<K, T>));
+    }
+    public void Deserialize(SerializationInfo info, StreamingContext context)
+    {
+        forwardDict = (Dictionary<T, K>)info.GetValue("forward", typeof(Dictionary<T, K>));
+        backwardsDict = (Dictionary<K, T>)info.GetValue("backwards", typeof(Dictionary<K, T>));
+    }
+
+    public K this[T key] { get => forwardDict[key]; set{forwardDict[key] = value;} }
+    public T this[K key] { get => backwardsDict[key]; set{backwardsDict[key] = value;} }
 
     public object this[object key] { get {
         if(key is T) 
@@ -60,8 +79,25 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
 
     public bool Remove(KeyValuePair<T, K> item) => forwardDict.Remove(item.Key) && backwardsDict.Remove(item.Value);
     public bool Remove(KeyValuePair<K, T> item) => backwardsDict.Remove(item.Key) && forwardDict.Remove(item.Value);
-    public bool Remove(T key) => throw new InvalidOperationException("Requires both key and value to remove.");
-    public void Remove(object key) => throw new InvalidOperationException("Requires both key and value to remove.");
+    public bool Remove(T key, K val) => forwardDict.Remove(key) && backwardsDict.Remove(val);
+    public bool Remove(K key, T val) => forwardDict.Remove(val) && backwardsDict.Remove(key);
+    public bool Remove(T key) 
+    {
+        K val = forwardDict[key];
+        return Remove(key, val);
+    }
+    public bool Remove(K key)
+    {
+        T val = backwardsDict[key];
+        return Remove(key, val);
+    }
+    public void Remove(object key)
+    {
+        if(key is T)
+            Remove((T)key);
+        else if(key is K)
+            Remove((K)key);
+    }
 
     public void Clear()
     {
@@ -90,7 +126,11 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
     public void CopyTo(KeyValuePair<T, K>[] array, int arrayIndex) => throw new System.NotImplementedException();
     public void CopyTo(KeyValuePair<K, T>[] array, int arrayIndex) => throw new NotImplementedException();
     public void CopyTo(Array array, int index) => throw new NotImplementedException();
-    public void GetObjectData(SerializationInfo info, StreamingContext context) => throw new NotImplementedException();
+    public void GetObjectData(SerializationInfo info, StreamingContext context) 
+    {
+        info.AddValue("forward", forwardDict, typeof(Dictionary<T, K>));
+        info.AddValue("backward", backwardsDict, typeof(Dictionary<K, T>));
+    }
     public void OnDeserialization(object sender)
     {
         return;

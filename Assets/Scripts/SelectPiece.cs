@@ -27,7 +27,8 @@ public class SelectPiece : MonoBehaviour
                 return;
             
             IPiece piece = hit.collider.GetComponent<IPiece>();
-            if(piece != null && piece.team == boardManager.GetCurrentTurn())
+            Team currentTurn = boardManager.GetCurrentTurn();
+            if(piece != null && piece.team == currentTurn)
             {
                 if(selectedPiece == piece)
                     return;
@@ -36,9 +37,20 @@ public class SelectPiece : MonoBehaviour
 
                 // Select new piece and highlight all of the places it can move to on the current board state
                 selectedPiece = piece;
-                pieceMoves = piece.GetAllPossibleMoves(boardSpawner, boardManager.GetCurrentBoardState());
+                BoardState currentBoardState = boardManager.GetCurrentBoardState();
+                pieceMoves = piece.GetAllPossibleMoves(boardSpawner, currentBoardState);
                 foreach(Hex hex in pieceMoves)
+                {
                     hex.ToggleSelect();
+                    if(currentBoardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+                    {
+                        (Team occupyingTeam, PieceType occupyingType) = currentBoardState.biDirPiecePositions[hex.hexIndex];
+                        if(occupyingTeam != selectedPiece.team)
+                            hex.SetOutlineColor(Color.red);
+                    }
+                    else
+                        hex.SetOutlineColor(Color.green);
+                }
                 
                 Index selectedLocation = selectedPiece.location;
                 Hex selectedHex = boardSpawner.GetHexIfInBounds(selectedLocation.row, selectedLocation.col);
@@ -46,28 +58,34 @@ public class SelectPiece : MonoBehaviour
                 selectedHex.SetOutlineColor(selectedPieceColor);
                 return;
             }
+            else if(piece != null && piece.team != currentTurn && selectedPiece != null)
+            {
+                Hex enemyHex = boardSpawner.GetHexIfInBounds(piece.location);
+                if(pieceMoves.Contains(enemyHex))
+                    Attack(enemyHex);
+            }
 
             Hex hitHex = hit.collider.GetComponent<Hex>();
-            if(hitHex != null && selectedPiece != null)
-            {
-                if(pieceMoves.Contains(hitHex))
-                {
-                    Index pieceStartLoc = selectedPiece.location;
-
-                    boardManager.SubmitMove(selectedPiece, hitHex);
-
-                    foreach(Hex hex in pieceMoves)
-                        hex.ToggleSelect();
-                    pieceMoves = Enumerable.Empty<Hex>();
-
-                    Hex selectedHex = boardSpawner.GetHexIfInBounds(pieceStartLoc.row, pieceStartLoc.col);
-                    selectedHex.SetOutlineColor(Color.green);
-                    selectedHex.ToggleSelect();
-                    
-                    selectedPiece = null;
-                }
-            }
+            if(hitHex != null && selectedPiece != null && pieceMoves.Contains(hitHex))
+                Attack(hitHex);
         }
+    }
+
+    private void Attack(Hex hitHex)
+    {
+        Index pieceStartLoc = selectedPiece.location;
+
+        boardManager.SubmitMove(selectedPiece, hitHex);
+
+        foreach (Hex hex in pieceMoves)
+            hex.ToggleSelect();
+        pieceMoves = Enumerable.Empty<Hex>();
+
+        Hex selectedHex = boardSpawner.GetHexIfInBounds(pieceStartLoc.row, pieceStartLoc.col);
+        selectedHex.SetOutlineColor(Color.green);
+        selectedHex.ToggleSelect();
+
+        selectedPiece = null;
     }
 
     public void RightClick(CallbackContext context)

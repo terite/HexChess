@@ -37,9 +37,9 @@ public class Squire : MonoBehaviour, IPiece
                 possible.RemoveAt(i);
                 continue;
             }
-            if(boardState.bidPiecePositions.ContainsKey(possible[i].hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(possible[i].hexIndex))
             {
-                (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[possible[i].hexIndex];
+                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[possible[i].hexIndex];
                 if(occupyingTeam == team)
                     possible.RemoveAt(i);
             }

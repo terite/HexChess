@@ -81,9 +81,9 @@ public class Bishop : MonoBehaviour, IPiece
         Hex hex = boardSpawner.GetHexIfInBounds(row, col);
         if(hex != null)
         {
-            if(boardState.bidPiecePositions.ContainsKey(hex.hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
             {
-                (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[hex.hexIndex];
+                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
                 if(occupyingTeam != team)
                     possible.Add(hex);
                 return false;

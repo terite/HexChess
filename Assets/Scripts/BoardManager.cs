@@ -15,7 +15,7 @@ public class BoardManager : SerializedMonoBehaviour
 
     public void SetBoardState(BoardState newState)
     {
-        foreach(KeyValuePair<(Team, PieceType), Index> pieceAtLocation in newState.bidPiecePositions)
+        foreach(KeyValuePair<(Team, PieceType), Index> pieceAtLocation in newState.biDirPiecePositions)
         {
             Index index = pieceAtLocation.Value;
             Vector3 piecePosition = boardSpawner.hexes[index.row][index.col].transform.position + Vector3.up;
@@ -45,16 +45,16 @@ public class BoardManager : SerializedMonoBehaviour
     public void SubmitMove(IPiece piece, Hex targetLocation)
     {
         BoardState currentState = GetCurrentBoardState();
-        if(currentState.bidPiecePositions.Contains(targetLocation.hexIndex))
+        if(currentState.biDirPiecePositions.Contains(targetLocation.hexIndex))
         {
-            (Team occupyingTeam, PieceType occupyingType) = currentState.bidPiecePositions[targetLocation.hexIndex];
+            (Team occupyingTeam, PieceType occupyingType) = currentState.biDirPiecePositions[targetLocation.hexIndex];
             // take enemy pice, if needed
             if(occupyingTeam != piece.team)
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
                 // Problem
-                currentState.bidPiecePositions.Remove((occupyingTeam, occupyingType));
+                currentState.biDirPiecePositions.Remove((occupyingTeam, occupyingType));
 
                 activePieces.Remove((occupyingTeam, occupyingType));
                 Destroy(occupyingPiece.obj);
@@ -65,11 +65,13 @@ public class BoardManager : SerializedMonoBehaviour
         piece.MoveTo(targetLocation);
 
         // update boardstate
-        // Problem
-        BidirectionalDictionary<(Team, PieceType), Index> allPositions = currentState.bidPiecePositions;
-        allPositions[(piece.team, piece.type)] = targetLocation.hexIndex;
-        currentState.bidPiecePositions = allPositions;
+        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        allPositions.Remove((piece.team, piece.type));
+        allPositions.Add((piece.team, piece.type), targetLocation.hexIndex);
+        
+        currentState.biDirPiecePositions = allPositions;
         currentState.currentMove = currentState.currentMove == Team.White ? Team.Black : Team.White;
+        
         turnHistory.Add(currentState);
     }
 }

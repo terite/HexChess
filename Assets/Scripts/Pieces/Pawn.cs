@@ -25,6 +25,17 @@ public class Pawn : MonoBehaviour, IPiece
     {
         List<Hex> possible = new List<Hex>();
         int pawnOffset = team == Team.White ? 2 : -2;
+
+        int attackOffset = location.row % 2 == 0 ? 1 : -1;
+
+        // Check takes
+        Hex take1 = boardSpawner.GetHexIfInBounds(location.row + (pawnOffset/2), location.col + attackOffset);
+        if(CanTake(take1, boardState))
+            possible.Add(take1);
+        
+        Hex take2 = boardSpawner.GetHexIfInBounds(location.row + (pawnOffset/2), location.col);
+        if(CanTake(take2, boardState))
+            possible.Add(take2);
         
         // One forward
         Hex normHex = boardSpawner.GetHexIfInBounds(location.row + pawnOffset, location.col);
@@ -46,10 +57,23 @@ public class Pawn : MonoBehaviour, IPiece
         if(hex == null)
             return false;
         
-        if(boardState.bidPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
             return true;
         
         possible.Add(hex);
+        return false;
+    }
+
+    private bool CanTake(Hex hex, BoardState boardState)
+    {
+        if(hex == null)
+            return false;
+        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+        {
+            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+            if(occupyingTeam != team)
+                return true;
+        }
         return false;
     }
 

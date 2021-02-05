@@ -49,9 +49,9 @@ public class Rook : MonoBehaviour, IPiece
         if(hex == null)
             return false;
             
-        if(boardState.bidPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
         {
-            (Team occupyingTeam, PieceType occupyingType) = boardState.bidPiecePositions[hex.hexIndex];
+            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
             if(occupyingTeam != team)
                 possible.Add(hex);
             return false;

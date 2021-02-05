@@ -29,9 +29,9 @@ public class King : MonoBehaviour, IPiece
             if(hex == null)
                 continue;
 
-            if(boardState.bidPiecePositions.ContainsKey(hex.hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
             {
-                (Team occuypingTeam, PieceType occupyingType) = boardState.bidPiecePositions[hex.hexIndex];
+                (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
                 if(occuypingTeam == team)
                     continue;
             }
