@@ -12,6 +12,7 @@ public class Rook : MonoBehaviour, IPiece
     private PieceType _type;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
+    public List<PieceType> defendableTypes = new List<PieceType>();
 
     public void Init(Team team, PieceType type, Index startingLocation)
     {
@@ -51,7 +52,7 @@ public class Rook : MonoBehaviour, IPiece
             if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
             {
                 (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
-                if(occuypingTeam == team)
+                if(occuypingTeam == team && defendableTypes.Contains(occupyingType))
                     possible.Add((hex, MoveType.Defend));
             }
         }
