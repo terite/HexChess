@@ -10,9 +10,9 @@ public class TurnText : MonoBehaviour
         boardManager.newTurn += NewTurn;
     }
 
-    private void NewTurn(Team team)
+    private void NewTurn(BoardState newState)
     {
-        turnText.text = team == Team.White ? "White's Turn" : "Black's Turn";
-        turnText.color = team == Team.White ? Color.white : Color.black;
+        turnText.text = newState.currentMove == Team.White ? "White's Turn" : "Black's Turn";
+        turnText.color = newState.currentMove == Team.White ? Color.white : Color.black;
     }
 }

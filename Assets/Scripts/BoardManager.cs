@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BoardManager : SerializedMonoBehaviour
 {
@@ -12,12 +13,12 @@ public class BoardManager : SerializedMonoBehaviour
     [SerializeField] private HexSpawner boardSpawner;
     public List<Pawn> enPassantables = new List<Pawn>();
 
-    public delegate void NewTurn(Team team);
+    public delegate void NewTurn(BoardState newState);
     public NewTurn newTurn;
 
     private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
 
-    private void Start() => newTurn.Invoke(Team.White);
+    private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
     public void SetBoardState(BoardState newState)
     {
@@ -99,7 +100,7 @@ public class BoardManager : SerializedMonoBehaviour
     {
         ClearPassantables();
         newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
-        newTurn.Invoke(newState.currentMove);
+        newTurn.Invoke(newState);
         turnHistory.Add(newState);
     }
 
@@ -138,5 +139,10 @@ public class BoardManager : SerializedMonoBehaviour
             else
                 pawn.turnsPassed++;
         }
+    }
+
+    public void Surrender()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
     }
 }
