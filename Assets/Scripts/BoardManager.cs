@@ -13,7 +13,7 @@ public class BoardManager : SerializedMonoBehaviour
 
     public List<Pawn> enPassantables = new List<Pawn>();
 
-    private void Awake() => SetBoardState(turnHistory[0]);
+    private void Awake() => SetBoardState(turnHistory[turnHistory.Count-1]);
 
     public void SetBoardState(BoardState newState)
     {

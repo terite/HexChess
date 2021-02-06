@@ -14,8 +14,10 @@ public class HexSpawner : SerializedMonoBehaviour
     
     private void MaybeNewHex()
     {
+        #if UNITY_EDITOR
         Hex[] selectedHexes = Selection.GetFiltered<Hex>(SelectionMode.Unfiltered);
         Debug.Log(selectedHexes.Length);
+        #endif
     }
 
     [Button("Spawn Hexes")]

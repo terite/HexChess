@@ -125,7 +125,9 @@ public class SelectPiece : MonoBehaviour
     {
         if(!context.performed)
             return;
-        DeselectPiece(selectedPiece.location);
+        
+        if(selectedPiece != null)
+            DeselectPiece(selectedPiece.location);
     }
 
     public void DeselectPiece(Index fromIndex)
