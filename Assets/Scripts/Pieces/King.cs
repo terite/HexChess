@@ -20,9 +20,9 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        List<Hex> possibleMoves = new List<Hex>();
+        List<(Hex, MoveType)> possibleMoves = new List<(Hex, MoveType)>();
         foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
         {
             Hex hex = boardSpawner.GetNeighborAt(location, dir);
@@ -34,8 +34,13 @@ public class King : MonoBehaviour, IPiece
                 (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
                 if(occuypingTeam == team)
                     continue;
+                else
+                {
+                    possibleMoves.Add((hex, MoveType.Attack));
+                    continue;
+                }
             }
-            possibleMoves.Add(hex);
+            possibleMoves.Add((hex, MoveType.Move));
         }
         return possibleMoves;
     }

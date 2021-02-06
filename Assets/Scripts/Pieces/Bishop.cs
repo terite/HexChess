@@ -19,9 +19,9 @@ public class Bishop : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        List<Hex> possible = new List<Hex>();
+        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int offset = location.row % 2;
         
         // Top Left
@@ -76,7 +76,7 @@ public class Bishop : MonoBehaviour, IPiece
         return possible;
     }
 
-    private bool CanMove(HexSpawner boardSpawner, BoardState boardState, int row, int col, ref List<Hex> possible)
+    private bool CanMove(HexSpawner boardSpawner, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
     {
         Hex hex = boardSpawner.GetHexIfInBounds(row, col);
         if(hex != null)
@@ -85,10 +85,10 @@ public class Bishop : MonoBehaviour, IPiece
             {
                 (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
                 if(occupyingTeam != team)
-                    possible.Add(hex);
+                    possible.Add((hex, MoveType.Attack));
                 return false;
             }
-            possible.Add(hex);
+            possible.Add((hex, MoveType.Move));
             return true;
         }
         return false;

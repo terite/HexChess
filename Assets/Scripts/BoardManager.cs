@@ -11,6 +11,8 @@ public class BoardManager : SerializedMonoBehaviour
     public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
     [SerializeField] private HexSpawner boardSpawner;
 
+    public List<Pawn> enPassantables = new List<Pawn>();
+
     private void Awake() => SetBoardState(turnHistory[0]);
 
     public void SetBoardState(BoardState newState)
@@ -53,7 +55,6 @@ public class BoardManager : SerializedMonoBehaviour
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
-                // Problem
                 currentState.biDirPiecePositions.Remove((occupyingTeam, occupyingType));
 
                 activePieces.Remove((occupyingTeam, occupyingType));
@@ -68,11 +69,9 @@ public class BoardManager : SerializedMonoBehaviour
         BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
         allPositions.Remove((piece.team, piece.type));
         allPositions.Add((piece.team, piece.type), targetLocation.hexIndex);
-        
         currentState.biDirPiecePositions = allPositions;
-        currentState.currentMove = currentState.currentMove == Team.White ? Team.Black : Team.White;
         
-        turnHistory.Add(currentState);
+        AdvanceTurn(currentState);
     }
 
     public void Swap(IPiece p1, IPiece p2)
@@ -89,8 +88,50 @@ public class BoardManager : SerializedMonoBehaviour
         allPositions.Add((p2.team, p2.type), p2.location);
         
         currentState.biDirPiecePositions = allPositions;
-        currentState.currentMove = currentState.currentMove == Team.White ? Team.Black : Team.White;
+        AdvanceTurn(currentState);
+    }
+
+    private void AdvanceTurn(BoardState newState)
+    {
+        ClearPassantables();
+        newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
+        turnHistory.Add(newState);
+    }
+
+    public void EnPassant(Pawn pawn, Team enemyTeam, PieceType enemyType, Hex targetHex)
+    {
+        BoardState currentState = GetCurrentBoardState();
+        IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
+        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
         
-        turnHistory.Add(currentState);
+        // Destroy enemy
+        allPositions.Remove((enemyTeam, enemyType));
+        Destroy(enemyPiece.obj);
+        
+        // Move pawn
+        pawn.MoveTo(targetHex);
+
+        // Update board state
+        allPositions.Remove((pawn.team, pawn.type));
+        allPositions.Add((pawn.team, pawn.type), targetHex.hexIndex);
+        currentState.biDirPiecePositions = allPositions;
+        AdvanceTurn(currentState);
+    }
+
+    public void EnPassantable(Pawn pawn) => enPassantables.Add(pawn);
+    public void ClearPassantables()
+    {
+        for(int i = enPassantables.Count - 1; i >= 0; i--)
+        {
+            Pawn pawn = enPassantables[i];
+            if(pawn.turnsPassed >= 1)
+            {
+                pawn.passantable = false;
+                pawn.turnsPassed = 0;
+                enPassantables.RemoveAt(i);
+            }
+            else
+                pawn.turnsPassed++;
+        }
     }
 }

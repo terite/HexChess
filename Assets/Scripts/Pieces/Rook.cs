@@ -20,9 +20,9 @@ public class Rook : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        List<Hex> possible = new List<Hex>();
+        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
 
         // Up
         for(int row = location.row + 2; row <= boardSpawner.hexGrid.rows; row += 2)
@@ -52,14 +52,14 @@ public class Rook : MonoBehaviour, IPiece
             {
                 (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
                 if(occuypingTeam == team)
-                    possible.Add(hex);
+                    possible.Add((hex, MoveType.Defend));
             }
         }
 
         return possible;
     }
 
-    private bool CanMove(HexSpawner board, BoardState boardState, int row, int col, ref List<Hex> possible)
+    private bool CanMove(HexSpawner board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
     {
         Hex hex = board.GetHexIfInBounds(row, col);
         if(hex == null)
@@ -69,10 +69,10 @@ public class Rook : MonoBehaviour, IPiece
         {
             (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
             if(occupyingTeam != team)
-                possible.Add(hex);
+                possible.Add((hex, MoveType.Attack));
             return false;
         }
-        possible.Add(hex);
+        possible.Add((hex, MoveType.Move));
         return true;
     }
 

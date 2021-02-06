@@ -8,9 +8,13 @@ public interface IPiece
     Team team {get; set;}
     PieceType type {get; set;}
     Index location {get; set;}
-    List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState);
+    List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState);
     void MoveTo(Hex hex);
     void Init(Team team, PieceType type, Index startingLocation);
+}
+
+public enum MoveType {
+    Move = 0, Defend = 1, Attack = 2, EnPassant = 3
 }
 
 public enum PieceType {

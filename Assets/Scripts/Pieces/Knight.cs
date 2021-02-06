@@ -19,37 +19,40 @@ public class Knight : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        List<Hex> possible = new List<Hex>();
+        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int offset = location.row % 2 == 0 ? 1 : -1;
 
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 5, location.col));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 5, location.col + offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 4, location.col + offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 4, location.col - offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 1, location.col + (2 * offset)));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 1, location.col - offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 1, location.col - offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 1, location.col + (2 * offset)));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 4, location.col - offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 4, location.col + offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 5, location.col + offset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 5, location.col));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 5, location.col), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 5, location.col + offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 4, location.col + offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 4, location.col - offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 1, location.col + (2 * offset)), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 1, location.col - offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 1, location.col - offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 1, location.col + (2 * offset)), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 4, location.col - offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 4, location.col + offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 5, location.col + offset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 5, location.col), MoveType.Move));
 
         for(int i = possible.Count - 1; i >= 0; i--)
         {
-            if(possible[i] == null)
+            (Hex possibleHex, MoveType moveType) = possible[i];
+            if(possibleHex == null)
             {
                 possible.RemoveAt(i);
                 continue;
             }
             
-            if(boardState.biDirPiecePositions.ContainsKey(possible[i].hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(possibleHex.hexIndex))
             {
-                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[possible[i].hexIndex];
+                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[possibleHex.hexIndex];
                 if(occupyingTeam == team)
                     possible.RemoveAt(i);
+                else
+                    possible[i] = (possibleHex, MoveType.Attack);
             }
         }
 

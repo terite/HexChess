@@ -19,29 +19,32 @@ public class Squire : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<Hex> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
     {
-        List<Hex> possible = new List<Hex>();
+        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int squireOffset = location.row % 2 == 0 ? 1 : -1;
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 3, location.col + squireOffset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 3, location.col + squireOffset));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row + 3, location.col));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row - 3, location.col));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row, location.col + 1));
-        possible.Add(boardSpawner.GetHexIfInBounds(location.row, location.col - 1));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 3, location.col + squireOffset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 3, location.col + squireOffset), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 3, location.col), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 3, location.col), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row, location.col + 1), MoveType.Move));
+        possible.Add((boardSpawner.GetHexIfInBounds(location.row, location.col - 1), MoveType.Move));
 
         for(int i = possible.Count - 1; i >= 0; i--)
         {
-            if(possible[i] == null)
+            (Hex possibleHex, MoveType moveType) = possible[i];
+            if(possibleHex == null)
             {
                 possible.RemoveAt(i);
                 continue;
             }
-            if(boardState.biDirPiecePositions.ContainsKey(possible[i].hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(possibleHex.hexIndex))
             {
-                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[possible[i].hexIndex];
+                (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[possibleHex.hexIndex];
                 if(occupyingTeam == team)
                     possible.RemoveAt(i);
+                else
+                    possible[i] = (possibleHex, MoveType.Attack);
             }
         }
         return possible;
