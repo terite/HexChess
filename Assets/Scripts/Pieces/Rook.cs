@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,6 +40,21 @@ public class Rook : MonoBehaviour, IPiece
         for(int col = location.col + 1; col <= boardSpawner.hexGrid.cols - 2 + location.row % 2; col++)
             if(!CanMove(boardSpawner, boardState, location.row, col, ref possible))
                 break;
+            
+        // Check defend
+        foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
+        {
+            Hex hex = boardSpawner.GetNeighborAt(location, dir);
+            if(hex == null)
+                continue;
+            
+            if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+            {
+                (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+                if(occuypingTeam == team)
+                    possible.Add(hex);
+            }
+        }
 
         return possible;
     }

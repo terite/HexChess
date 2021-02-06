@@ -33,6 +33,23 @@ public class SelectPiece : MonoBehaviour
                 if(selectedPiece == piece)
                     return;
 
+                if(selectedPiece is Rook)
+                {
+                    Index startLoc = selectedPiece.location;
+                    Hex startHex = boardSpawner.GetHexIfInBounds(startLoc.row, startLoc.col);
+                    
+                    boardManager.Swap(selectedPiece, piece);
+                    
+                    foreach(Hex hex in pieceMoves)
+                        hex.ToggleSelect();
+                    startHex.SetOutlineColor(Color.green);
+                    startHex.ToggleSelect();
+                   
+                    selectedPiece = null;
+                    pieceMoves = Enumerable.Empty<Hex>();
+                    return;
+                }
+
                 DeselectPiece();
 
                 // Select new piece and highlight all of the places it can move to on the current board state

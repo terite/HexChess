@@ -74,4 +74,23 @@ public class BoardManager : SerializedMonoBehaviour
         
         turnHistory.Add(currentState);
     }
+
+    public void Swap(IPiece p1, IPiece p2)
+    {
+        Index p1StartLoc = p1.location;
+        p1.MoveTo(boardSpawner.GetHexIfInBounds(p2.location));
+        p2.MoveTo(boardSpawner.GetHexIfInBounds(p1StartLoc));
+
+        BoardState currentState = GetCurrentBoardState();
+        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        allPositions.Remove((p1.team, p1.type));
+        allPositions.Remove((p2.team, p2.type));
+        allPositions.Add((p1.team, p1.type), p1.location);
+        allPositions.Add((p2.team, p2.type), p2.location);
+        
+        currentState.biDirPiecePositions = allPositions;
+        currentState.currentMove = currentState.currentMove == Team.White ? Team.Black : Team.White;
+        
+        turnHistory.Add(currentState);
+    }
 }
