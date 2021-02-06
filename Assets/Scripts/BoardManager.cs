@@ -10,10 +10,14 @@ public class BoardManager : SerializedMonoBehaviour
     public Dictionary<(Team, PieceType), GameObject> piecePrefabs = new Dictionary<(Team, PieceType), GameObject>();
     public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
     [SerializeField] private HexSpawner boardSpawner;
-
     public List<Pawn> enPassantables = new List<Pawn>();
 
-    private void Awake() => SetBoardState(turnHistory[turnHistory.Count-1]);
+    public delegate void NewTurn(Team team);
+    public NewTurn newTurn;
+
+    private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
+
+    private void Start() => newTurn.Invoke(Team.White);
 
     public void SetBoardState(BoardState newState)
     {
@@ -95,6 +99,7 @@ public class BoardManager : SerializedMonoBehaviour
     {
         ClearPassantables();
         newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
+        newTurn.Invoke(newState.currentMove);
         turnHistory.Add(newState);
     }
 
