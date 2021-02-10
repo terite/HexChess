@@ -119,8 +119,8 @@ public class Pawn : MonoBehaviour, IPiece
     {
         Index startLoc = location;
         int pawnOffset = team == Team.White ? 2 : -2;
+        // If the pawn is moved to it's boosed location, it becomes open to an enpassant
         Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
-        
         if(hex.hexIndex == boostedLoc)
         {
             BoardManager boardManager = GameObject.FindObjectOfType<BoardManager>();
@@ -130,5 +130,14 @@ public class Pawn : MonoBehaviour, IPiece
 
         transform.position = hex.transform.position + Vector3.up;
         location = hex.hexIndex;
+        
+        // If the pawn reaches the other side of the board, it can Promote
+        int goal = team == Team.White ? 18 - (location.row % 2) : location.row % 2;
+        if(location.row == goal)
+        {
+            // promote 
+            BoardManager boardManager = GameObject.FindObjectOfType<BoardManager>();
+            boardManager.QueryPromote(this);
+        }
     }
 }

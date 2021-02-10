@@ -11,13 +11,13 @@ public class BoardManager : SerializedMonoBehaviour
     public Dictionary<(Team, PieceType), GameObject> piecePrefabs = new Dictionary<(Team, PieceType), GameObject>();
     public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
     [SerializeField] private HexSpawner boardSpawner;
+    [SerializeField] private PromotionDialogue promotionDialogue;
     public List<Pawn> enPassantables = new List<Pawn>();
 
     public delegate void NewTurn(BoardState newState);
     public NewTurn newTurn;
 
     private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
-
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
     public void SetBoardState(BoardState newState)
@@ -46,7 +46,13 @@ public class BoardManager : SerializedMonoBehaviour
         }
     }
 
-    public Team GetCurrentTurn() => turnHistory[turnHistory.Count - 1].currentMove;
+    public Team GetCurrentTurn()
+    {
+        if(promotionDialogue.gameObject.activeSelf)
+            return Team.None;
+
+        return turnHistory[turnHistory.Count - 1].currentMove;
+    } 
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
 
     public void SubmitMove(IPiece piece, Hex targetLocation)
@@ -55,7 +61,7 @@ public class BoardManager : SerializedMonoBehaviour
         if(currentState.biDirPiecePositions.Contains(targetLocation.hexIndex))
         {
             (Team occupyingTeam, PieceType occupyingType) = currentState.biDirPiecePositions[targetLocation.hexIndex];
-            // take enemy pice, if needed
+            // take enemy piece, if needed
             if(occupyingTeam != piece.team)
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
@@ -77,6 +83,21 @@ public class BoardManager : SerializedMonoBehaviour
         currentState.biDirPiecePositions = allPositions;
         
         AdvanceTurn(currentState);
+    }
+
+    public void QueryPromote(Pawn pawn)
+    {
+        promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
+    }
+
+    public void Promote(Pawn pawn, PieceType type)
+    {
+        IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
+        newPiece.team = pawn.team;
+        newPiece.location = pawn.location;
+        newPiece.type = pawn.type;
+        activePieces[(pawn.team, pawn.type)] = newPiece;
+        Destroy(pawn.gameObject);
     }
 
     public void Swap(IPiece p1, IPiece p2)
