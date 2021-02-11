@@ -12,6 +12,8 @@ public class Rook : MonoBehaviour, IPiece
     private PieceType _type;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
+    public bool captured { get{ return _captured; } set{ _captured = value; } }
+    private bool _captured = false;
     public List<PieceType> defendableTypes = new List<PieceType>();
 
     public void Init(Team team, PieceType type, Index startingLocation)

@@ -31,7 +31,7 @@ public class SelectPiece : MonoBehaviour
             
             // Clicked on a piece
             IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
-            if(clickedPiece != null && clickedPiece.team == currentTurn)
+            if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentTurn)
             {
                 if(selectedPiece == clickedPiece)
                     return;

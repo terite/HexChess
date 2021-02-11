@@ -12,6 +12,8 @@ public class Pawn : MonoBehaviour, IPiece
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     private Index startLoc;
+    public bool captured { get{ return _captured; } set{ _captured = value; } }
+    private bool _captured = false;
 
     public bool passantable = false;
     public int turnsPassed = 0;

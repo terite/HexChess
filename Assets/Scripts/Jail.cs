@@ -13,16 +13,14 @@ public class Jail : MonoBehaviour
 
     public void Enprison(IPiece piece)
     {
-        int xRot = teamToPrison == Team.White ? -90 : 90;
+        piece.captured = true;
+        
         Vector3 initialRot = piece.obj.transform.rotation.eulerAngles;
         piece.obj.transform.SetPositionAndRotation(
             position: GetNextPos(),
-            Quaternion.Euler(initialRot.x, 180, initialRot.z)
-            // Quaternion.identity
-            // rotation: Quaternion.Euler(xRot, initialRot.y, initialRot.z)
+            rotation: Quaternion.Euler(initialRot.x, 180, initialRot.z)
         );
         piece.obj.transform.parent = transform;
-
         prisonedPieces.Add(piece);
     }
 
