@@ -17,6 +17,8 @@ public class BoardManager : SerializedMonoBehaviour
     public delegate void NewTurn(BoardState newState);
     public NewTurn newTurn;
 
+    public List<Jail> jails = new List<Jail>();
+
     private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
@@ -69,7 +71,10 @@ public class BoardManager : SerializedMonoBehaviour
                 currentState.biDirPiecePositions.Remove((occupyingTeam, occupyingType));
 
                 activePieces.Remove((occupyingTeam, occupyingType));
-                Destroy(occupyingPiece.obj);
+                
+                jails[(int)occupyingTeam].Enprison(occupyingPiece);
+                
+                // Destroy(occupyingPiece.obj);
             }
         }
 
@@ -85,13 +90,11 @@ public class BoardManager : SerializedMonoBehaviour
         AdvanceTurn(currentState);
     }
 
-    public void QueryPromote(Pawn pawn)
-    {
-        promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
-    }
+    public void QueryPromote(Pawn pawn) => promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
 
     public void Promote(Pawn pawn, PieceType type)
     {
+        // Replace the pawn with the chosen piece type
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
         newPiece.team = pawn.team;
         newPiece.location = pawn.location;
@@ -133,7 +136,8 @@ public class BoardManager : SerializedMonoBehaviour
         
         // Destroy enemy
         allPositions.Remove((enemyTeam, enemyType));
-        Destroy(enemyPiece.obj);
+        jails[(int)enemyTeam].Enprison(enemyPiece);
+        // Destroy(enemyPiece.obj);
         
         // Move pawn
         pawn.MoveTo(targetHex);

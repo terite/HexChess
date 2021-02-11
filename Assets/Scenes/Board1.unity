@@ -9327,7 +9327,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 643187455}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 6.054, y: 17.44, z: 7.62}
+  m_LocalPosition: {x: 6.054, y: 17.66, z: 7.78}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -11479,8 +11479,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 821376220}
+  - component: {fileID: 821376221}
   m_Layer: 0
-  m_Name: Captured White Pieces
+  m_Name: White Jail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11494,12 +11495,27 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 821376219}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.5, y: 0, z: 15.5}
+  m_LocalPosition: {x: -3.08, y: 0, z: 15.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &821376221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821376219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9da963be4e2d638468c84e3d716b2f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamToPrison: 1
+  piecesAcross: 4
+  xzOffsets: {x: -2, y: -2}
 --- !u!21 &843591397
 Material:
   serializedVersion: 6
@@ -13993,6 +14009,10 @@ MonoBehaviour:
   boardSpawner: {fileID: 155833291}
   promotionDialogue: {fileID: 1447485345}
   enPassantables: []
+  jails:
+  - {fileID: 0}
+  - {fileID: 821376221}
+  - {fileID: 1361868995}
 --- !u!21 &918258438
 Material:
   serializedVersion: 6
@@ -20805,8 +20825,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1361868994}
+  - component: {fileID: 1361868995}
   m_Layer: 0
-  m_Name: Captured Black Pieces
+  m_Name: Black Jail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20820,12 +20841,27 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1361868993}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 13.5, y: 0, z: 0}
+  m_LocalPosition: {x: 14.23, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1361868995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361868993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9da963be4e2d638468c84e3d716b2f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamToPrison: 2
+  piecesAcross: 4
+  xzOffsets: {x: 2, y: 2}
 --- !u!1 &1376055725
 GameObject:
   m_ObjectHideFlags: 0
