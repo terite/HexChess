@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -59,30 +57,30 @@ public class BoardManager : SerializedMonoBehaviour
 
     public void SubmitMove(IPiece piece, Hex targetLocation)
     {
+        // Copy the existing board state
         BoardState currentState = GetCurrentBoardState();
+        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        
+        // If the hex being moved into contains an enemy piece, capture it
         if(currentState.biDirPiecePositions.Contains(targetLocation.hexIndex))
         {
             (Team occupyingTeam, PieceType occupyingType) = currentState.biDirPiecePositions[targetLocation.hexIndex];
-            // take enemy piece, if needed
             if(occupyingTeam != piece.team)
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
-                currentState.biDirPiecePositions.Remove((occupyingTeam, occupyingType));
-
-                activePieces.Remove((occupyingTeam, occupyingType));
-                
+                // Capture the enemy piece
                 jails[(int)occupyingTeam].Enprison(occupyingPiece);
-                
-                // Destroy(occupyingPiece.obj);
+                // Remove captured piece from boardstate and active pieces dictionary
+                allPositions.Remove((occupyingTeam, occupyingType));
+                activePieces.Remove((occupyingTeam, occupyingType));
             }
         }
 
-        // move piece
+        // Move piece
         piece.MoveTo(targetLocation);
 
-        // update boardstate
-        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        // Update boardstate
         allPositions.Remove((piece.team, piece.type));
         allPositions.Add((piece.team, piece.type), targetLocation.hexIndex);
         currentState.biDirPiecePositions = allPositions;
@@ -95,10 +93,11 @@ public class BoardManager : SerializedMonoBehaviour
     public void Promote(Pawn pawn, PieceType type)
     {
         // Replace the pawn with the chosen piece type
+        // Worth noting: Even though the new IPiece is of a different type than Pawn, 
+        // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
+        // This may need changed when doing networking/saving/loading, or some singal will have to be sent about what the pawn is promoted to
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
-        newPiece.team = pawn.team;
-        newPiece.location = pawn.location;
-        newPiece.type = pawn.type;
+        newPiece.Init(pawn.team, pawn.type, pawn.location);
         activePieces[(pawn.team, pawn.type)] = newPiece;
         Destroy(pawn.gameObject);
     }
@@ -134,10 +133,9 @@ public class BoardManager : SerializedMonoBehaviour
         IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
         BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
         
-        // Destroy enemy
+        // Capture enemy
         allPositions.Remove((enemyTeam, enemyType));
         jails[(int)enemyTeam].Enprison(enemyPiece);
-        // Destroy(enemyPiece.obj);
         
         // Move pawn
         pawn.MoveTo(targetHex);

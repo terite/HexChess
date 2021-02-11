@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Extensions;
 using UnityEngine;
@@ -14,7 +13,7 @@ public class Jail : MonoBehaviour
     public void Enprison(IPiece piece)
     {
         piece.captured = true;
-        
+
         Vector3 initialRot = piece.obj.transform.rotation.eulerAngles;
         piece.obj.transform.SetPositionAndRotation(
             position: GetNextPos(),
