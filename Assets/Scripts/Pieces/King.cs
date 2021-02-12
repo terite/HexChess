@@ -22,12 +22,12 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
     {
         List<(Hex, MoveType)> possibleMoves = new List<(Hex, MoveType)>();
         foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
         {
-            Hex hex = boardSpawner.GetNeighborAt(location, dir);
+            Hex hex = board.GetNeighborAt(location, dir);
             if(hex == null)
                 continue;
 

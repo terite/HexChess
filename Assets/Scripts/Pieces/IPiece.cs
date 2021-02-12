@@ -9,7 +9,7 @@ public interface IPiece
     PieceType type {get; set;}
     Index location {get; set;}
     bool captured {get; set;}
-    List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState);
+    List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState);
     void MoveTo(Hex hex);
     void Init(Team team, PieceType type, Index startingLocation);
 }

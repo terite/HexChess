@@ -21,16 +21,16 @@ public class Squire : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int squireOffset = location.row % 2 == 0 ? 1 : -1;
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 3, location.col + squireOffset), MoveType.Move));
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 3, location.col + squireOffset), MoveType.Move));
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row + 3, location.col), MoveType.Move));
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row - 3, location.col), MoveType.Move));
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row, location.col + 1), MoveType.Move));
-        possible.Add((boardSpawner.GetHexIfInBounds(location.row, location.col - 1), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row + 3, location.col + squireOffset), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row - 3, location.col + squireOffset), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row + 3, location.col), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row - 3, location.col), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row, location.col + 1), MoveType.Move));
+        possible.Add((board.GetHexIfInBounds(location.row, location.col - 1), MoveType.Move));
 
         for(int i = possible.Count - 1; i >= 0; i--)
         {

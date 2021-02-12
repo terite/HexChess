@@ -8,8 +8,7 @@ public class SelectPiece : MonoBehaviour
 {
     Mouse mouse => Mouse.current;
     Camera cam;
-    [SerializeField] private BoardManager boardManager;
-    [SerializeField] private HexSpawner boardSpawner;
+    [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
     [SerializeField] private Color selectedPieceColor;
     private IPiece selectedPiece;
@@ -26,18 +25,17 @@ public class SelectPiece : MonoBehaviour
             if(hit.collider == null)
                 return;
             
-            Team currentTurn = boardManager.GetCurrentTurn();
-            BoardState currentBoardState = boardManager.GetCurrentBoardState();
+            BoardState currentBoardState = board.GetCurrentBoardState();
             
             // Clicked on a piece
             IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
-            if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentTurn)
+            if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
             {
                 if(selectedPiece == clickedPiece)
                     return;
 
                 // Rooks can defend (swap positions with a near by ally)
-                if(pieceMoves.Contains((boardSpawner.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                if(pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
                 {
                     Defend(clickedPiece);
                     return;
@@ -49,7 +47,7 @@ public class SelectPiece : MonoBehaviour
 
                 // Select new piece and highlight all of the places it can move to on the current board state
                 selectedPiece = clickedPiece;
-                pieceMoves = clickedPiece.GetAllPossibleMoves(boardSpawner, currentBoardState);
+                pieceMoves = clickedPiece.GetAllPossibleMoves(board, currentBoardState);
                 
                 // Highlight each possible move the correct color
                 foreach((Hex hex, MoveType moveType) moves in pieceMoves)
@@ -72,14 +70,14 @@ public class SelectPiece : MonoBehaviour
                     }
                 }
                 
-                Hex selectedHex = boardSpawner.GetHexIfInBounds(selectedPiece.location);
+                Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
                 selectedHex.ToggleSelect();
                 selectedHex.SetOutlineColor(selectedPieceColor);
                 return;
             }
             else if(clickedPiece != null && selectedPiece != null && clickedPiece.team != selectedPiece.team)
             {
-                Hex enemyHex = boardSpawner.GetHexIfInBounds(clickedPiece.location);
+                Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
                 // Check if this attack is within our possible moves
                 if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
                     MoveOrAttack(enemyHex);
@@ -92,14 +90,14 @@ public class SelectPiece : MonoBehaviour
                 if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                     MoveOrAttack(hitHex);
                 else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                    Defend(boardManager.activePieces[currentBoardState.biDirPiecePositions[hitHex.hexIndex]]);
+                    Defend(board.activePieces[currentBoardState.biDirPiecePositions[hitHex.hexIndex]]);
                 else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
                 {
                     Index startIndex = selectedPiece.location;
-                    int teamOffset = currentTurn == Team.White ? -2 : 2;
+                    int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
                     Index enemyLoc = new Index(hitHex.hexIndex.row + teamOffset, hitHex.hexIndex.col);
                     (Team enemyTeam, PieceType enemyType) = currentBoardState.biDirPiecePositions[enemyLoc];
-                    boardManager.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex);
+                    board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex);
                     DeselectPiece(startIndex);
                 }
             }
@@ -109,15 +107,15 @@ public class SelectPiece : MonoBehaviour
     private void Defend(IPiece pieceToDefend)
     {
         Index startLoc = selectedPiece.location;
-        Hex startHex = boardSpawner.GetHexIfInBounds(startLoc.row, startLoc.col);
-        boardManager.Swap(selectedPiece, pieceToDefend);
+        Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
+        board.Swap(selectedPiece, pieceToDefend);
         DeselectPiece(startLoc);
     }
 
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
-        boardManager.SubmitMove(selectedPiece, hitHex);
+        board.SubmitMove(selectedPiece, hitHex);
         DeselectPiece(pieceStartLoc);
     }
 
@@ -139,7 +137,7 @@ public class SelectPiece : MonoBehaviour
             moves.hex.ToggleSelect();
         pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
 
-        boardSpawner.GetHexIfInBounds(fromIndex.row, fromIndex.col)
+        board.GetHexIfInBounds(fromIndex.row, fromIndex.col)
             .ToggleSelect();
         
         selectedPiece = null;

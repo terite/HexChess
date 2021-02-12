@@ -8,7 +8,7 @@ using UnityEngine;
 public class Hex : SerializedMonoBehaviour
 {
     public bool selected {get; private set;}
-    private HexSpawner hexSpawner;
+    public Board board {get; private set;}
     [OdinSerialize, ReadOnly] public Index hexIndex {get; private set;}
     [SerializeField, ReadOnly] private MeshRenderer meshRenderer;
 
@@ -17,7 +17,7 @@ public class Hex : SerializedMonoBehaviour
         foreach(HexNeighborDirection direction in EnumArray<HexNeighborDirection>.Values)
         {
 #if UNITY_EDITOR
-            Hex neighbor = GameObject.FindObjectOfType<HexSpawner>().GetNeighborAt(hexIndex, direction);
+            Hex neighbor = GameObject.FindObjectOfType<Board>().GetNeighborAt(hexIndex, direction);
             yield return (neighbor, direction);
 #elif !UNITY_EDITOR
             Hex neighbor = hexSpawner.GetNeighborAt(hexIndex, direction);
@@ -26,7 +26,7 @@ public class Hex : SerializedMonoBehaviour
         }
     }
 
-    private void Awake() => hexSpawner = GameObject.FindObjectOfType<HexSpawner>();
+    private void Awake() => board = GameObject.FindObjectOfType<Board>();
     
     public void AssignIndex(Index index) => hexIndex = index;
 

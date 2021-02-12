@@ -21,7 +21,7 @@ public class Bishop : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int offset = location.row % 2;
@@ -29,10 +29,10 @@ public class Bishop : MonoBehaviour, IPiece
         // Top Left
         for(
             (int row, int col, int i) = (location.row + 1, location.col - offset, 0); 
-            row <= boardSpawner.hexGrid.rows && col >= 0; 
+            row <= board.hexGrid.rows && col >= 0; 
             row++, i++
         ){
-            if(!CanMove(boardSpawner, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible))
                 break;
 
             if(i % 2 == offset)
@@ -41,10 +41,10 @@ public class Bishop : MonoBehaviour, IPiece
         // Top Right
         for(
             (int row, int col, int i) = (location.row + 1, location.col + Mathf.Abs(1 - offset), 0);
-            row <= boardSpawner.hexGrid.rows && col <= boardSpawner.hexGrid.cols;
+            row <= board.hexGrid.rows && col <= board.hexGrid.cols;
             row++, i++
         ){
-            if(!CanMove(boardSpawner, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible))
                 break;
 
             if(i % 2 != offset)
@@ -56,7 +56,7 @@ public class Bishop : MonoBehaviour, IPiece
             row >= 0 && col >= 0;
             row--, i++
         ){
-            if(!CanMove(boardSpawner, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible))
                 break;
 
             if(i % 2 == offset)
@@ -65,10 +65,10 @@ public class Bishop : MonoBehaviour, IPiece
         // Bottom Right
         for(
             (int row, int col, int i) = (location.row - 1, location.col + Mathf.Abs(1 - offset), 0);
-            row >= 0 && col <= boardSpawner.hexGrid.cols;
+            row >= 0 && col <= board.hexGrid.cols;
             row--, i++
         ){
-            if(!CanMove(boardSpawner, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible))
                 break;
 
             if(i % 2 != offset)
@@ -78,9 +78,9 @@ public class Bishop : MonoBehaviour, IPiece
         return possible;
     }
 
-    private bool CanMove(HexSpawner boardSpawner, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
+    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
     {
-        Hex hex = boardSpawner.GetHexIfInBounds(row, col);
+        Hex hex = board.GetHexIfInBounds(row, col);
         if(hex != null)
         {
             if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))

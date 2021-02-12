@@ -4,10 +4,10 @@ using TMPro;
 public class TurnText : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI turnText;
-    BoardManager boardManager;
+    Board board;
     private void Awake() {
-        boardManager = GameObject.FindObjectOfType<BoardManager>();
-        boardManager.newTurn += NewTurn;
+        board = GameObject.FindObjectOfType<Board>();
+        board.newTurn += NewTurn;
     }
 
     private void NewTurn(BoardState newState)

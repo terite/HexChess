@@ -23,31 +23,31 @@ public class Rook : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
 
         // Up
-        for(int row = location.row + 2; row <= boardSpawner.hexGrid.rows; row += 2)
-            if(!CanMove(boardSpawner, boardState, row, location.col, ref possible))
+        for(int row = location.row + 2; row <= board.hexGrid.rows; row += 2)
+            if(!CanMove(board, boardState, row, location.col, ref possible))
                 break;
         // Down
         for(int row = location.row - 2; row >= 0; row -= 2)
-            if(!CanMove(boardSpawner, boardState, row, location.col, ref possible))
+            if(!CanMove(board, boardState, row, location.col, ref possible))
                 break;
         // Left
         for(int col = location.col - 1; col >= 0; col--)
-            if(!CanMove(boardSpawner, boardState, location.row, col, ref possible))
+            if(!CanMove(board, boardState, location.row, col, ref possible))
                 break;
         // Right
-        for(int col = location.col + 1; col <= boardSpawner.hexGrid.cols - 2 + location.row % 2; col++)
-            if(!CanMove(boardSpawner, boardState, location.row, col, ref possible))
+        for(int col = location.col + 1; col <= board.hexGrid.cols - 2 + location.row % 2; col++)
+            if(!CanMove(board, boardState, location.row, col, ref possible))
                 break;
             
         // Check defend
         foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
         {
-            Hex hex = boardSpawner.GetNeighborAt(location, dir);
+            Hex hex = board.GetNeighborAt(location, dir);
             if(hex == null)
                 continue;
             
@@ -62,7 +62,7 @@ public class Rook : MonoBehaviour, IPiece
         return possible;
     }
 
-    private bool CanMove(HexSpawner board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
+    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
     {
         Hex hex = board.GetHexIfInBounds(row, col);
         if(hex == null)

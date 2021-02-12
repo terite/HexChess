@@ -26,40 +26,39 @@ public class Pawn : MonoBehaviour, IPiece
         startLoc = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(HexSpawner boardSpawner, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int pawnOffset = team == Team.White ? 2 : -2;
-
         int attackOffset = location.row % 2 == 0 ? 1 : -1;
 
         // Check takes
-        Hex take1 = boardSpawner.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);
+        Hex take1 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);
         if(CanTake(take1, boardState))
             possible.Add((take1, MoveType.Attack));
         
-        Hex take2 = boardSpawner.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col);
+        Hex take2 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col);
         if(CanTake(take2, boardState))
             possible.Add((take2, MoveType.Attack));
         
         // Check en passant
-        Hex passant1 = boardSpawner.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col + attackOffset);
+        Hex passant1 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col + attackOffset);
         if(CanPassant(passant1, boardState))
             possible.Add((take1, MoveType.EnPassant));
         
-        Hex passant2 = boardSpawner.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col);
+        Hex passant2 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col);
         if(CanPassant(passant2, boardState))
             possible.Add((take2, MoveType.EnPassant));
 
         // One forward
-        Hex normHex = boardSpawner.GetHexIfInBounds(location.row + pawnOffset, location.col);
+        Hex normHex = board.GetHexIfInBounds(location.row + pawnOffset, location.col);
         if(CanMove(normHex, boardState, ref possible))
             return possible; 
         
         // Two forward on 1st move
         if(location == startLoc)
         {
-            Hex boostedHex = boardSpawner.GetHexIfInBounds(location.row + (pawnOffset * 2), location.col);
+            Hex boostedHex = board.GetHexIfInBounds(location.row + (pawnOffset * 2), location.col);
             if(CanMove(boostedHex, boardState, ref possible))
                 return possible; 
         }
@@ -82,6 +81,7 @@ public class Pawn : MonoBehaviour, IPiece
     {
         if(hex == null)
             return false;
+
         if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
         {
             (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
@@ -91,21 +91,20 @@ public class Pawn : MonoBehaviour, IPiece
         return false;
     }
 
-    private bool CanPassant(Hex hex, BoardState boardState)
+    private bool CanPassant(Hex passantToHex, BoardState boardState)
     {
-        if(hex == null)
+        if(passantToHex == null)
             return false;
         
-        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(passantToHex.hexIndex))
         {
-            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[passantToHex.hexIndex];
             if(occupyingTeam == team)
                 return false;
-            
-            BoardManager boardManager = GameObject.FindObjectOfType<BoardManager>();
-            if(boardManager.activePieces.ContainsKey((occupyingTeam, occupyingType)))
+
+            if(passantToHex.board.activePieces.ContainsKey((occupyingTeam, occupyingType)))
             {
-                IPiece piece = boardManager.activePieces[(occupyingTeam, occupyingType)];
+                IPiece piece = passantToHex.board.activePieces[(occupyingTeam, occupyingType)];
                 if(piece is Pawn)
                 {
                     Pawn otherPawn = (Pawn)piece;
@@ -125,8 +124,7 @@ public class Pawn : MonoBehaviour, IPiece
         Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
         if(hex.hexIndex == boostedLoc)
         {
-            BoardManager boardManager = GameObject.FindObjectOfType<BoardManager>();
-            boardManager.EnPassantable(this);
+            hex.board.EnPassantable(this);
             passantable = true;
         }
 
@@ -136,10 +134,6 @@ public class Pawn : MonoBehaviour, IPiece
         // If the pawn reaches the other side of the board, it can Promote
         int goal = team == Team.White ? 18 - (location.row % 2) : location.row % 2;
         if(location.row == goal)
-        {
-            // promote 
-            BoardManager boardManager = GameObject.FindObjectOfType<BoardManager>();
-            boardManager.QueryPromote(this);
-        }
+            hex.board.QueryPromote(this);
     }
 }

@@ -1,21 +1,27 @@
+﻿using System;
 using System.Collections.Generic;
+using Extensions;
 using Sirenix.OdinInspector;
+using Sirenix.Serialization;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class BoardManager : SerializedMonoBehaviour
+public class Board : SerializedMonoBehaviour
 {
-    public List<BoardState> turnHistory = new List<BoardState>();
-    public Dictionary<(Team, PieceType), GameObject> piecePrefabs = new Dictionary<(Team, PieceType), GameObject>();
-    public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
-    [SerializeField] private HexSpawner boardSpawner;
     [SerializeField] private PromotionDialogue promotionDialogue;
-    public List<Pawn> enPassantables = new List<Pawn>();
-
-    public delegate void NewTurn(BoardState newState);
-    public NewTurn newTurn;
-
     public List<Jail> jails = new List<Jail>();
+    [SerializeField] private GameObject hexPrefab;
+    public Dictionary<(Team, PieceType), GameObject> piecePrefabs = new Dictionary<(Team, PieceType), GameObject>();
+
+    public List<BoardState> turnHistory = new List<BoardState>();
+    [ReadOnly] public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
+    [ReadOnly, ShowInInspector] private List<Pawn> enPassantables = new List<Pawn>();
+    public delegate void NewTurn(BoardState newState);
+    [HideInInspector] public NewTurn newTurn;
+
+    [SerializeField] public HexGrid hexGrid;
+    [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
 
     private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
@@ -25,13 +31,13 @@ public class BoardManager : SerializedMonoBehaviour
         foreach(KeyValuePair<(Team, PieceType), Index> pieceAtLocation in newState.biDirPiecePositions)
         {
             Index index = pieceAtLocation.Value;
-            Vector3 piecePosition = boardSpawner.hexes[index.row][index.col].transform.position + Vector3.up;
+            Vector3 piecePosition = hexes[index.row][index.col].transform.position + Vector3.up;
 
             // If the piece already exists, move it
             if(activePieces.ContainsKey(pieceAtLocation.Key))
             {
                 IPiece piece = activePieces[pieceAtLocation.Key];
-                piece.MoveTo(boardSpawner.hexes[index.row][index.col]);
+                piece.MoveTo(hexes[index.row][index.col]);
                 continue;
             }
 
@@ -105,8 +111,8 @@ public class BoardManager : SerializedMonoBehaviour
     public void Swap(IPiece p1, IPiece p2)
     {
         Index p1StartLoc = p1.location;
-        p1.MoveTo(boardSpawner.GetHexIfInBounds(p2.location));
-        p2.MoveTo(boardSpawner.GetHexIfInBounds(p1StartLoc));
+        p1.MoveTo(GetHexIfInBounds(p2.location));
+        p2.MoveTo(GetHexIfInBounds(p1StartLoc));
 
         BoardState currentState = GetCurrentBoardState();
         BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
@@ -148,6 +154,7 @@ public class BoardManager : SerializedMonoBehaviour
     }
 
     public void EnPassantable(Pawn pawn) => enPassantables.Add(pawn);
+
     public void ClearPassantables()
     {
         for(int i = enPassantables.Count - 1; i >= 0; i--)
@@ -164,8 +171,113 @@ public class BoardManager : SerializedMonoBehaviour
         }
     }
 
-    public void Surrender()
+    public void Surrender() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+
+    private void MaybeNewHex()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+        #if UNITY_EDITOR
+        Hex[] selectedHexes = Selection.GetFiltered<Hex>(SelectionMode.Unfiltered);
+        Debug.Log(selectedHexes.Length);
+        #endif
+    }
+
+    [Button("Spawn Hexes")]
+    private void SpawnHexes()
+    {
+        if(hexes.Count > 0)
+            ClearHexes();
+        
+        for(int row = 0; row < hexGrid.rows; row++) 
+        {
+            hexes.Add(new List<Hex>());
+            for(int col = 0; col < hexGrid.cols; col++)
+            {
+                if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+                    continue;
+
+                GameObject newGo = Instantiate(
+                    original: hexPrefab,
+                    position: new Vector3(
+                        x: hexGrid.radius * 3 * col + Get_X_Offset(row),
+                        y: UnityEngine.Random.Range(hexGrid.minHeight, hexGrid.maxHeight),
+                        z: row * hexGrid.Apothem
+                    ),
+                    rotation: Quaternion.identity,
+                    parent: transform
+                );
+
+                Hex newHex = newGo.GetComponent<Hex>();
+
+                newHex.transform.localScale = new Vector3(
+                    x: newHex.transform.localScale.x * hexGrid.radius,
+                    y: newHex.transform.localScale.y * hexGrid.height,
+                    z: newHex.transform.localScale.z * hexGrid.radius
+                );
+
+                newHex.AssignIndex(new Index(row, col));
+
+                hexes[row].Add(newHex);
+                newHex.SetColor(GetColor(row));
+            }
+        }
+    }
+
+    public Color GetColor(int row) => row % 2 == 0  
+        ? hexGrid.colors[(Mathf.FloorToInt(row/2) + 1) % 3]
+        : hexGrid.colors[Mathf.FloorToInt(row/2) % 3];
+
+    private float Get_X_Offset(int row) => row % 2 == 0 ? hexGrid.radius * 1.5f : 0f;
+
+    [Button("Clear Hexes")]
+    private void ClearHexes()
+    {
+        for(int row = 0; row < hexes.Count; row++)
+        {
+            for(int col = 0; col < hexes[row].Count; col++)
+            {
+#if UNITY_EDITOR
+                DestroyImmediate(hexes[row][col].gameObject);
+#elif !UNITY_EDITOR
+                Destroy(hexes[row][col].gameObject);
+#endif                
+            }
+        }
+        hexes = new List<List<Hex>>();
+    }
+
+    public Hex GetNeighborAt(Index source, HexNeighborDirection direction)
+    {
+        (int row, int col) offsets = GetOffsetInDirection(source.row % 2 == 0, direction);
+        return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
+    }
+
+    public Hex GetHexIfInBounds(int row, int col)
+    {
+        if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+            return null;
+        return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+    }
+    public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
+
+    private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction)
+    {
+        switch(direction)
+        {
+            case HexNeighborDirection.Up:
+                return (2, 0);
+            case HexNeighborDirection.UpRight:
+                return isEven ? (1, 1) : (1, 0);
+            case HexNeighborDirection.DownRight:
+                return isEven ? (-1, 1) : (-1, 0);
+            case HexNeighborDirection.Down:
+                return (-2, 0);
+            case HexNeighborDirection.DownLeft:
+                return isEven ? (-1, 0) : (-1, -1);
+            case HexNeighborDirection.UpLeft:
+                return isEven ? (1, 0) : (1, -1);
+        }
+        return (0, 0);
     }
 }
+
+public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};
