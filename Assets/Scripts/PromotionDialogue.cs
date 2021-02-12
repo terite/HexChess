@@ -11,27 +11,27 @@ public class PromotionDialogue : MonoBehaviour
     [SerializeField] private Button bishopButton;
     [SerializeField] private Button squireButton;
     [SerializeField] private Button queenButton;
-    IEnumerable<(Button, PieceType)> GetButtons()
+    IEnumerable<(Button, Piece)> GetButtons()
     {
-        yield return (rookButton, PieceType.QueensRook);
-        yield return (knightButton, PieceType.QueensKnight);
-        yield return (bishopButton, PieceType.QueensBishop);
-        yield return (squireButton, PieceType.BlackSquire);
-        yield return (queenButton, PieceType.Queen);
+        yield return (rookButton, Piece.QueensRook);
+        yield return (knightButton, Piece.QueensKnight);
+        yield return (bishopButton, Piece.QueensBishop);
+        yield return (squireButton, Piece.BlackSquire);
+        yield return (queenButton, Piece.Queen);
     }
 
     private void Awake() => gameObject.SetActive(false);
 
-    public void Display(Action<PieceType> callback)
+    public void Display(Action<Piece> callback)
     {
         gameObject.SetActive(true);
         
-        foreach((Button button, PieceType type) in GetButtons())
+        foreach((Button button, Piece piece) in GetButtons())
         {
             button.onClick.RemoveAllListeners();
             
             button.onClick.AddListener(() => {
-                callback.Invoke(type);
+                callback.Invoke(piece);
                 gameObject.SetActive(false);
             });
         }

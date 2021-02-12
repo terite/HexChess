@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,8 +8,8 @@ public class Pawn : MonoBehaviour, IPiece
     public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
-    public PieceType type { get{ return _type; } set{ _type = value; } }
-    private PieceType _type;
+    public Piece type { get{ return _type; } set{ _type = value; } }
+    private Piece _type;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     private Index startLoc;
@@ -17,8 +18,10 @@ public class Pawn : MonoBehaviour, IPiece
 
     public bool passantable = false;
     public int turnsPassed = 0;
+
+    private Board board;
     
-    public void Init(Team team, PieceType type, Index startingLocation)
+    public void Init(Team team, Piece type, Index startingLocation)
     {
         this.team = team;
         this.type = type;
@@ -70,7 +73,7 @@ public class Pawn : MonoBehaviour, IPiece
         if(hex == null)
             return false;
         
-        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(hex.index))
             return true;
         
         possible.Add((hex, MoveType.Move));
@@ -82,9 +85,9 @@ public class Pawn : MonoBehaviour, IPiece
         if(hex == null)
             return false;
 
-        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(hex.index))
         {
-            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+            (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[hex.index];
             if(occupyingTeam != team)
                 return true;
         }
@@ -96,21 +99,17 @@ public class Pawn : MonoBehaviour, IPiece
         if(passantToHex == null)
             return false;
         
-        if(boardState.biDirPiecePositions.ContainsKey(passantToHex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(passantToHex.index))
         {
-            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[passantToHex.hexIndex];
+            (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[passantToHex.index];
             if(occupyingTeam == team)
                 return false;
 
             if(passantToHex.board.activePieces.ContainsKey((occupyingTeam, occupyingType)))
             {
                 IPiece piece = passantToHex.board.activePieces[(occupyingTeam, occupyingType)];
-                if(piece is Pawn)
-                {
-                    Pawn otherPawn = (Pawn)piece;
-                    if(otherPawn.passantable)
-                        return true;
-                }
+                if(piece is Pawn otherPawn && otherPawn.passantable)
+                    return true;
             }
         }
         return false;
@@ -122,18 +121,32 @@ public class Pawn : MonoBehaviour, IPiece
         int pawnOffset = team == Team.White ? 2 : -2;
         // If the pawn is moved to it's boosed location, it becomes open to an enpassant
         Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
-        if(hex.hexIndex == boostedLoc)
+        if(hex.index == boostedLoc)
         {
-            hex.board.EnPassantable(this);
+            board = hex.board;
+            board.newTurn += TurnPassed;
             passantable = true;
         }
 
         transform.position = hex.transform.position + Vector3.up;
-        location = hex.hexIndex;
+        location = hex.index;
         
         // If the pawn reaches the other side of the board, it can Promote
         int goal = team == Team.White ? 18 - (location.row % 2) : location.row % 2;
         if(location.row == goal)
             hex.board.QueryPromote(this);
+    }
+
+    private void TurnPassed(BoardState newState)
+    {
+        if(turnsPassed >= 1)
+        {
+            passantable = false;
+            turnsPassed = 0;
+            board.newTurn -= TurnPassed;
+            board = null;
+        }
+        else
+            turnsPassed++;
     }
 }

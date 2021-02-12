@@ -13,6 +13,7 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Color selectedPieceColor;
     private IPiece selectedPiece;
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
+    public List<Color> moveTypeHighlightColors = new List<Color>();
 
     private void Awake() => cam = Camera.main;
     public void LeftClick(CallbackContext context)
@@ -53,21 +54,7 @@ public class SelectPiece : MonoBehaviour
                 foreach((Hex hex, MoveType moveType) moves in pieceMoves)
                 {
                     moves.hex.ToggleSelect();
-                    switch(moves.moveType)
-                    {
-                        case MoveType.Move:
-                            moves.hex.SetOutlineColor(Color.green);
-                            break;
-                        case MoveType.Attack:
-                            moves.hex.SetOutlineColor(Color.red);
-                            break;
-                        case MoveType.Defend:
-                            moves.hex.SetOutlineColor(Color.green);
-                            break;
-                        case MoveType.EnPassant:
-                            moves.hex.SetOutlineColor(Color.red);
-                            break;
-                    }
+                    moves.hex.SetOutlineColor(moveTypeHighlightColors[(int)moves.moveType]);
                 }
                 
                 Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
@@ -90,13 +77,13 @@ public class SelectPiece : MonoBehaviour
                 if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                     MoveOrAttack(hitHex);
                 else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                    Defend(board.activePieces[currentBoardState.biDirPiecePositions[hitHex.hexIndex]]);
+                    Defend(board.activePieces[currentBoardState.biDirPiecePositions[hitHex.index]]);
                 else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
                 {
                     Index startIndex = selectedPiece.location;
                     int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
-                    Index enemyLoc = new Index(hitHex.hexIndex.row + teamOffset, hitHex.hexIndex.col);
-                    (Team enemyTeam, PieceType enemyType) = currentBoardState.biDirPiecePositions[enemyLoc];
+                    Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
+                    (Team enemyTeam, Piece enemyType) = currentBoardState.biDirPiecePositions[enemyLoc];
                     board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex);
                     DeselectPiece(startIndex);
                 }
@@ -137,8 +124,7 @@ public class SelectPiece : MonoBehaviour
             moves.hex.ToggleSelect();
         pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
 
-        board.GetHexIfInBounds(fromIndex.row, fromIndex.col)
-            .ToggleSelect();
+        board.GetHexIfInBounds(fromIndex).ToggleSelect();
         
         selectedPiece = null;
     }

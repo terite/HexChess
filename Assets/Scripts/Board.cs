@@ -12,14 +12,11 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private PromotionDialogue promotionDialogue;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
-    public Dictionary<(Team, PieceType), GameObject> piecePrefabs = new Dictionary<(Team, PieceType), GameObject>();
-
+    public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
     public List<BoardState> turnHistory = new List<BoardState>();
-    [ReadOnly] public Dictionary<(Team, PieceType), IPiece> activePieces = new Dictionary<(Team, PieceType), IPiece>();
-    [ReadOnly, ShowInInspector] private List<Pawn> enPassantables = new List<Pawn>();
+    [ReadOnly] public Dictionary<(Team, Piece), IPiece> activePieces = new Dictionary<(Team, Piece), IPiece>();
     public delegate void NewTurn(BoardState newState);
     [HideInInspector] public NewTurn newTurn;
-
     [SerializeField] public HexGrid hexGrid;
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
 
@@ -28,7 +25,7 @@ public class Board : SerializedMonoBehaviour
 
     public void SetBoardState(BoardState newState)
     {
-        foreach(KeyValuePair<(Team, PieceType), Index> pieceAtLocation in newState.biDirPiecePositions)
+        foreach(KeyValuePair<(Team, Piece), Index> pieceAtLocation in newState.biDirPiecePositions)
         {
             Index index = pieceAtLocation.Value;
             Vector3 piecePosition = hexes[index.row][index.col].transform.position + Vector3.up;
@@ -43,7 +40,7 @@ public class Board : SerializedMonoBehaviour
 
             // Spawn a new piece at the proper location
             IPiece newPiece = Instantiate(piecePrefabs[pieceAtLocation.Key], piecePosition, Quaternion.identity).GetComponent<IPiece>();
-            (Team team, PieceType type) = pieceAtLocation.Key;
+            (Team team, Piece type) = pieceAtLocation.Key;
             newPiece.Init(team, type, index);
             activePieces.Add(
                 pieceAtLocation.Key, 
@@ -65,12 +62,12 @@ public class Board : SerializedMonoBehaviour
     {
         // Copy the existing board state
         BoardState currentState = GetCurrentBoardState();
-        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
         
         // If the hex being moved into contains an enemy piece, capture it
-        if(currentState.biDirPiecePositions.Contains(targetLocation.hexIndex))
+        if(currentState.biDirPiecePositions.Contains(targetLocation.index))
         {
-            (Team occupyingTeam, PieceType occupyingType) = currentState.biDirPiecePositions[targetLocation.hexIndex];
+            (Team occupyingTeam, Piece occupyingType) = currentState.biDirPiecePositions[targetLocation.index];
             if(occupyingTeam != piece.team)
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
@@ -88,7 +85,7 @@ public class Board : SerializedMonoBehaviour
 
         // Update boardstate
         allPositions.Remove((piece.team, piece.type));
-        allPositions.Add((piece.team, piece.type), targetLocation.hexIndex);
+        allPositions.Add((piece.team, piece.type), targetLocation.index);
         currentState.biDirPiecePositions = allPositions;
         
         AdvanceTurn(currentState);
@@ -96,7 +93,7 @@ public class Board : SerializedMonoBehaviour
 
     public void QueryPromote(Pawn pawn) => promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
 
-    public void Promote(Pawn pawn, PieceType type)
+    public void Promote(Pawn pawn, Piece type)
     {
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn, 
@@ -115,7 +112,7 @@ public class Board : SerializedMonoBehaviour
         p2.MoveTo(GetHexIfInBounds(p1StartLoc));
 
         BoardState currentState = GetCurrentBoardState();
-        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
         allPositions.Remove((p1.team, p1.type));
         allPositions.Remove((p2.team, p2.type));
         allPositions.Add((p1.team, p1.type), p1.location);
@@ -127,17 +124,17 @@ public class Board : SerializedMonoBehaviour
 
     private void AdvanceTurn(BoardState newState)
     {
-        ClearPassantables();
+        // ClearPassantables();
         newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
         newTurn.Invoke(newState);
         turnHistory.Add(newState);
     }
 
-    public void EnPassant(Pawn pawn, Team enemyTeam, PieceType enemyType, Hex targetHex)
+    public void EnPassant(Pawn pawn, Team enemyTeam, Piece enemyType, Hex targetHex)
     {
         BoardState currentState = GetCurrentBoardState();
         IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
-        BidirectionalDictionary<(Team, PieceType), Index> allPositions = new BidirectionalDictionary<(Team, PieceType), Index>(currentState.biDirPiecePositions);
+        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
         
         // Capture enemy
         allPositions.Remove((enemyTeam, enemyType));
@@ -148,27 +145,9 @@ public class Board : SerializedMonoBehaviour
 
         // Update board state
         allPositions.Remove((pawn.team, pawn.type));
-        allPositions.Add((pawn.team, pawn.type), targetHex.hexIndex);
+        allPositions.Add((pawn.team, pawn.type), targetHex.index);
         currentState.biDirPiecePositions = allPositions;
         AdvanceTurn(currentState);
-    }
-
-    public void EnPassantable(Pawn pawn) => enPassantables.Add(pawn);
-
-    public void ClearPassantables()
-    {
-        for(int i = enPassantables.Count - 1; i >= 0; i--)
-        {
-            Pawn pawn = enPassantables[i];
-            if(pawn.turnsPassed >= 1)
-            {
-                pawn.passantable = false;
-                pawn.turnsPassed = 0;
-                enPassantables.RemoveAt(i);
-            }
-            else
-                pawn.turnsPassed++;
-        }
     }
 
     public void Surrender() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
@@ -214,7 +193,7 @@ public class Board : SerializedMonoBehaviour
                     z: newHex.transform.localScale.z * hexGrid.radius
                 );
 
-                newHex.AssignIndex(new Index(row, col));
+                newHex.AssignIndex(new Index(row, col), this);
 
                 hexes[row].Add(newHex);
                 newHex.SetColor(GetColor(row));

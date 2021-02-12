@@ -8,15 +8,15 @@ public class Rook : MonoBehaviour, IPiece
     public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
-    public PieceType type { get{ return _type; } set{ _type = value; } }
-    private PieceType _type;
+    public Piece type { get{ return _type; } set{ _type = value; } }
+    private Piece _type;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     public bool captured { get{ return _captured; } set{ _captured = value; } }
     private bool _captured = false;
-    public List<PieceType> defendableTypes = new List<PieceType>();
+    public List<Piece> defendableTypes = new List<Piece>();
 
-    public void Init(Team team, PieceType type, Index startingLocation)
+    public void Init(Team team, Piece type, Index startingLocation)
     {
         this.team = team;
         this.type = type;
@@ -51,9 +51,9 @@ public class Rook : MonoBehaviour, IPiece
             if(hex == null)
                 continue;
             
-            if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+            if(boardState.biDirPiecePositions.ContainsKey(hex.index))
             {
-                (Team occuypingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+                (Team occuypingTeam, Piece occupyingType) = boardState.biDirPiecePositions[hex.index];
                 if(occuypingTeam == team && defendableTypes.Contains(occupyingType))
                     possible.Add((hex, MoveType.Defend));
             }
@@ -68,9 +68,9 @@ public class Rook : MonoBehaviour, IPiece
         if(hex == null)
             return false;
             
-        if(boardState.biDirPiecePositions.ContainsKey(hex.hexIndex))
+        if(boardState.biDirPiecePositions.ContainsKey(hex.index))
         {
-            (Team occupyingTeam, PieceType occupyingType) = boardState.biDirPiecePositions[hex.hexIndex];
+            (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[hex.index];
             if(occupyingTeam != team)
                 possible.Add((hex, MoveType.Attack));
             return false;
@@ -82,6 +82,6 @@ public class Rook : MonoBehaviour, IPiece
     public void MoveTo(Hex hex)
     {
         transform.position = hex.transform.position + Vector3.up;
-        location = hex.hexIndex;
+        location = hex.index;
     }
 }

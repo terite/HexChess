@@ -8,8 +8,8 @@ using UnityEngine;
 public class Hex : SerializedMonoBehaviour
 {
     public bool selected {get; private set;}
-    public Board board {get; private set;}
-    [OdinSerialize, ReadOnly] public Index hexIndex {get; private set;}
+    [OdinSerialize, ReadOnly] public Board board {get; private set;}
+    [OdinSerialize, ReadOnly] public Index index {get; private set;}
     [SerializeField, ReadOnly] private MeshRenderer meshRenderer;
 
     IEnumerable<(Hex neighbor, HexNeighborDirection direction)> NeighborsWithDirection()
@@ -17,7 +17,7 @@ public class Hex : SerializedMonoBehaviour
         foreach(HexNeighborDirection direction in EnumArray<HexNeighborDirection>.Values)
         {
 #if UNITY_EDITOR
-            Hex neighbor = GameObject.FindObjectOfType<Board>().GetNeighborAt(hexIndex, direction);
+            Hex neighbor = board.GetNeighborAt(index, direction);
             yield return (neighbor, direction);
 #elif !UNITY_EDITOR
             Hex neighbor = hexSpawner.GetNeighborAt(hexIndex, direction);
@@ -26,9 +26,11 @@ public class Hex : SerializedMonoBehaviour
         }
     }
 
-    private void Awake() => board = GameObject.FindObjectOfType<Board>();
-    
-    public void AssignIndex(Index index) => hexIndex = index;
+    public void AssignIndex(Index index, Board board)
+    {
+        this.index = index;
+        this.board = board;
+    } 
 
     public void ToggleSelect() => (selected ? (Action)Deselect : (Action)Select)();
     
@@ -107,7 +109,6 @@ public class Hex : SerializedMonoBehaviour
             value: Mathf.Abs(meshRenderer.material.GetFloat($"_Edge{(int)toUpdate}") - 1).Floor()
         );
 #endif 
-
     }
 
     public void UpdateNeighbors()
@@ -127,6 +128,19 @@ public struct Index
     {
         row = _row;
         col = _col;
+    }
+
+    public override bool Equals(object obj) => 
+        obj is Index index &&
+        row == index.row &&
+        col == index.col;
+
+    public override int GetHashCode()
+    {
+        int hashCode = -1720622044;
+        hashCode = hashCode * -1521134295 + row.GetHashCode();
+        hashCode = hashCode * -1521134295 + col.GetHashCode();
+        return hashCode;
     }
 
     public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
