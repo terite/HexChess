@@ -238,25 +238,15 @@ public class Board : SerializedMonoBehaviour
     }
     public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
 
-    private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction)
-    {
-        switch(direction)
-        {
-            case HexNeighborDirection.Up:
-                return (2, 0);
-            case HexNeighborDirection.UpRight:
-                return isEven ? (1, 1) : (1, 0);
-            case HexNeighborDirection.DownRight:
-                return isEven ? (-1, 1) : (-1, 0);
-            case HexNeighborDirection.Down:
-                return (-2, 0);
-            case HexNeighborDirection.DownLeft:
-                return isEven ? (-1, 0) : (-1, -1);
-            case HexNeighborDirection.UpLeft:
-                return isEven ? (1, 0) : (1, -1);
-        }
-        return (0, 0);
-    }
+    private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction) => direction switch {
+        HexNeighborDirection.Up => (2, 0),
+        HexNeighborDirection.UpRight => isEven ? (1, 1) : (1, 0),
+        HexNeighborDirection.DownRight => isEven ? (-1, 1) : (-1, 0),
+        HexNeighborDirection.Down => (-2, 0),
+        HexNeighborDirection.DownLeft => isEven ? (-1, 0) : (-1, -1),
+        HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
+        _ => (0, 0)
+    };
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};

@@ -139,6 +139,8 @@ public class Pawn : MonoBehaviour, IPiece
 
     private void TurnPassed(BoardState newState)
     {
+        // A pawn may only be EnPassanted on the enemies turn immediately after it used it's boosted move
+        // So we track when the turn passes, on the 2nd pass (enemy returning control to us), clear the passant flag
         if(turnsPassed >= 1)
         {
             passantable = false;
