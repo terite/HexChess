@@ -124,10 +124,10 @@ public struct Index
 {
     public int row;
     public int col;
-    public Index(int _row, int _col)
+    public Index(int row, int col)
     {
-        row = _row;
-        col = _col;
+        this.row = row;
+        this.col = col;
     }
 
     public override bool Equals(object obj) => 

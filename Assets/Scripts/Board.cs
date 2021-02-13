@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Extensions;
+﻿using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEditor;
@@ -55,14 +53,15 @@ public class Board : SerializedMonoBehaviour
             return Team.None;
 
         return turnHistory[turnHistory.Count - 1].currentMove;
-    } 
+    }
+
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
 
-    public void SubmitMove(IPiece piece, Hex targetLocation)
+    public BoardState SubmitMove(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false)
     {
         // Copy the existing board state
-        BoardState currentState = GetCurrentBoardState();
-        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
+        BoardState currentState = boardState;
+        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.biDirPiecePositions);
         
         // If the hex being moved into contains an enemy piece, capture it
         if(currentState.biDirPiecePositions.Contains(targetLocation.index))
@@ -73,22 +72,25 @@ public class Board : SerializedMonoBehaviour
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
                 // Capture the enemy piece
-                jails[(int)occupyingTeam].Enprison(occupyingPiece);
-                // Remove captured piece from boardstate and active pieces dictionary
+                if(!isQuery)
+                {
+                    jails[(int)occupyingTeam].Enprison(occupyingPiece);
+                    activePieces.Remove((occupyingTeam, occupyingType));
+                }
                 allPositions.Remove((occupyingTeam, occupyingType));
-                activePieces.Remove((occupyingTeam, occupyingType));
             }
         }
 
         // Move piece
-        piece.MoveTo(targetLocation);
+        if(!isQuery)
+            piece.MoveTo(targetLocation);
 
         // Update boardstate
         allPositions.Remove((piece.team, piece.type));
         allPositions.Add((piece.team, piece.type), targetLocation.index);
         currentState.biDirPiecePositions = allPositions;
         
-        AdvanceTurn(currentState);
+        return currentState;
     }
 
     public void QueryPromote(Pawn pawn) => promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
@@ -105,49 +107,144 @@ public class Board : SerializedMonoBehaviour
         Destroy(pawn.gameObject);
     }
 
-    public void Swap(IPiece p1, IPiece p2)
+    public BoardState Swap(IPiece p1, IPiece p2, BoardState boardState, bool isQuery = false)
     {
         Index p1StartLoc = p1.location;
-        p1.MoveTo(GetHexIfInBounds(p2.location));
-        p2.MoveTo(GetHexIfInBounds(p1StartLoc));
+        Index p2StartLoc = p2.location;
+        
+        if(!isQuery)
+        {
+            p1.MoveTo(GetHexIfInBounds(p2.location));
+            p2.MoveTo(GetHexIfInBounds(p1StartLoc));
+        }
 
-        BoardState currentState = GetCurrentBoardState();
+        BoardState currentState = boardState;
         BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
         allPositions.Remove((p1.team, p1.type));
         allPositions.Remove((p2.team, p2.type));
-        allPositions.Add((p1.team, p1.type), p1.location);
-        allPositions.Add((p2.team, p2.type), p2.location);
+        allPositions.Add((p1.team, p1.type), p2StartLoc);
+        allPositions.Add((p2.team, p2.type), p1StartLoc);
         
         currentState.biDirPiecePositions = allPositions;
-        AdvanceTurn(currentState);
+
+        return currentState;
     }
 
-    private void AdvanceTurn(BoardState newState)
+    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyType, Hex targetHex, BoardState boardState, bool isQuery = false)
+    {
+        BoardState currentState = boardState;
+        IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
+        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
+        
+        allPositions.Remove((enemyTeam, enemyType));
+        
+        if(!isQuery)
+        {
+            // Capture enemy
+            jails[(int)enemyTeam].Enprison(enemyPiece);
+            // Move pawn
+            pawn.MoveTo(targetHex);
+        }
+        
+        // Update board state
+        allPositions.Remove((pawn.team, pawn.type));
+        allPositions.Add((pawn.team, pawn.type), targetHex.index);
+        currentState.biDirPiecePositions = allPositions;
+        
+        return currentState;
+    }
+
+    public void AdvanceTurn(BoardState newState)
     {
         // ClearPassantables();
+        List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
+        if(checkingPieces.Count > 0)
+        {
+            Debug.Log("Check");
+
+            List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
+            // Check for mate
+            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
+            {
+                (Team team, Piece piece) = kvp.Key;
+                if(team == newState.currentMove)
+                    continue;
+                List<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
+                // Debug.Log($"{team}, {piece} has {vm.Count} valid moves.");
+                validMoves.AddRange(vm);
+            }
+            if(validMoves.Count == 0)
+                Debug.Log("Mate");
+        }
         newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
         newTurn.Invoke(newState);
         turnHistory.Add(newState);
     }
 
-    public void EnPassant(Pawn pawn, Team enemyTeam, Piece enemyType, Hex targetHex)
+    public List<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
     {
-        BoardState currentState = GetCurrentBoardState();
-        IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
-        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
-        
-        // Capture enemy
-        allPositions.Remove((enemyTeam, enemyType));
-        jails[(int)enemyTeam].Enprison(enemyPiece);
-        
-        // Move pawn
-        pawn.MoveTo(targetHex);
+        List<IPiece> checkingPieces = new List<IPiece>();
 
-        // Update board state
-        allPositions.Remove((pawn.team, pawn.type));
-        allPositions.Add((pawn.team, pawn.type), targetHex.index);
-        currentState.biDirPiecePositions = allPositions;
-        AdvanceTurn(currentState);
+        foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
+        {
+            (Team team, Piece piece) = kvp.Key;
+            // If the IPiece doesn't exist in the boardstate, it might be a simulated boardstate, skip that piece
+            if(team != checkForTeam || !boardState.biDirPiecePositions.ContainsKey((team, piece)))
+                continue;
+
+            List<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
+            foreach((Hex hex, MoveType moveType) in moves)
+            {
+                if(moveType != MoveType.Attack)
+                    continue;
+                
+                if(boardState.biDirPiecePositions.ContainsKey(hex.index))
+                {
+                    (Team occupyingTeam, Piece occupyingPiece) = boardState.biDirPiecePositions[hex.index];
+                    // Check
+                    if(occupyingTeam != checkForTeam && occupyingPiece == Piece.King)
+                        checkingPieces.Add(kvp.Value);
+                }
+            }
+        }
+        return checkingPieces;
+    }
+
+    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
+    {
+        // Eliminate invalid moves
+        // Simulate moves, eliminating any that leave the current player in check
+        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState);
+        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
+        for(int i = possibleMoves.Count - 1; i >= 0; i--)
+        {
+            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
+            if (possibleHex == null)
+            {
+                possibleMoves.RemoveAt(i);
+                continue;
+            }
+
+            BoardState newState = default;
+            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
+                newState = SubmitMove(piece, possibleHex, boardState, true);
+            else if(possibleMoveType == MoveType.Defend)
+                newState = Swap(piece, activePieces[boardState.biDirPiecePositions[possibleHex.index]], boardState, true);
+            else if(possibleMoveType == MoveType.EnPassant)
+            {
+                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
+                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
+                (Team enemyTeam, Piece enemyType) = boardState.biDirPiecePositions[enemyLoc];
+                newState = EnPassant((Pawn)piece, enemyTeam, enemyType, possibleHex, boardState, true);
+            }
+
+            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
+            // If any piece is checking, the move is invalid, remove it from the list of possible moves
+            List<IPiece> checkingPieces = GetCheckingPieces(newState, otherTeam);
+            if(checkingPieces.Count > 0)
+                possibleMoves.RemoveAt(i);
+        }
+        return possibleMoves;
     }
 
     public void Surrender() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);

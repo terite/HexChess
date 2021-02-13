@@ -32,11 +32,11 @@ public class SelectPiece : MonoBehaviour
             IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
             if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
             {
-                if(selectedPiece == clickedPiece)
+                if (selectedPiece == clickedPiece)
                     return;
 
                 // Rooks can defend (swap positions with a near by ally)
-                if(pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                if (pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
                 {
                     Defend(clickedPiece);
                     return;
@@ -47,16 +47,16 @@ public class SelectPiece : MonoBehaviour
                     DeselectPiece(selectedPiece.location);
 
                 // Select new piece and highlight all of the places it can move to on the current board state
-                selectedPiece = clickedPiece;
-                pieceMoves = clickedPiece.GetAllPossibleMoves(board, currentBoardState);
-                
+                selectedPiece = clickedPiece;                
+                pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
+
                 // Highlight each possible move the correct color
-                foreach((Hex hex, MoveType moveType) moves in pieceMoves)
+                foreach ((Hex hex, MoveType moveType) in pieceMoves)
                 {
-                    moves.hex.ToggleSelect();
-                    moves.hex.SetOutlineColor(moveTypeHighlightColors[(int)moves.moveType]);
+                    hex.ToggleSelect();
+                    hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
                 }
-                
+
                 Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
                 selectedHex.ToggleSelect();
                 selectedHex.SetOutlineColor(selectedPieceColor);
@@ -84,7 +84,8 @@ public class SelectPiece : MonoBehaviour
                     int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
                     Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
                     (Team enemyTeam, Piece enemyType) = currentBoardState.biDirPiecePositions[enemyLoc];
-                    board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex);
+                    BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
+                    board.AdvanceTurn(newState);
                     DeselectPiece(startIndex);
                 }
             }
@@ -94,15 +95,17 @@ public class SelectPiece : MonoBehaviour
     private void Defend(IPiece pieceToDefend)
     {
         Index startLoc = selectedPiece.location;
-        Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
-        board.Swap(selectedPiece, pieceToDefend);
+        // Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
+        BoardState newState = board.Swap(selectedPiece, pieceToDefend, board.GetCurrentBoardState());
+        board.AdvanceTurn(newState);
         DeselectPiece(startLoc);
     }
 
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
-        board.SubmitMove(selectedPiece, hitHex);
+        BoardState newState = board.SubmitMove(selectedPiece, hitHex, board.GetCurrentBoardState());
+        board.AdvanceTurn(newState);
         DeselectPiece(pieceStartLoc);
     }
 
@@ -120,8 +123,8 @@ public class SelectPiece : MonoBehaviour
         if(selectedPiece == null)
             return;
 
-        foreach((Hex hex, MoveType moveType) moves in pieceMoves)
-            moves.hex.ToggleSelect();
+        foreach((Hex hex, MoveType moveType) in pieceMoves)
+            hex.ToggleSelect();
         pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
 
         board.GetHexIfInBounds(fromIndex).ToggleSelect();
