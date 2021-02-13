@@ -77,13 +77,13 @@ public class SelectPiece : MonoBehaviour
                 if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                     MoveOrAttack(hitHex);
                 else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                    Defend(board.activePieces[currentBoardState.biDirPiecePositions[hitHex.index]]);
+                    Defend(board.activePieces[currentBoardState.allPiecePositions[hitHex.index]]);
                 else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
                 {
                     Index startIndex = selectedPiece.location;
                     int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
                     Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
-                    (Team enemyTeam, Piece enemyType) = currentBoardState.biDirPiecePositions[enemyLoc];
+                    (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
                     BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
                     board.AdvanceTurn(newState);
                     DeselectPiece(startIndex);
@@ -104,7 +104,7 @@ public class SelectPiece : MonoBehaviour
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
-        BoardState newState = board.SubmitMove(selectedPiece, hitHex, board.GetCurrentBoardState());
+        BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
         board.AdvanceTurn(newState);
         DeselectPiece(pieceStartLoc);
     }

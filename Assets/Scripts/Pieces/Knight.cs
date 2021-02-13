@@ -7,17 +7,17 @@ public class Knight : MonoBehaviour, IPiece
     public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
-    public Piece type { get{ return _type; } set{ _type = value; } }
-    private Piece _type;
+    public Piece piece { get{ return _piece; } set{ _piece = value; } }
+    private Piece _piece;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     public bool captured { get{ return _captured; } set{ _captured = value; } }
     private bool _captured = false;
     
-    public void Init(Team team, Piece type, Index startingLocation)
+    public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
-        this.type = type;
+        this.piece = piece;
         this.location = startingLocation;
     }
 
@@ -48,9 +48,9 @@ public class Knight : MonoBehaviour, IPiece
                 continue;
             }
             
-            if(boardState.biDirPiecePositions.ContainsKey(possibleHex.index))
+            if(boardState.allPiecePositions.ContainsKey(possibleHex.index))
             {
-                (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[possibleHex.index];
+                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[possibleHex.index];
                 if(occupyingTeam == team)
                     possible.RemoveAt(i);
                 else

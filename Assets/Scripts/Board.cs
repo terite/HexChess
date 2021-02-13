@@ -23,7 +23,7 @@ public class Board : SerializedMonoBehaviour
 
     public void SetBoardState(BoardState newState)
     {
-        foreach(KeyValuePair<(Team, Piece), Index> pieceAtLocation in newState.biDirPiecePositions)
+        foreach(KeyValuePair<(Team, Piece), Index> pieceAtLocation in newState.allPiecePositions)
         {
             Index index = pieceAtLocation.Value;
             Vector3 piecePosition = hexes[index.row][index.col].transform.position + Vector3.up;
@@ -57,16 +57,16 @@ public class Board : SerializedMonoBehaviour
 
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
 
-    public BoardState SubmitMove(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false)
+    public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false)
     {
         // Copy the existing board state
         BoardState currentState = boardState;
-        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.biDirPiecePositions);
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.allPiecePositions);
         
         // If the hex being moved into contains an enemy piece, capture it
-        if(currentState.biDirPiecePositions.Contains(targetLocation.index))
+        if(currentState.allPiecePositions.Contains(targetLocation.index))
         {
-            (Team occupyingTeam, Piece occupyingType) = currentState.biDirPiecePositions[targetLocation.index];
+            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
             if(occupyingTeam != piece.team)
             {
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
@@ -77,7 +77,7 @@ public class Board : SerializedMonoBehaviour
                     jails[(int)occupyingTeam].Enprison(occupyingPiece);
                     activePieces.Remove((occupyingTeam, occupyingType));
                 }
-                allPositions.Remove((occupyingTeam, occupyingType));
+                allPiecePositions.Remove((occupyingTeam, occupyingType));
             }
         }
 
@@ -86,9 +86,9 @@ public class Board : SerializedMonoBehaviour
             piece.MoveTo(targetLocation);
 
         // Update boardstate
-        allPositions.Remove((piece.team, piece.type));
-        allPositions.Add((piece.team, piece.type), targetLocation.index);
-        currentState.biDirPiecePositions = allPositions;
+        allPiecePositions.Remove((piece.team, piece.piece));
+        allPiecePositions.Add((piece.team, piece.piece), targetLocation.index);
+        currentState.allPiecePositions = allPiecePositions;
         
         return currentState;
     }
@@ -102,8 +102,8 @@ public class Board : SerializedMonoBehaviour
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
         // This may need changed when doing networking/saving/loading, or some singal will have to be sent about what the pawn is promoted to
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
-        newPiece.Init(pawn.team, pawn.type, pawn.location);
-        activePieces[(pawn.team, pawn.type)] = newPiece;
+        newPiece.Init(pawn.team, pawn.piece, pawn.location);
+        activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
     }
 
@@ -119,38 +119,38 @@ public class Board : SerializedMonoBehaviour
         }
 
         BoardState currentState = boardState;
-        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
-        allPositions.Remove((p1.team, p1.type));
-        allPositions.Remove((p2.team, p2.type));
-        allPositions.Add((p1.team, p1.type), p2StartLoc);
-        allPositions.Add((p2.team, p2.type), p1StartLoc);
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.allPiecePositions);
+        allPiecePositions.Remove((p1.team, p1.piece));
+        allPiecePositions.Remove((p2.team, p2.piece));
+        allPiecePositions.Add((p1.team, p1.piece), p2StartLoc);
+        allPiecePositions.Add((p2.team, p2.piece), p1StartLoc);
         
-        currentState.biDirPiecePositions = allPositions;
+        currentState.allPiecePositions = allPiecePositions;
 
         return currentState;
     }
 
-    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyType, Hex targetHex, BoardState boardState, bool isQuery = false)
+    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Hex targetHex, BoardState boardState, bool isQuery = false)
     {
         BoardState currentState = boardState;
-        IPiece enemyPiece = activePieces[(enemyTeam, enemyType)];
-        BidirectionalDictionary<(Team, Piece), Index> allPositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.biDirPiecePositions);
+        IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.allPiecePositions);
         
-        allPositions.Remove((enemyTeam, enemyType));
+        allPiecePositions.Remove((enemyTeam, enemyPiece));
         
         if(!isQuery)
         {
             // Capture enemy
-            jails[(int)enemyTeam].Enprison(enemyPiece);
+            jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
             pawn.MoveTo(targetHex);
         }
         
         // Update board state
-        allPositions.Remove((pawn.team, pawn.type));
-        allPositions.Add((pawn.team, pawn.type), targetHex.index);
-        currentState.biDirPiecePositions = allPositions;
+        allPiecePositions.Remove((pawn.team, pawn.piece));
+        allPiecePositions.Add((pawn.team, pawn.piece), targetHex.index);
         
+        currentState.allPiecePositions = allPiecePositions;
         return currentState;
     }
 
@@ -189,7 +189,7 @@ public class Board : SerializedMonoBehaviour
         {
             (Team team, Piece piece) = kvp.Key;
             // If the IPiece doesn't exist in the boardstate, it might be a simulated boardstate, skip that piece
-            if(team != checkForTeam || !boardState.biDirPiecePositions.ContainsKey((team, piece)))
+            if(team != checkForTeam || !boardState.allPiecePositions.ContainsKey((team, piece)))
                 continue;
 
             List<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
@@ -198,9 +198,9 @@ public class Board : SerializedMonoBehaviour
                 if(moveType != MoveType.Attack)
                     continue;
                 
-                if(boardState.biDirPiecePositions.ContainsKey(hex.index))
+                if(boardState.allPiecePositions.ContainsKey(hex.index))
                 {
-                    (Team occupyingTeam, Piece occupyingPiece) = boardState.biDirPiecePositions[hex.index];
+                    (Team occupyingTeam, Piece occupyingPiece) = boardState.allPiecePositions[hex.index];
                     // Check
                     if(occupyingTeam != checkForTeam && occupyingPiece == Piece.King)
                         checkingPieces.Add(kvp.Value);
@@ -227,15 +227,15 @@ public class Board : SerializedMonoBehaviour
 
             BoardState newState = default;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
-                newState = SubmitMove(piece, possibleHex, boardState, true);
+                newState = MovePiece(piece, possibleHex, boardState, true);
             else if(possibleMoveType == MoveType.Defend)
-                newState = Swap(piece, activePieces[boardState.biDirPiecePositions[possibleHex.index]], boardState, true);
+                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex.index]], boardState, true);
             else if(possibleMoveType == MoveType.EnPassant)
             {
                 int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
                 Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
-                (Team enemyTeam, Piece enemyType) = boardState.biDirPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyType, possibleHex, boardState, true);
+                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
+                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
             }
 
             Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;

@@ -8,17 +8,17 @@ public class King : MonoBehaviour, IPiece
     public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
-    public Piece type { get{ return _type; } set{ _type = value; } }
-    private Piece _type;
+    public Piece piece { get{ return _piece; } set{ _piece = value; } }
+    private Piece _piece;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     public bool captured { get{ return _captured; } set{ _captured = value; } }
     private bool _captured = false;
     
-    public void Init(Team team, Piece type, Index startingLocation)
+    public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
-        this.type = type;
+        this.piece = piece;
         this.location = startingLocation;
     }
 
@@ -31,9 +31,9 @@ public class King : MonoBehaviour, IPiece
             if(hex == null)
                 continue;
 
-            if(boardState.biDirPiecePositions.ContainsKey(hex.index))
+            if(boardState.allPiecePositions.ContainsKey(hex.index))
             {
-                (Team occuypingTeam, Piece occupyingType) = boardState.biDirPiecePositions[hex.index];
+                (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
                 if(occuypingTeam == team)
                     continue;
                 else

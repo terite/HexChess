@@ -6,12 +6,12 @@ public interface IPiece
 {
     GameObject obj {get; set;}
     Team team {get; set;}
-    Piece type {get; set;}
+    Piece piece {get; set;}
     Index location {get; set;}
     bool captured {get; set;}
     List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState);
     void MoveTo(Hex hex);
-    void Init(Team team, Piece type, Index startingLocation);
+    void Init(Team team, Piece piece, Index startingLocation);
 }
 
 public enum MoveType {

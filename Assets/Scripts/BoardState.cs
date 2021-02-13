@@ -1,5 +1,8 @@
+using UnityEngine.Serialization;
+
 public struct BoardState
 {
     public Team currentMove;
-    public BidirectionalDictionary<(Team, Piece), Index> biDirPiecePositions;
+    [FormerlySerializedAs("biDirPiecePositions")]
+    public BidirectionalDictionary<(Team, Piece), Index> allPiecePositions;
 }

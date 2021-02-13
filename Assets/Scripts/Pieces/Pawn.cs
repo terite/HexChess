@@ -8,8 +8,8 @@ public class Pawn : MonoBehaviour, IPiece
     public GameObject obj {get => gameObject; set{}}
     public Team team { get{ return _team; } set{ _team = value; } }
     private Team _team;
-    public Piece type { get{ return _type; } set{ _type = value; } }
-    private Piece _type;
+    public Piece piece { get{ return _piece; } set{ _piece = value; } }
+    private Piece _piece;
     public Index location { get{ return _location; } set{ _location = value; } }
     private Index _location;
     private Index startLoc;
@@ -21,10 +21,10 @@ public class Pawn : MonoBehaviour, IPiece
 
     private Board board;
     
-    public void Init(Team team, Piece type, Index startingLocation)
+    public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
-        this.type = type;
+        this.piece = piece;
         this.location = startingLocation;
         startLoc = startingLocation;
     }
@@ -73,7 +73,7 @@ public class Pawn : MonoBehaviour, IPiece
         if(hex == null)
             return false;
         
-        if(boardState.biDirPiecePositions.ContainsKey(hex.index))
+        if(boardState.allPiecePositions.ContainsKey(hex.index))
             return true;
         
         possible.Add((hex, MoveType.Move));
@@ -85,9 +85,9 @@ public class Pawn : MonoBehaviour, IPiece
         if(hex == null)
             return false;
 
-        if(boardState.biDirPiecePositions.ContainsKey(hex.index))
+        if(boardState.allPiecePositions.ContainsKey(hex.index))
         {
-            (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[hex.index];
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
             if(occupyingTeam != team)
                 return true;
         }
@@ -99,9 +99,9 @@ public class Pawn : MonoBehaviour, IPiece
         if(passantToHex == null)
             return false;
         
-        if(boardState.biDirPiecePositions.ContainsKey(passantToHex.index))
+        if(boardState.allPiecePositions.ContainsKey(passantToHex.index))
         {
-            (Team occupyingTeam, Piece occupyingType) = boardState.biDirPiecePositions[passantToHex.index];
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[passantToHex.index];
             if(occupyingTeam == team)
                 return false;
 
