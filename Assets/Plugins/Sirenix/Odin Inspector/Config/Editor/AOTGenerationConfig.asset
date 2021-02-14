@@ -16,12 +16,8 @@ MonoBehaviour:
   deleteDllAfterBuilds: 1
   AutomateForAllAOTPlatforms: 1
   automateForPlatforms: 0900000014000000
-  lastScan: 637488295680538063
+  lastScan: 637488447262855818
   supportSerializedTypes:
-  - TypeName: BidirectionalDictionary`2[[System.ValueTuple`2[[Team, Assembly-CSharp],[Piece,
-      Assembly-CSharp]], mscorlib],[Index, Assembly-CSharp]], Assembly-CSharp
-    IsCustom: 0
-    Emit: 1
   - TypeName: Board, Assembly-CSharp
     IsCustom: 0
     Emit: 1
@@ -71,11 +67,6 @@ MonoBehaviour:
     IsCustom: 0
     Emit: 1
   - TypeName: IPiece, Assembly-CSharp
-    IsCustom: 0
-    Emit: 1
-  - TypeName: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-      Assembly-CSharp],[Piece, Assembly-CSharp]], mscorlib],[Index, Assembly-CSharp]],
-      mscorlib
     IsCustom: 0
     Emit: 1
   - TypeName: System.Collections.Generic.List`1[[BoardState, Assembly-CSharp]], mscorlib
