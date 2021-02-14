@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 public class Board : SerializedMonoBehaviour
 {
     [SerializeField] private PromotionDialogue promotionDialogue;
+    [SerializeField] private LastMoveTracker moveTracker;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -93,7 +94,10 @@ public class Board : SerializedMonoBehaviour
 
         // Move piece
         if(!isQuery)
+        {
+            moveTracker.UpdateText(piece.team, piece.piece, piece.location, targetLocation.index);
             piece.MoveTo(targetLocation);
+        }
 
         // Update boardstate
         allPiecePositions.Remove((piece.team, piece.piece));
@@ -124,6 +128,7 @@ public class Board : SerializedMonoBehaviour
         
         if(!isQuery)
         {
+            moveTracker.UpdateText(p1.team, p1.piece, p1StartLoc, p2StartLoc);
             p1.MoveTo(GetHexIfInBounds(p2.location));
             p2.MoveTo(GetHexIfInBounds(p1StartLoc));
         }
@@ -153,6 +158,7 @@ public class Board : SerializedMonoBehaviour
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
+            moveTracker.UpdateText(pawn.team, pawn.piece, pawn.location, targetHex.index);
             pawn.MoveTo(targetHex);
         }
         
