@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Newtonsoft.Json;
 
 public class Board : SerializedMonoBehaviour
 {
@@ -17,8 +19,10 @@ public class Board : SerializedMonoBehaviour
     [HideInInspector] public NewTurn newTurn;
     [SerializeField] public HexGrid hexGrid;
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
+    [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
 
-    private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
+    private void Awake() => LoadTurnHistory(GetTurnHistoryFromFile(defaultBoardStateFileLoc));
+    // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
     public void SetBoardState(BoardState newState)
@@ -45,6 +49,12 @@ public class Board : SerializedMonoBehaviour
                 newPiece
             );
         }
+    }
+
+    public void LoadTurnHistory(List<BoardState> history)
+    {
+        turnHistory = history;
+        SetBoardState(turnHistory[turnHistory.Count - 1]);
     }
 
     public Team GetCurrentTurn()
@@ -158,10 +168,11 @@ public class Board : SerializedMonoBehaviour
     {
         // ClearPassantables();
         List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
+        newState.check = Team.None;
+        newState.checkmate = Team.None;
+        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
         if(checkingPieces.Count > 0)
         {
-            Debug.Log("Check");
-
             List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
             // Check for mate
             foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
@@ -174,9 +185,11 @@ public class Board : SerializedMonoBehaviour
                 validMoves.AddRange(vm);
             }
             if(validMoves.Count == 0)
-                Debug.Log("Mate");
+                newState.checkmate = otherTeam;
+            else
+                newState.check = otherTeam;
         }
-        newState.currentMove = newState.currentMove == Team.White ? Team.Black : Team.White;
+        newState.currentMove = otherTeam;
         newTurn.Invoke(newState);
         turnHistory.Add(newState);
     }
@@ -344,6 +357,30 @@ public class Board : SerializedMonoBehaviour
         HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
         _ => (0, 0)
     };
+
+    [Button]
+    public void WriteTurnHistoryToFile()
+    {
+        List<(Team, List<TeamPieceLoc>, Team, Team)> ml = new List<(Team, List<TeamPieceLoc>, Team, Team)>();
+        foreach(BoardState bs in turnHistory)
+        {
+            List<TeamPieceLoc> serializeableList = bs.GetSerializeable();
+            ml.Add((bs.currentMove, serializeableList, bs.check, bs.checkmate));
+        }
+        string json = JsonConvert.SerializeObject(ml);
+        File.WriteAllText("Assets/Resources/" + defaultBoardStateFileLoc + ".json", json);
+        Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
+    }
+
+    public List<BoardState> GetTurnHistoryFromFile(string loc)
+    {
+        List<BoardState> history = new List<BoardState>();
+        TextAsset ta = (TextAsset)Resources.Load(loc, typeof(TextAsset));
+        List<(Team, List<TeamPieceLoc>, Team, Team)> des = JsonConvert.DeserializeObject<List<(Team, List<TeamPieceLoc>, Team, Team)>>(ta.text);
+        foreach((Team, List<TeamPieceLoc>, Team, Team) i in des)
+            history.Add(BoardState.GetBoardStateFromDeserializedDict(i.Item2, i.Item1, i.Item3, i.Item4));
+        return history;
+    } 
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};

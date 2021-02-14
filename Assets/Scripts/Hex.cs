@@ -20,7 +20,7 @@ public class Hex : SerializedMonoBehaviour
             Hex neighbor = board.GetNeighborAt(index, direction);
             yield return (neighbor, direction);
 #elif !UNITY_EDITOR
-            Hex neighbor = hexSpawner.GetNeighborAt(hexIndex, direction);
+            Hex neighbor = board.GetNeighborAt(index, direction);
             yield return (neighbor, direction);
 #endif 
         }
