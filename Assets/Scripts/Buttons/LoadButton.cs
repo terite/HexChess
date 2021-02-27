@@ -23,6 +23,6 @@ public class LoadButton : MonoBehaviour
         string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", path, extensions, true);
 
         if(paths.Length > 0)
-            board.LoadTurnHistory(board.GetTurnHistoryFromSerializedData(File.ReadAllText(paths.First())));
+            board.LoadGame(Game.Deserialize(File.ReadAllText(paths.First())));
     }
 }

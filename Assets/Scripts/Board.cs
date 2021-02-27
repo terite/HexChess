@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Newtonsoft.Json;
 using System.Linq;
 
 public class Board : SerializedMonoBehaviour
@@ -23,12 +21,13 @@ public class Board : SerializedMonoBehaviour
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
 
-    private void Awake() => LoadTurnHistory(LoadDefualtTurnHistory(defaultBoardStateFileLoc));
+    private void Awake() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
     public void SetBoardState(BoardState newState)
     {
-        BoardState defaultBoard = LoadDefualtTurnHistory(defaultBoardStateFileLoc).First();
+        BoardState defaultBoard = GetDefaultGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
+
         foreach(KeyValuePair<(Team, Piece), GameObject> prefabs in piecePrefabs)
         {
             IPiece piece;
@@ -61,11 +60,11 @@ public class Board : SerializedMonoBehaviour
         newTurn?.Invoke(newState);
     }
 
-    public void LoadTurnHistory(List<BoardState> history)
+    public void LoadGame(Game game)
     {
-        turnHistory = history;
+        turnHistory = game.turnHistory;
         
-        (Team team, Piece piece, Index last, Index current) = BoardState.GetLastMove(history);
+        (Team team, Piece piece, Index last, Index current) = BoardState.GetLastMove(turnHistory);
         if(team != Team.None)
             moveTracker.UpdateText(team, piece, last, current);
 
@@ -74,6 +73,9 @@ public class Board : SerializedMonoBehaviour
 
         SetBoardState(turnHistory[turnHistory.Count - 1]);
     }
+
+    public Game GetDefaultGame(string loc) => 
+        Game.Deserialize(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);
 
     public Team GetCurrentTurn()
     {
@@ -84,6 +86,72 @@ public class Board : SerializedMonoBehaviour
     }
 
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
+
+    public void AdvanceTurn(BoardState newState)
+    {
+        List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
+        newState.check = Team.None;
+        newState.checkmate = Team.None;
+        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
+        if(checkingPieces.Count > 0)
+        {
+            List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
+            // Check for mate
+            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
+            {
+                (Team team, Piece piece) = kvp.Key;
+                if(team == newState.currentMove)
+                    continue;
+                List<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
+                // Debug.Log($"{team}, {piece} has {vm.Count} valid moves.");
+                validMoves.AddRange(vm);
+            }
+            if(validMoves.Count == 0)
+                newState.checkmate = otherTeam;
+            else
+                newState.check = otherTeam;
+        }
+        newState.currentMove = otherTeam;
+        newTurn.Invoke(newState);
+        turnHistory.Add(newState);
+    }
+
+    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
+    {
+        // Eliminate invalid moves
+        // Simulate moves, eliminating any that leave the current player in check
+        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState);
+        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
+        for(int i = possibleMoves.Count - 1; i >= 0; i--)
+        {
+            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
+            if (possibleHex == null)
+            {
+                possibleMoves.RemoveAt(i);
+                continue;
+            }
+
+            BoardState newState = default;
+            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
+                newState = MovePiece(piece, possibleHex, boardState, true);
+            else if(possibleMoveType == MoveType.Defend)
+                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex.index]], boardState, true);
+            else if(possibleMoveType == MoveType.EnPassant)
+            {
+                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
+                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
+                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
+                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
+            }
+
+            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
+            // If any piece is checking, the move is invalid, remove it from the list of possible moves
+            List<IPiece> checkingPieces = GetCheckingPieces(newState, otherTeam);
+            if(checkingPieces.Count > 0)
+                possibleMoves.RemoveAt(i);
+        }
+        return possibleMoves;
+    }
 
     public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false)
     {
@@ -124,7 +192,7 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public void QueryPromote(Pawn pawn) => promotionDialogue.Display((pieceType) => Promote(pawn, pieceType));
+    public void QueryPromote(Pawn pawn) => promotionDialogue.Display(pieceType => Promote(pawn, pieceType));
 
     public void Promote(Pawn pawn, Piece type)
     {
@@ -187,36 +255,6 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public void AdvanceTurn(BoardState newState)
-    {
-        // ClearPassantables();
-        List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
-        newState.check = Team.None;
-        newState.checkmate = Team.None;
-        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
-        if(checkingPieces.Count > 0)
-        {
-            List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
-            // Check for mate
-            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
-            {
-                (Team team, Piece piece) = kvp.Key;
-                if(team == newState.currentMove)
-                    continue;
-                List<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
-                // Debug.Log($"{team}, {piece} has {vm.Count} valid moves.");
-                validMoves.AddRange(vm);
-            }
-            if(validMoves.Count == 0)
-                newState.checkmate = otherTeam;
-            else
-                newState.check = otherTeam;
-        }
-        newState.currentMove = otherTeam;
-        newTurn.Invoke(newState);
-        turnHistory.Add(newState);
-    }
-
     public List<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
     {
         List<IPiece> checkingPieces = new List<IPiece>();
@@ -244,43 +282,6 @@ public class Board : SerializedMonoBehaviour
             }
         }
         return checkingPieces;
-    }
-
-    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
-    {
-        // Eliminate invalid moves
-        // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState);
-        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
-        for(int i = possibleMoves.Count - 1; i >= 0; i--)
-        {
-            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
-            if (possibleHex == null)
-            {
-                possibleMoves.RemoveAt(i);
-                continue;
-            }
-
-            BoardState newState = default;
-            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true);
-            else if(possibleMoveType == MoveType.Defend)
-                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex.index]], boardState, true);
-            else if(possibleMoveType == MoveType.EnPassant)
-            {
-                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
-                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
-                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
-            }
-
-            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
-            // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            List<IPiece> checkingPieces = GetCheckingPieces(newState, otherTeam);
-            if(checkingPieces.Count > 0)
-                possibleMoves.RemoveAt(i);
-        }
-        return possibleMoves;
     }
 
     public void Surrender() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
@@ -380,32 +381,6 @@ public class Board : SerializedMonoBehaviour
         HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
         _ => (0, 0)
     };
-
-    [Button]
-    public void WriteTurnHistoryToFile()
-    {
-        List<(Team, List<TeamPieceLoc>, Team, Team)> ml = new List<(Team, List<TeamPieceLoc>, Team, Team)>();
-        foreach(BoardState bs in turnHistory)
-        {
-            List<TeamPieceLoc> serializeableList = bs.GetSerializeable();
-            ml.Add((bs.currentMove, serializeableList, bs.check, bs.checkmate));
-        }
-        string json = JsonConvert.SerializeObject(ml);
-        File.WriteAllText("Assets/Resources/" + defaultBoardStateFileLoc + ".json", json);
-        Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
-    }
-
-    public List<BoardState> LoadDefualtTurnHistory(string loc) =>
-        GetTurnHistoryFromSerializedData(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);
-
-    public List<BoardState> GetTurnHistoryFromSerializedData(string data)
-    {
-        List<BoardState> history = new List<BoardState>();
-        List<(Team, List<TeamPieceLoc>, Team, Team)> des = JsonConvert.DeserializeObject<List<(Team, List<TeamPieceLoc>, Team, Team)>>(data);
-        foreach((Team, List<TeamPieceLoc>, Team, Team) i in des)
-            history.Add(BoardState.GetBoardStateFromDeserializedDict(i.Item2, i.Item1, i.Item3, i.Item4));
-        return history;
-    }
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};

@@ -17,16 +17,14 @@ public class SaveButton : MonoBehaviour
 
     public void Save()
     {
-        List<(Team, List<TeamPieceLoc>, Team, Team)> ml = new List<(Team, List<TeamPieceLoc>, Team, Team)>();
-        foreach(BoardState bs in board.turnHistory)
-        {
-            List<TeamPieceLoc> serializeableList = bs.GetSerializeable();
-            ml.Add((bs.currentMove, serializeableList, bs.check, bs.checkmate));
-        }
-        string json = JsonConvert.SerializeObject(ml);
         string path = Application.persistentDataPath + $"/saves";
-        Directory.CreateDirectory(Application.persistentDataPath + $"/saves");
-        File.WriteAllText(path + $"/{DateTime.Now.ToString().Replace("/", "").Replace(":", "").Replace(" ", "")}.json", json);
+        Directory.CreateDirectory(path);
+
+        File.WriteAllText(
+            path + $"/{DateTime.Now.ToString().Replace("/", "-").Replace(":", "-")}.json", 
+            Game.Serialize(board.turnHistory)
+        );
+
         Debug.Log($"Saved to file: {path}");
     }
 }
