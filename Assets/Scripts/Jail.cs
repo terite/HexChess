@@ -33,4 +33,11 @@ public class Jail : MonoBehaviour
             z: transform.position.z + (xzOffsets.y * zCount)
         );
     }
+
+    public void Clear()
+    {
+        foreach(IPiece piece in prisonedPieces)
+            Destroy(piece.obj);
+        prisonedPieces.Clear();
+    }
 }

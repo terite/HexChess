@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class Board : SerializedMonoBehaviour
 {
@@ -22,39 +23,55 @@ public class Board : SerializedMonoBehaviour
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
 
-    private void Awake() => LoadTurnHistory(GetTurnHistoryFromFile(defaultBoardStateFileLoc));
-    // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
+    private void Awake() => LoadTurnHistory(LoadDefualtTurnHistory(defaultBoardStateFileLoc));
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
     public void SetBoardState(BoardState newState)
     {
-        foreach(KeyValuePair<(Team, Piece), Index> pieceAtLocation in newState.allPiecePositions)
+        BoardState defaultBoard = LoadDefualtTurnHistory(defaultBoardStateFileLoc).First();
+        foreach(KeyValuePair<(Team, Piece), GameObject> prefabs in piecePrefabs)
         {
-            Index index = pieceAtLocation.Value;
-            Vector3 piecePosition = hexes[index.row][index.col].transform.position + Vector3.up;
-
-            // If the piece already exists, move it
-            if(activePieces.ContainsKey(pieceAtLocation.Key))
+            IPiece piece;
+            if(activePieces.ContainsKey(prefabs.Key))
+                piece = activePieces[prefabs.Key];
+            else
             {
-                IPiece piece = activePieces[pieceAtLocation.Key];
-                piece.MoveTo(hexes[index.row][index.col]);
-                continue;
+                Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
+                Vector3 loc = hexes[startLoc.row][startLoc.col].transform.position + Vector3.up;
+                piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                piece.Init(prefabs.Key.Item1, prefabs.Key.Item2, defaultBoard.allPiecePositions[prefabs.Key]);
+                activePieces.Add(prefabs.Key, piece);
             }
 
-            // Spawn a new piece at the proper location
-            IPiece newPiece = Instantiate(piecePrefabs[pieceAtLocation.Key], piecePosition, Quaternion.identity).GetComponent<IPiece>();
-            (Team team, Piece type) = pieceAtLocation.Key;
-            newPiece.Init(team, type, index);
-            activePieces.Add(
-                pieceAtLocation.Key, 
-                newPiece
-            );
+            // If the piece is on the board, place it at the correct location
+            if(newState.allPiecePositions.ContainsKey(prefabs.Key))
+            {
+                Index loc = newState.allPiecePositions[prefabs.Key];
+                piece.MoveTo(hexes[loc.row][loc.col]);
+                continue;
+            }
+            // Put the piece in the correct jail
+            else
+            {
+                jails[(int)prefabs.Key.Item1].Enprison(piece);
+                activePieces.Remove(prefabs.Key);
+            }
         }
+
+        newTurn?.Invoke(newState);
     }
 
     public void LoadTurnHistory(List<BoardState> history)
     {
         turnHistory = history;
+        
+        (Team team, Piece piece, Index last, Index current) = BoardState.GetLastMove(history);
+        if(team != Team.None)
+            moveTracker.UpdateText(team, piece, last, current);
+
+        foreach(Jail jail in jails)
+            jail?.Clear();
+
         SetBoardState(turnHistory[turnHistory.Count - 1]);
     }
 
@@ -378,15 +395,17 @@ public class Board : SerializedMonoBehaviour
         Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
     }
 
-    public List<BoardState> GetTurnHistoryFromFile(string loc)
+    public List<BoardState> LoadDefualtTurnHistory(string loc) =>
+        GetTurnHistoryFromSerializedData(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);
+
+    public List<BoardState> GetTurnHistoryFromSerializedData(string data)
     {
         List<BoardState> history = new List<BoardState>();
-        TextAsset ta = (TextAsset)Resources.Load(loc, typeof(TextAsset));
-        List<(Team, List<TeamPieceLoc>, Team, Team)> des = JsonConvert.DeserializeObject<List<(Team, List<TeamPieceLoc>, Team, Team)>>(ta.text);
+        List<(Team, List<TeamPieceLoc>, Team, Team)> des = JsonConvert.DeserializeObject<List<(Team, List<TeamPieceLoc>, Team, Team)>>(data);
         foreach((Team, List<TeamPieceLoc>, Team, Team) i in des)
             history.Add(BoardState.GetBoardStateFromDeserializedDict(i.Item2, i.Item1, i.Item3, i.Item4));
         return history;
-    } 
+    }
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};

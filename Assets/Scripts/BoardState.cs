@@ -32,6 +32,24 @@ public struct BoardState
 
         return new BoardState{allPiecePositions = newDict, currentMove = currentMove, check = check, checkmate = checkmate};
     }
+
+    public static (Team, Piece, Index, Index) GetLastMove(List<BoardState> history)
+    {
+        if(history.Count > 1)
+        {
+            BoardState lastState = history[history.Count - 2];
+            BoardState nowState = history[history.Count - 1];
+            foreach(KeyValuePair<(Team, Piece), Index> kvp in lastState.allPiecePositions)
+            {
+                if(!nowState.allPiecePositions.Contains(kvp.Key))
+                    continue;
+                Index nowPos = nowState.allPiecePositions[kvp.Key];
+                if(kvp.Value != nowPos)
+                    return (kvp.Key.Item1, kvp.Key.Item2, kvp.Value, nowPos);
+            }
+        }
+        return(Team.None, Piece.King, default(Index), default(Index));
+    }
 }
 
 [System.Serializable]

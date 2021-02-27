@@ -28,7 +28,7 @@ public class LastMoveTracker : MonoBehaviour
     {
         bool isEven = i.row % 2 == 0;
 
-        return i.col switch{
+        return i.col switch {
             0 when !isEven => "A", 0 when isEven => "B",
             1 when !isEven => "C", 1 when isEven => "D",
             2 when !isEven => "E", 2 when isEven => "F",
