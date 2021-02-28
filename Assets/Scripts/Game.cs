@@ -7,34 +7,58 @@ public struct Game
 {
     public Winner winner;
     public List<BoardState> turnHistory;
+    public List<Promotion> promotions;
     public int turns => Mathf.CeilToInt((float)turnHistory.Count / 2f);
 
-    public Game(List<BoardState> history)
+    public Game(List<BoardState> history, List<Promotion> promotions = null)
     {
         turnHistory = history;
         winner = Winner.Pending;
+        this.promotions = promotions == null ? new List<Promotion>() : promotions;
     }
 
-    public static string Serialize(List<BoardState> turnHistory)
+    public static string Serialize(List<BoardState> turnHistory, List<Promotion> promotions)
     {
-        List<(Team, List<SerializedPiece>, Team, Team)> serializeableGame = new List<(Team, List<SerializedPiece>, Team, Team)>();
+        List<(Team, List<SerializedPiece>, Team, Team)> serializeableBoards = new List<(Team, List<SerializedPiece>, Team, Team)>();
         foreach(BoardState bs in turnHistory)
         {
             List<SerializedPiece> serializeableBoardState = bs.GetSerializeable();
-            serializeableGame.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate));
+            serializeableBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate));
         }
-        return JsonConvert.SerializeObject(serializeableGame);
+
+        return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions));
     }
 
     public static Game Deserialize(string json)
     {
         List<BoardState> history = new List<BoardState>();
         
-        List<(Team, List<SerializedPiece>, Team, Team)> boards = JsonConvert.DeserializeObject<List<(Team, List<SerializedPiece>, Team, Team)>>(json);
-        foreach((Team, List<SerializedPiece>, Team, Team) board in boards)
+        SerializeableGame game = JsonConvert.DeserializeObject<SerializeableGame>(json);
+        foreach((Team, List<SerializedPiece>, Team, Team) board in game.serializedBoards)
             history.Add(BoardState.GetBoardStateFromDeserializedGame(board.Item2, board.Item1, board.Item3, board.Item4));
-        return new Game(history);
+        return new Game(history,game.promotions);
     }
+}
+
+[System.Serializable]
+public struct SerializeableGame
+{
+    public List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards;
+    public List<Promotion> promotions;
+
+    public SerializeableGame(List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards, List<Promotion> promotions)
+    {
+        this.serializedBoards = serializedBoards;
+        this.promotions = promotions;
+    }
+}
+
+[System.Serializable]
+public struct Promotion
+{
+    public Team team;
+    public Piece from;
+    public Piece to;
 }
 
 public enum Winner {

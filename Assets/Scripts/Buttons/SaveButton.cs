@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using SFB;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class SaveButton : MonoBehaviour
 {
@@ -17,14 +16,33 @@ public class SaveButton : MonoBehaviour
 
     public void Save()
     {
+        // Prevents it from opening too many save file browsers
+        EventSystem.current.SetSelectedGameObject(null);
+
         string path = Application.persistentDataPath + $"/saves";
         Directory.CreateDirectory(path);
 
-        File.WriteAllText(
-            path + $"/{DateTime.Now.ToString().Replace("/", "-").Replace(":", "-")}.json", 
-            Game.Serialize(board.turnHistory)
+        string file = StandaloneFileBrowser.SaveFilePanel(
+            title: "Save File", 
+            directory: path, 
+            defaultName: $"/{DateTime.Now.ToString().Replace("/", "-").Replace(":", "-")}.json", 
+            extensions: new []{
+                new ExtensionFilter("Json Files", "json"),
+                new ExtensionFilter("All FIles", "*")
+            }
         );
 
-        Debug.Log($"Saved to file: {path}");
+        if(string.IsNullOrEmpty(file))
+        {
+            Debug.Log("Failed to save to file. Path empty.");
+            return;
+        }
+        
+        File.WriteAllText(
+            file, 
+            Game.Serialize(board.turnHistory, board.promotions)
+        );
+
+        Debug.Log($"Saved to file: {file}");
     }
 }

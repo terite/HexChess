@@ -18,6 +18,7 @@ public class Pawn : MonoBehaviour, IPiece
 
     public bool passantable = false;
     public int turnsPassed = 0;
+    public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;
 
     private Board board;
     
@@ -132,7 +133,7 @@ public class Pawn : MonoBehaviour, IPiece
         location = hex.index;
         
         // If the pawn reaches the other side of the board, it can Promote
-        int goal = team == Team.White ? 18 - (location.row % 2) : location.row % 2;
+        
         if(location.row == goal)
             hex.board.QueryPromote(this);
     }
