@@ -12,7 +12,8 @@ public class TurnText : MonoBehaviour
 
     private void NewTurn(BoardState newState)
     {
-        turnText.text = newState.currentMove == Team.White ? "White's Turn" : "Black's Turn";
+        string text = newState.currentMove == Team.White ? "White's Turn" : "Black's Turn";
+        turnText.text = $"{Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + 1}:{text}";
         turnText.color = newState.currentMove == Team.White ? Color.white : Color.black;
     }
 }

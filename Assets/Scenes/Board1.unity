@@ -22007,6 +22007,7 @@ GameObject:
   - component: {fileID: 1428896167}
   - component: {fileID: 1428896166}
   - component: {fileID: 1428896165}
+  - component: {fileID: 1428896168}
   m_Layer: 5
   m_Name: Turn Panel
   m_TagString: Untagged
@@ -22101,6 +22102,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1428896163}
   m_CullTransparentMesh: 1
+--- !u!114 &1428896168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428896163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2800becbcf32358408c65308f9809012, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  turnText: {fileID: 1665345133}
 --- !u!1 &1433748830
 GameObject:
   m_ObjectHideFlags: 0
@@ -25139,7 +25153,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1665345132}
   - component: {fileID: 1665345135}
-  - component: {fileID: 1665345134}
   - component: {fileID: 1665345133}
   m_Layer: 5
   m_Name: Turn Text
@@ -25256,19 +25269,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &1665345134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665345131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2800becbcf32358408c65308f9809012, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  turnText: {fileID: 1665345133}
 --- !u!222 &1665345135
 CanvasRenderer:
   m_ObjectHideFlags: 0

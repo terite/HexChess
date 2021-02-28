@@ -23,6 +23,7 @@ public class Board : SerializedMonoBehaviour
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
 
+    // Used to write the default boardstate out to file
     [Button]
     public void WriteTurnHistoryToFile()
     {
@@ -30,8 +31,8 @@ public class Board : SerializedMonoBehaviour
         File.WriteAllText("Assets/Resources/" + defaultBoardStateFileLoc + ".json", json);
         Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
     }
-
     // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
+
     private void Awake() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
@@ -53,39 +54,20 @@ public class Board : SerializedMonoBehaviour
                 activePieces.Add(prefabs.Key, piece);
             }
 
+            // It might need to be promoted. 
+            // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
+            piece = GetPromotedPieceIfNeeded(piece);
+            
             // If the piece is on the board, place it at the correct location
             if(newState.allPiecePositions.ContainsKey(prefabs.Key))
             {
-                Index loc = newState.allPiecePositions[prefabs.Key];
-                
-                // It might need to be promoted. 
-                //Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
-                if(piece is Pawn pawn)
-                {
-                    Piece p = pawn.piece;
-                    foreach(Promotion promo in promotions)
-                        if(promo.team == pawn.team && promo.from == p)
-                            p = promo.to;
-                    if(p != pawn.piece)
-                        piece = Promote(pawn, p);
-                }
-
+                Index loc = newState.allPiecePositions[prefabs.Key];                
                 piece.MoveTo(hexes[loc.row][loc.col]);
                 continue;
             }
             // Put the piece in the correct jail
             else
             {
-                if(piece is Pawn pawn)
-                {
-                    Piece p = pawn.piece;
-                    foreach(Promotion promo in promotions)
-                        if(promo.team == pawn.team && promo.from == p)
-                            p = promo.to;
-                    if(p != pawn.piece)
-                        piece = Promote(pawn, p);
-                }
-                
                 jails[(int)prefabs.Key.Item1].Enprison(piece);
                 activePieces.Remove(prefabs.Key);
             }
@@ -240,6 +222,21 @@ public class Board : SerializedMonoBehaviour
         activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
         return newPiece;
+    }
+
+    private IPiece GetPromotedPieceIfNeeded(IPiece piece)
+    {
+        if (piece is Pawn pawn)
+        {
+            Piece p = pawn.piece;
+            foreach(Promotion promo in promotions)
+                if (promo.team == pawn.team && promo.from == p)
+                    p = promo.to;
+            if (p != pawn.piece)
+                piece = Promote(pawn, p);
+        }
+
+        return piece;
     }
 
     public BoardState Swap(IPiece p1, IPiece p2, BoardState boardState, bool isQuery = false)
