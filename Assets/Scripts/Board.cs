@@ -142,7 +142,9 @@ public class Board : SerializedMonoBehaviour
             turnHistory.Add(newState);
             newTurn.Invoke(newState);
 
-            game = new Game(turnHistory, promotions, (Winner)(int)newState.checkmate);
+            Winner winner = newState.checkmate == Team.White ? Winner.Black : Winner.White;
+
+            game = new Game(turnHistory, promotions, winner);
             gameOver.Invoke(game);
             return;
         }
