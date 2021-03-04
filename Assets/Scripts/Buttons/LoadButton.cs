@@ -20,7 +20,7 @@ public class LoadButton : MonoBehaviour
             new ExtensionFilter("All FIles", "*")
         };
         string path = Application.persistentDataPath + $"/saves";
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", path, extensions, true);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", path, extensions, false);
 
         if(paths.Length > 0)
             board.LoadGame(Game.Deserialize(File.ReadAllText(paths.First())));

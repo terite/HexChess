@@ -43,7 +43,7 @@ public struct BoardState
     }
 
     // When deserializing from json, because of the before mentioned dictionary issues, we must deserialize as a list, then construct our dictionary from it.
-    public static BoardState GetBoardStateFromDeserializedGame(List<SerializedPiece> list, Team currentMove, Team check, Team checkmate)
+    public static BoardState GetBoardStateFromDeserializedBoard(List<SerializedPiece> list, Team currentMove, Team check, Team checkmate)
     {
         BidirectionalDictionary<(Team, Piece), Index> newDict = new BidirectionalDictionary<(Team, Piece), Index>();
         foreach(SerializedPiece tpl in list)

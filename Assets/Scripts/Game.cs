@@ -10,14 +10,14 @@ public struct Game
     public List<Promotion> promotions;
     public int turns => Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1;
 
-    public Game(List<BoardState> history, List<Promotion> promotions = null)
+    public Game(List<BoardState> history, List<Promotion> promotions = null, Winner winner = Winner.Pending)
     {
         turnHistory = history;
-        winner = Winner.Pending;
+        this.winner = winner;
         this.promotions = promotions == null ? new List<Promotion>() : promotions;
     }
 
-    public static string Serialize(List<BoardState> turnHistory, List<Promotion> promotions)
+    public static string Serialize(List<BoardState> turnHistory, List<Promotion> promotions, Winner winner = Winner.Pending)
     {
         List<(Team, List<SerializedPiece>, Team, Team)> serializeableBoards = new List<(Team, List<SerializedPiece>, Team, Team)>();
         foreach(BoardState bs in turnHistory)
@@ -26,7 +26,7 @@ public struct Game
             serializeableBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate));
         }
 
-        return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions));
+        return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions, winner));
     }
 
     public static Game Deserialize(string json)
@@ -34,9 +34,9 @@ public struct Game
         List<BoardState> history = new List<BoardState>();
         
         SerializeableGame game = JsonConvert.DeserializeObject<SerializeableGame>(json);
-        foreach((Team, List<SerializedPiece>, Team, Team) board in game.serializedBoards)
-            history.Add(BoardState.GetBoardStateFromDeserializedGame(board.Item2, board.Item1, board.Item3, board.Item4));
-        return new Game(history,game.promotions);
+        foreach((Team team, List<SerializedPiece> pieces, Team check, Team checkmate) in game.serializedBoards)
+            history.Add(BoardState.GetBoardStateFromDeserializedBoard(pieces, team, check, checkmate));
+        return new Game(history,game.promotions, game.winner);
     }
 }
 
@@ -45,11 +45,13 @@ public struct SerializeableGame
 {
     public List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards;
     public List<Promotion> promotions;
+    public Winner winner;
 
-    public SerializeableGame(List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards, List<Promotion> promotions)
+    public SerializeableGame(List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards, List<Promotion> promotions, Winner winner = Winner.Pending)
     {
         this.serializedBoards = serializedBoards;
         this.promotions = promotions;
+        this.winner = winner;
     }
 }
 

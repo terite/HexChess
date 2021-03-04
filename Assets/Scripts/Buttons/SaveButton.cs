@@ -40,7 +40,7 @@ public class SaveButton : MonoBehaviour
         
         File.WriteAllText(
             file, 
-            Game.Serialize(board.turnHistory, board.promotions)
+            Game.Serialize(board.turnHistory, board.promotions, board.game.winner)
         );
 
         Debug.Log($"Saved to file: {file}");

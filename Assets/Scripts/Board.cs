@@ -14,10 +14,13 @@ public class Board : SerializedMonoBehaviour
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
+    public Game game;
     public List<BoardState> turnHistory = new List<BoardState>();
     [ReadOnly] public Dictionary<(Team, Piece), IPiece> activePieces = new Dictionary<(Team, Piece), IPiece>();
     public delegate void NewTurn(BoardState newState);
     [HideInInspector] public NewTurn newTurn;
+    public delegate void GameOver(Game game);
+    [HideInInspector] public GameOver gameOver;
     [SerializeField] public HexGrid hexGrid;
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
@@ -79,6 +82,7 @@ public class Board : SerializedMonoBehaviour
     public void LoadGame(Game game)
     {
         turnHistory = game.turnHistory;
+        this.game = game;
         
         (Team team, Piece piece, Index last, Index current) = BoardState.GetLastMove(turnHistory);
         if(team != Team.None)
@@ -88,6 +92,9 @@ public class Board : SerializedMonoBehaviour
             jail?.Clear();
 
         SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
+
+        if(game.winner != Winner.Pending)
+            gameOver?.Invoke(game);
     }
 
     public Game GetDefaultGame(string loc) => 
@@ -127,9 +134,23 @@ public class Board : SerializedMonoBehaviour
             else
                 newState.check = otherTeam;
         }
+
+        if(newState.checkmate != Team.None)
+        {
+            // End game
+            newState.currentMove = Team.None;
+            turnHistory.Add(newState);
+            newTurn.Invoke(newState);
+
+            game = new Game(turnHistory, promotions, (Winner)(int)newState.checkmate);
+            gameOver.Invoke(game);
+            return;
+        }
+
         newState.currentMove = otherTeam;
-        newTurn.Invoke(newState);
         turnHistory.Add(newState);
+        newTurn.Invoke(newState);
+
     }
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
@@ -226,13 +247,14 @@ public class Board : SerializedMonoBehaviour
 
     private IPiece GetPromotedPieceIfNeeded(IPiece piece)
     {
-        if (piece is Pawn pawn)
+        if(piece is Pawn pawn)
         {
             Piece p = pawn.piece;
             foreach(Promotion promo in promotions)
-                if (promo.team == pawn.team && promo.from == p)
+                if(promo.team == pawn.team && promo.from == p)
                     p = promo.to;
-            if (p != pawn.piece)
+            if(p != pawn.piece)
+            
                 piece = Promote(pawn, p);
         }
 
