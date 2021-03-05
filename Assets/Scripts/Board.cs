@@ -47,7 +47,22 @@ public class Board : SerializedMonoBehaviour
         {
             IPiece piece;
             if(activePieces.ContainsKey(prefabs.Key))
+            {
                 piece = activePieces[prefabs.Key];
+                if(prefabs.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
+                {
+                    IPiece old = activePieces[prefabs.Key];
+                    activePieces.Remove(prefabs.Key);
+                    Destroy(old.obj);
+
+                    Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
+                    Vector3 loc = hexes[startLoc.row][startLoc.col].transform.position + Vector3.up;
+                    piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                    piece.Init(prefabs.Key.team, prefabs.Key.piece, defaultBoard.allPiecePositions[prefabs.Key]);
+                    
+                    activePieces.Add(prefabs.Key, piece);
+                }
+            }
             else
             {
                 Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
