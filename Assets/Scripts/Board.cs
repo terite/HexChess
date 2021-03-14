@@ -11,6 +11,7 @@ public class Board : SerializedMonoBehaviour
 {
     [SerializeField] private PromotionDialogue promotionDialogue;
     [SerializeField] private LastMoveTracker moveTracker;
+    [SerializeField] private TurnPanel turnPanel;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -110,6 +111,8 @@ public class Board : SerializedMonoBehaviour
 
         if(game.winner != Winner.Pending)
             gameOver?.Invoke(game);
+        else
+            turnPanel.Reset();
     }
 
     public Game GetDefaultGame(string loc) => 
@@ -356,7 +359,20 @@ public class Board : SerializedMonoBehaviour
         return checkingPieces;
     }
 
-    public void Surrender() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+    public void Surrender()
+    {
+        BoardState currentState = GetCurrentBoardState();
+        Winner winner = currentState.currentMove == Team.White ? Winner.Black : Winner.White;
+
+        currentState.currentMove = Team.None;
+        turnHistory.Add(currentState);
+        newTurn.Invoke(currentState);
+
+        game = new Game(turnHistory, promotions, winner);
+        gameOver.Invoke(game);
+    }
+
+    public void Reset() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
 
     private void MaybeNewHex()
     {

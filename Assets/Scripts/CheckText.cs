@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System;
@@ -12,7 +10,21 @@ public class CheckText : MonoBehaviour
     private void Awake() {
         board = GameObject.FindObjectOfType<Board>();
         board.newTurn += NewTurn;
+        board.gameOver += GameOver;
         gameObject.SetActive(false);
+    }
+
+    private void GameOver(Game game)
+    {
+        BoardState finalState = game.turnHistory[game.turnHistory.Count - 1];
+
+        if(finalState.checkmate == Team.None && game.winner != Winner.Draw)
+        {
+            gameObject.SetActive(true);
+            text.color = Color.red;
+            Team loser = game.winner == Winner.White ? Team.Black : Team.White;
+            text.text = $"{loser} surrendered.";
+        }
     }
 
     private void NewTurn(BoardState newState)
@@ -37,4 +49,6 @@ public class CheckText : MonoBehaviour
         else
             text.text = "Something went wrong";
     }
+
+
 }

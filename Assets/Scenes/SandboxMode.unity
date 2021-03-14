@@ -2849,6 +2849,21 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
+    - Name: game
+      Entry: 7
+      Data: Game, Assembly-CSharp
+    - Name: winner
+      Entry: 3
+      Data: 0
+    - Name: turnHistory
+      Entry: 6
+      Data: 
+    - Name: promotions
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
     - Name: turnHistory
       Entry: 7
       Data: 2|System.Collections.Generic.List`1[[BoardState, Assembly-CSharp]], mscorlib
@@ -4163,6 +4178,9 @@ MonoBehaviour:
     - Name: newTurn
       Entry: 6
       Data: 
+    - Name: gameOver
+      Entry: 6
+      Data: 
     - Name: hexGrid
       Entry: 7
       Data: HexGrid, Assembly-CSharp
@@ -4758,6 +4776,7 @@ MonoBehaviour:
       Data: 
   promotionDialogue: {fileID: 1447485345}
   moveTracker: {fileID: 1575216244}
+  turnPanel: {fileID: 1428896168}
   jails:
   - {fileID: 0}
   - {fileID: 821376221}
@@ -5851,12 +5870,12 @@ RectTransform:
   m_Children:
   - {fileID: 657396068}
   m_Father: {fileID: 913026310}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 158.8, y: 30}
+  m_SizeDelta: {x: 80, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &218016550
 MonoBehaviour:
@@ -8946,7 +8965,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 158.8, y: 30}
+  m_SizeDelta: {x: 80, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &507177007
 MonoBehaviour:
@@ -14509,8 +14528,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 507177006}
-  - {fileID: 1433748831}
   - {fileID: 218016549}
+  - {fileID: 1433748831}
   m_Father: {fileID: 1428896164}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -14575,8 +14594,8 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
+  m_Spacing: 5
+  m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
@@ -22115,6 +22134,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turnText: {fileID: 1665345133}
+  buttonContainer: {fileID: 913026310}
+  surrenderButton: {fileID: 1433748832}
+  mainMenuButtonPrefab: {fileID: 7880229305858792622, guid: 41b34b64e1b4be342bb27385311697c1,
+    type: 3}
 --- !u!1 &1433748830
 GameObject:
   m_ObjectHideFlags: 0
@@ -22148,12 +22171,12 @@ RectTransform:
   m_Children:
   - {fileID: 1024859501}
   m_Father: {fileID: 913026310}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 158.8, y: 30}
+  m_SizeDelta: {x: 125, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1433748832
 MonoBehaviour:
@@ -22168,6 +22191,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   button: {fileID: 1433748833}
+  text: {fileID: 1024859502}
 --- !u!114 &1433748833
 MonoBehaviour:
   m_ObjectHideFlags: 0

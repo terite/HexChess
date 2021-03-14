@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -77,6 +76,7 @@ public class Bishop : MonoBehaviour, IPiece
 
         return possible;
     }
+
 
     private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
     {

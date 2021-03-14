@@ -8,7 +8,9 @@ public struct Game
     public Winner winner;
     public List<BoardState> turnHistory;
     public List<Promotion> promotions;
-    public int turns => Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1;
+    public int turns => turnHistory.Count % 2 == 0 
+        ? Mathf.FloorToInt((float)turnHistory.Count / 2f)
+        : Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1;
 
     public Game(List<BoardState> history, List<Promotion> promotions = null, Winner winner = Winner.Pending)
     {
