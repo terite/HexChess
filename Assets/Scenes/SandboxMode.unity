@@ -22192,6 +22192,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   button: {fileID: 1433748833}
   text: {fileID: 1024859502}
+  resetButtonPrefab: {fileID: 6638547339229265148, guid: b79ba5d6fa21d9349a21d69bb466808e,
+    type: 3}
 --- !u!114 &1433748833
 MonoBehaviour:
   m_ObjectHideFlags: 0

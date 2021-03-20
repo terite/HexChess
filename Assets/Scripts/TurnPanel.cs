@@ -18,7 +18,7 @@ public class TurnPanel : MonoBehaviour
 
     private void GameOver(Game game)
     {
-        turnText.text = $"Game over! In {game.turns} turns {game.winner} is victorius!";
+        turnText.text = $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!";
 
         turnText.color = game.winner switch {
             Winner.White => Color.white,
@@ -27,8 +27,8 @@ public class TurnPanel : MonoBehaviour
         };
         turnText.text = game.winner switch {
             Winner.Pending => "",
-            Winner.Draw => $"After {game.turns} turns, Draw.",
-            _ => $"Game over! In {game.turns} turns {game.winner} is victorius!"
+            Winner.Draw => $"After {game.GetTurnCount()} turns, Draw.",
+            _ => $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!"
         };
         
         if(mainMenuButton == null)
@@ -49,6 +49,6 @@ public class TurnPanel : MonoBehaviour
     {
         if(mainMenuButton != null)
             Destroy(mainMenuButton);
-        surrenderButton.Reset();
+        // surrenderButton.Reset();
     }
 }
