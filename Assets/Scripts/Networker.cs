@@ -261,7 +261,7 @@ public class Networker : MonoBehaviour
                 {
                     Debug.Log("The host closed the socket.");
                     if(lobby != null)
-                        networker.mainThreadActions.Enqueue(() => Shutdown());
+                        networker.mainThreadActions.Enqueue(Shutdown);
                     else if(multiplayer != null)
                     {
                         networker.mainThreadActions.Enqueue(() => multiplayer.Surrender(host.team)); 
@@ -271,7 +271,7 @@ public class Networker : MonoBehaviour
                 else
                 {
                     Debug.Log("The player disconnected.");
-                    networker.mainThreadActions.Enqueue(() => PlayerDisconnected());
+                    networker.mainThreadActions.Enqueue(PlayerDisconnected);
                     return;
                 }
             }
@@ -281,7 +281,7 @@ public class Networker : MonoBehaviour
                 byte[] readBytes = new byte[amountOfBytesRead];
                 Buffer.BlockCopy(networker.readBuffer, 0, readBytes, 0, amountOfBytesRead);
                 networker.readQueue.Enqueue(readBytes);
-                networker.mainThreadActions.Enqueue(() => networker.CheckCompleteMessage());                
+                networker.mainThreadActions.Enqueue(networker.CheckCompleteMessage);                
             }
             
             // Wait for next message
@@ -289,7 +289,7 @@ public class Networker : MonoBehaviour
             
         } catch (IOException e) {
             Debug.Log($"The socket was closed.\n{e}");
-            networker.mainThreadActions.Enqueue(() => Shutdown());
+            networker.mainThreadActions.Enqueue(Shutdown);
         }
         catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
@@ -363,7 +363,7 @@ public class Networker : MonoBehaviour
                 });
             },
             MessageType.ProposeTeamChange => ReceiveTeamChangeProposal,
-            MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(() => SwapTeams()),
+            MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(SwapTeams),
             MessageType.Ready when isHost => Ready,
             MessageType.Unready when isHost => Unready,
             MessageType.StartMatch when !isHost => StartMatch,
