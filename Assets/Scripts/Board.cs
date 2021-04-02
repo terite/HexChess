@@ -24,6 +24,7 @@ public class Board : SerializedMonoBehaviour
     [HideInInspector] public GameOver gameOver;
     [SerializeField] public HexGrid hexGrid;
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
+    List<Hex> highlightedHexes = new List<Hex>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
 
@@ -97,6 +98,8 @@ public class Board : SerializedMonoBehaviour
         }
 
         newTurn?.Invoke(newState);
+        if(turnHistory.Count > 1)
+            HighlightMove(BoardState.GetLastMove(turnHistory));
     }
 
     public void LoadGame(Game game)
@@ -157,12 +160,14 @@ public class Board : SerializedMonoBehaviour
                 newState.check = otherTeam;
         }
 
+        
         if(newState.checkmate != Team.None)
         {
             // End game
             newState.currentMove = Team.None;
             turnHistory.Add(newState);
             newTurn.Invoke(newState);
+            HighlightMove(BoardState.GetLastMove(turnHistory));
 
             Winner winner = newState.checkmate == Team.White ? Winner.Black : Winner.White;
 
@@ -174,6 +179,7 @@ public class Board : SerializedMonoBehaviour
         newState.currentMove = otherTeam;
         turnHistory.Add(newState);
         newTurn.Invoke(newState);
+        HighlightMove(BoardState.GetLastMove(turnHistory));
     }
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
@@ -220,11 +226,14 @@ public class Board : SerializedMonoBehaviour
         BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.allPiecePositions);
         
         // If the hex being moved into contains an enemy piece, capture it
+        Piece? takenPieceAtLocation = null;
+        Piece? defendedPieceAtLocation = null;
         if(currentState.allPiecePositions.Contains(targetLocation.index))
         {
             (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
             if(occupyingTeam != piece.team)
             {
+                takenPieceAtLocation = occupyingType;
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
                 // Capture the enemy piece
@@ -235,12 +244,14 @@ public class Board : SerializedMonoBehaviour
                 }
                 allPiecePositions.Remove((occupyingTeam, occupyingType));
             }
+            else
+                defendedPieceAtLocation = occupyingType;
         }
 
         // Move piece
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(piece.team, piece.piece, piece.location, targetLocation.index));
+            moveTracker.UpdateText(new Move(piece.team, piece.piece, piece.location, targetLocation.index, takenPieceAtLocation, defendedPieceAtLocation));
             piece.MoveTo(targetLocation);
         }
 
@@ -304,7 +315,7 @@ public class Board : SerializedMonoBehaviour
         
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(p1.team, p1.piece, p1StartLoc, p2StartLoc));
+            moveTracker.UpdateText(new Move(p1.team, p1.piece, p1StartLoc, p2StartLoc, null, p2.piece));
             p1.MoveTo(GetHexIfInBounds(p2.location));
             p2.MoveTo(GetHexIfInBounds(p1StartLoc));
         }
@@ -334,7 +345,7 @@ public class Board : SerializedMonoBehaviour
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
-            moveTracker.UpdateText(new Move(pawn.team, pawn.piece, pawn.location, targetHex.index));
+            moveTracker.UpdateText(new Move(pawn.team, pawn.piece, pawn.location, targetHex.index, enemyPiece));
             pawn.MoveTo(targetHex);
         }
         
@@ -386,9 +397,32 @@ public class Board : SerializedMonoBehaviour
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
+        HighlightMove(BoardState.GetLastMove(turnHistory));
 
         game = new Game(turnHistory, promotions, winner);
         gameOver.Invoke(game);
+    }
+
+
+    public void HighlightMove(Move move)
+    {
+        foreach(Hex hex in highlightedHexes)
+            hex.Unhighlight();
+        highlightedHexes.Clear();
+        
+        Hex fromHex = GetHexIfInBounds(move.from);
+        Hex toHex = GetHexIfInBounds(move.to);
+
+        fromHex.Highlight(Color.yellow);
+        toHex.Highlight(move.capturedPiece.HasValue 
+            ? Color.red 
+            : move.defendedPiece.HasValue 
+                ? Color.green 
+                : Color.yellow
+        );
+
+        highlightedHexes.Add(fromHex);
+        highlightedHexes.Add(toHex);
     }
 
     public void Reset() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);

@@ -12,6 +12,8 @@ public class Hex : SerializedMonoBehaviour
     [OdinSerialize, ReadOnly] public Index index {get; private set;}
     [SerializeField, ReadOnly] private MeshRenderer meshRenderer;
 
+    public Color outlineColor;
+
     IEnumerable<(Hex neighbor, HexNeighborDirection direction)> NeighborsWithDirection()
     {
         foreach(HexNeighborDirection direction in EnumArray<HexNeighborDirection>.Values)
@@ -34,11 +36,13 @@ public class Hex : SerializedMonoBehaviour
 
     public void ToggleSelect() => (selected ? (Action)Deselect : (Action)Select)();
     
-    [Button(ButtonSizes.Medium, ButtonStyle.FoldoutButton)]
-    public void ToggleOutline()
+    public void Highlight(Color highlightColor)
     {
-        
+        meshRenderer.material.SetColor("_HighlightColor", highlightColor);
+        meshRenderer.material.SetFloat("_HighlightPower", 0.33f);
     }
+
+    public void Unhighlight() => meshRenderer.material.SetFloat("_HighlightPower", 0f);
 
     [Button(ButtonSizes.Medium, ButtonStyle.FoldoutButton)]
     public void SetColor(Color color)
@@ -57,6 +61,7 @@ public class Hex : SerializedMonoBehaviour
     [Button(ButtonSizes.Medium, ButtonStyle.FoldoutButton)]
     public void SetOutlineColor(Color color)
     {
+        outlineColor = color;
         meshRenderer.material.SetColor("_EdgeColor", color);
     }
 
@@ -66,7 +71,7 @@ public class Hex : SerializedMonoBehaviour
 
         // Update edges of this hex based on the direction to each neighbor
         foreach(var (neighbor, direction) in NeighborsWithDirection())
-            if(neighbor == null || !neighbor.selected)
+            if(neighbor == null || !neighbor.selected || neighbor.outlineColor != outlineColor)
                 UpdateEdge(direction);
 
         UpdateNeighbors();
@@ -114,7 +119,7 @@ public class Hex : SerializedMonoBehaviour
     public void UpdateNeighbors()
     {
         foreach(var (neighbor, direction) in NeighborsWithDirection())
-            if(neighbor != null && neighbor.selected)
+            if(neighbor != null && neighbor.selected && neighbor.outlineColor == outlineColor)
                 neighbor.UpdateEdge(direction.OppositeDirection());
     }
 }

@@ -125,7 +125,6 @@ public class Pawn : MonoBehaviour, IPiece
         Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
         if(hex.index == boostedLoc)
         {
-            Debug.Log("Boosted.");
             board = hex.board;
             board.newTurn += TurnPassed;
             passantable = true;
@@ -146,7 +145,6 @@ public class Pawn : MonoBehaviour, IPiece
         int count = isSingleplayer ? 1 : 2;
         if(turnsPassed >= count)
         {
-            Debug.Log("Reset en passant");
             passantable = false;
             turnsPassed = 0;
             board.newTurn -= TurnPassed;

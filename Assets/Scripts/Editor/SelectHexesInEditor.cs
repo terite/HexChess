@@ -19,7 +19,7 @@ public static class SelectHexesInEditor
             {
                 if(!currentHexes.Contains(hex))
                 {
-                    hex.ToggleSelect();
+                    // hex.ToggleSelect();
                     toRemove.Add(hex);
                 }
             }
@@ -34,7 +34,7 @@ public static class SelectHexesInEditor
                 if(!lastSelectedHexes.Contains(hex))
                 {
                     lastSelectedHexes.Add(hex);
-                    hex.ToggleSelect();
+                    // hex.ToggleSelect();
                 }
             }
         };

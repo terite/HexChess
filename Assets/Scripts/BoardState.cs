@@ -23,8 +23,20 @@ public struct BoardState
                 if(!nowState.allPiecePositions.Contains(kvp.Key))
                     continue;
                 Index nowPos = nowState.allPiecePositions[kvp.Key];
+
+                (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
+                    ? lastState.allPiecePositions[nowPos] 
+                    : (Team.None, (Piece?)null);
+
                 if(kvp.Value != nowPos)
-                    return new Move(kvp.Key.Item1, kvp.Key.Item2, kvp.Value, nowPos);
+                    return new Move(
+                        lastTeam: kvp.Key.Item1, 
+                        lastPiece: kvp.Key.Item2, 
+                        from: kvp.Value, 
+                        to: nowPos, 
+                        capturedPiece: previousTeamAtLocation == kvp.Key.Item1 ? null : previousPieceAtLocation, 
+                        defendedPiece: previousTeamAtLocation != kvp.Key.Item1 ? null : previousPieceAtLocation
+                    );
             }
         }
         return new Move(Team.None, Piece.King, default(Index), default(Index));

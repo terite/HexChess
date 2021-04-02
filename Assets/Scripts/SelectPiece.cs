@@ -23,86 +23,96 @@ public class SelectPiece : MonoBehaviour
     }
     public void LeftClick(CallbackContext context)
     {
-        if(!context.performed)
-            return;
+        if(context.started)
+        {
+            // Later allow players to queue a move, but for now, just prevent even clicking a piece when not their turn
+            if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+                return;
+
+            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            {
+                if(hit.collider == null)
+                    return;
+                
+                BoardState currentBoardState = board.GetCurrentBoardState();
+                IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
+                if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
+                {
+                    if(selectedPiece != null)
+                        DeselectPiece(selectedPiece.location);
+
+                    // Select new piece and highlight all of the places it can move to on the current board state
+                    selectedPiece = clickedPiece;
+                    pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
+                    // Highlight each possible move the correct color
+                    foreach((Hex hex, MoveType moveType) in pieceMoves)
+                    {
+                        hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
+                        hex.ToggleSelect();
+                    }
+
+                    Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
+                    selectedHex.SetOutlineColor(selectedPieceColor);
+                    selectedHex.ToggleSelect();
+                }
+            }
+        }
+        else if(context.canceled)
+        {
+            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            {
+                BoardState currentBoardState = board.GetCurrentBoardState();
+                IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
+
+                if(clickedPiece != null && selectedPiece != null)
+                {
+                    // Rooks can defend (swap positions with a near by ally)
+                    if(clickedPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                    {
+                        Defend(clickedPiece);
+                        return;
+                    }
+                    else
+                    {
+                        Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
+                        // Check if this attack is within our possible moves
+                        if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
+                            MoveOrAttack(enemyHex);
+                    }
+                }
+
+                // Clicked on a hex
+                Hex hitHex = hit.collider.GetComponent<Hex>();
+                if(hitHex != null && selectedPiece != null)
+                {
+                    if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
+                        MoveOrAttack(hitHex);
+                    else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
+                        Defend(board.activePieces[currentBoardState.allPiecePositions[hitHex.index]]);
+                    else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
+                        EnPassant(currentBoardState, hitHex);
+                }
+            }
+
+            if(selectedPiece != null)
+                DeselectPiece(selectedPiece.location);
+        }
+    }
+
+    private void MoveOrAttack(Hex hitHex)
+    {
+        Index pieceStartLoc = selectedPiece.location;
+        BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
         
         if(multiplayer != null)
         {
-            if(multiplayer.gameParams.localTeam != board.GetCurrentTurn())
-                return;
+            // We skip sending a board here when a promotion is happening. That will be sent with the promotion after it's chosen
+            if(!(selectedPiece is Pawn pawn) || pawn.goal != hitHex.index.row)
+                multiplayer.SendBoard(newState);
         }
-        
-        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
-        {
-            if(hit.collider == null)
-                return;
-            
-            BoardState currentBoardState = board.GetCurrentBoardState();
-            
-            // Clicked on a piece
-            IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
-            if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
-            {
-                if(selectedPiece == clickedPiece)
-                    return;
 
-                // Rooks can defend (swap positions with a near by ally)
-                if(pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
-                {
-                    Defend(clickedPiece);
-                    return;
-                }
-
-                // Deselect any existing selection
-                if(selectedPiece != null)
-                    DeselectPiece(selectedPiece.location);
-
-                // Select new piece and highlight all of the places it can move to on the current board state
-                selectedPiece = clickedPiece;                
-                pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
-
-                // Highlight each possible move the correct color
-                foreach((Hex hex, MoveType moveType) in pieceMoves)
-                {
-                    hex.ToggleSelect();
-                    hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
-                }
-
-                Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
-                selectedHex.ToggleSelect();
-                selectedHex.SetOutlineColor(selectedPieceColor);
-                return;
-            }
-            else if(clickedPiece != null && selectedPiece != null && clickedPiece.team != selectedPiece.team)
-            {
-                Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
-                // Check if this attack is within our possible moves
-                if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
-                    MoveOrAttack(enemyHex);
-            }
-
-            // Clicked on a hex
-            Hex hitHex = hit.collider.GetComponent<Hex>();
-            if(hitHex != null && selectedPiece != null)
-            {
-                if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
-                    MoveOrAttack(hitHex);
-                else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                    Defend(board.activePieces[currentBoardState.allPiecePositions[hitHex.index]]);
-                else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
-                {
-                    Index startIndex = selectedPiece.location;
-                    int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
-                    Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
-                    (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
-                    BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
-                    if(multiplayer != null)
-                        multiplayer.SendBoard(newState);
-                    board.AdvanceTurn(newState);
-                    DeselectPiece(startIndex);
-                }
-            }
-        }
+        board.AdvanceTurn(newState);
+        DeselectPiece(pieceStartLoc);
     }
 
     private void Defend(IPiece pieceToDefend)
@@ -116,30 +126,21 @@ public class SelectPiece : MonoBehaviour
         DeselectPiece(startLoc);
     }
 
-    private void MoveOrAttack(Hex hitHex)
+    private void EnPassant(BoardState currentBoardState, Hex hitHex)
     {
-        Index pieceStartLoc = selectedPiece.location;
-        BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
-        if(multiplayer != null)
-        {
-            // We skip sending a board here when a promotion is happening. That will be sent with the promotion after it's chosen
-            if(!(selectedPiece is Pawn pawn) || pawn.goal != hitHex.index.row)
-                multiplayer.SendBoard(newState);
-        }
+        int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
+        Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
+        (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
+        BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
+
+        if (multiplayer != null)
+            multiplayer.SendBoard(newState);
+
         board.AdvanceTurn(newState);
-        DeselectPiece(pieceStartLoc);
+        DeselectPiece(selectedPiece.location);
     }
 
     private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
-
-    public void RightClick(CallbackContext context)
-    {
-        if(!context.performed)
-            return;
-        
-        if(selectedPiece != null)
-            DeselectPiece(selectedPiece.location);
-    }
 
     public void DeselectPiece(Index fromIndex)
     {

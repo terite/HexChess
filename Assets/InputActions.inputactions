@@ -16,7 +16,7 @@
                 {
                     "name": "RightClick",
                     "type": "Button",
-                    "id": "3bfc43dc-3004-4fbb-a3c8-81a8f527028d",
+                    "id": "eaa2624b-b875-4938-b7e2-87ef5604de32",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
@@ -36,7 +36,7 @@
                 },
                 {
                     "name": "",
-                    "id": "8c5ee3be-c00e-4795-9e40-217bf89ac07a",
+                    "id": "2261f2cf-9c04-415a-a435-ede5b64ac831",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",

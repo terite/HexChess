@@ -16,9 +16,15 @@ public class LastMoveTracker : MonoBehaviour
         if(!gameObject.activeSelf)
             gameObject.SetActive(true);
 
-        string sFrom = $"{GetLetter(move.from)}{GetNumber(move.from)}";
-        string sTo = $"{GetLetter(move.to)}{GetNumber(move.to)}";
-        text.text = $"{GetPieceString(move.lastPiece)} {sFrom} to {sTo}";
+        string from = $"{GetLetter(move.from)}{GetNumber(move.from)}";
+        string to = $"{GetLetter(move.to)}{GetNumber(move.to)}";
+
+        text.text = move.capturedPiece.HasValue
+            ? $"{GetPieceString(move.lastPiece)} {from} takes {GetPieceString(move.capturedPiece.Value)} {to}"
+            : move.defendedPiece.HasValue 
+                ? $"{GetPieceString(move.lastPiece)} {from} defends {GetPieceString(move.defendedPiece.Value)} {to}" 
+                : $"{GetPieceString(move.lastPiece)} {from} to {to}";
+
         text.color = move.lastTeam == Team.White ? Color.white : Color.black;
     }
 
