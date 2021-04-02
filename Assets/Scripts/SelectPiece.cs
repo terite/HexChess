@@ -7,6 +7,7 @@ using System.Linq;
 public class SelectPiece : MonoBehaviour
 {
     Mouse mouse => Mouse.current;
+    Multiplayer multiplayer;
     Camera cam;
     [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
@@ -15,11 +16,21 @@ public class SelectPiece : MonoBehaviour
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
 
-    private void Awake() => cam = Camera.main;
+    private void Awake() 
+    {
+        cam = Camera.main;
+        multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+    }
     public void LeftClick(CallbackContext context)
     {
         if(!context.performed)
             return;
+        
+        if(multiplayer != null)
+        {
+            if(multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+                return;
+        }
         
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
         {
@@ -32,18 +43,18 @@ public class SelectPiece : MonoBehaviour
             IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
             if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
             {
-                if (selectedPiece == clickedPiece)
+                if(selectedPiece == clickedPiece)
                     return;
 
                 // Rooks can defend (swap positions with a near by ally)
-                if (pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                if(pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
                 {
                     Defend(clickedPiece);
                     return;
                 }
 
                 // Deselect any existing selection
-                if (selectedPiece != null)
+                if(selectedPiece != null)
                     DeselectPiece(selectedPiece.location);
 
                 // Select new piece and highlight all of the places it can move to on the current board state
@@ -51,7 +62,7 @@ public class SelectPiece : MonoBehaviour
                 pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
 
                 // Highlight each possible move the correct color
-                foreach ((Hex hex, MoveType moveType) in pieceMoves)
+                foreach((Hex hex, MoveType moveType) in pieceMoves)
                 {
                     hex.ToggleSelect();
                     hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
@@ -85,6 +96,8 @@ public class SelectPiece : MonoBehaviour
                     Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
                     (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
                     BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
+                    if(multiplayer != null)
+                        multiplayer.SendBoard(newState);
                     board.AdvanceTurn(newState);
                     DeselectPiece(startIndex);
                 }
@@ -97,6 +110,8 @@ public class SelectPiece : MonoBehaviour
         Index startLoc = selectedPiece.location;
         // Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
         BoardState newState = board.Swap(selectedPiece, pieceToDefend, board.GetCurrentBoardState());
+        if(multiplayer != null)
+            multiplayer.SendBoard(newState);
         board.AdvanceTurn(newState);
         DeselectPiece(startLoc);
     }
@@ -105,9 +120,17 @@ public class SelectPiece : MonoBehaviour
     {
         Index pieceStartLoc = selectedPiece.location;
         BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
+        if(multiplayer != null)
+        {
+            // We skip sending a board here when a promotion is happening. That will be sent with the promotion after it's chosen
+            if(!(selectedPiece is Pawn pawn) || pawn.goal != hitHex.index.row)
+                multiplayer.SendBoard(newState);
+        }
         board.AdvanceTurn(newState);
         DeselectPiece(pieceStartLoc);
     }
+
+    private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
 
     public void RightClick(CallbackContext context)
     {

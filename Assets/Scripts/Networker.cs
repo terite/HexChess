@@ -14,12 +14,14 @@ public class Networker : MonoBehaviour
 {
     [ReadOnly, ShowInInspector] public bool isHost {get; private set;} = false;
     [ReadOnly, ShowInInspector] public string ip;
-    [ReadOnly, ShowInInspector] public int port;
+    [ShowInInspector] public int port;
 
     Lobby lobby;
+    Multiplayer multiplayer;
     Latency latency;
-    Player host;
-    Player? player;
+    QueryTeamChangePanel teamChangePanel;
+    [ReadOnly, ShowInInspector] public Player host;
+    [ReadOnly, ShowInInspector] public Player? player;
 
     TcpListener server;
     TcpClient client;
@@ -35,22 +37,35 @@ public class Networker : MonoBehaviour
     ConcurrentQueue<byte[]> readQueue = new ConcurrentQueue<byte[]>();
     List<byte> readMessageFragment = new List<byte>();
     
-    ConcurrentQueue<Action> mainTreadActions = new ConcurrentQueue<Action>();
+    ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
 
-    private void Awake() => DontDestroyOnLoad(gameObject);
+    public bool clientIsReady {get; private set;}
+    private void Awake()
+    {
+        List<Networker> networkers = GameObject.FindObjectsOfType<Networker>().ToList();
+        networkers = networkers.Where(networker => networker != this).ToList();
+        for(int i = networkers.Count() - 1; i >= 0; i--)
+            Destroy(networkers[i].gameObject);
+            
+        DontDestroyOnLoad(gameObject);
+    }
 
     private void Update() {
-        while(mainTreadActions.TryDequeue(out Action a))
+        while(mainThreadActions.TryDequeue(out Action a))
             a.Invoke();
         
         // To track latency, every pingDelay seconds we ping the socket, we expect back a pong in a timely fashion
         if(Time.timeSinceLevelLoad >= pingAtTime && stream != null && pongReceived)
         {
             byte[] ping = new Message(MessageType.Ping).Serialize();
-            stream.Write(ping, 0, ping.Length);
-            pingedAtTime = Time.timeSinceLevelLoad;
-            pingAtTime = Time.timeSinceLevelLoad + pingDelay;
-            pongReceived = false;
+            try {
+                stream.Write(ping, 0, ping.Length);
+                pingedAtTime = Time.timeSinceLevelLoad;
+                pingAtTime = Time.timeSinceLevelLoad + pingDelay;
+                pongReceived = false;
+            } catch (Exception e) {
+                Debug.LogWarning($"Failed to write ping to socket with error:\n{e}");
+            }
         }
     }
 
@@ -70,7 +85,11 @@ public class Networker : MonoBehaviour
         {
             // Write disconnect to socket
             byte[] disconnectMessage = new Message(MessageType.Disconnect).Serialize();
-            stream.Write(disconnectMessage, 0, disconnectMessage.Length);
+            try {
+                stream.Write(disconnectMessage, 0, disconnectMessage.Length);
+            } catch (Exception e) {
+                Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+            }
         }
 
         stream?.Close();
@@ -87,7 +106,7 @@ public class Networker : MonoBehaviour
             lobby = GameObject.FindObjectOfType<Lobby>();
         
         lobby?.SpawnPlayer(host);
-        lobby?.SetIP(ip, port);
+        lobby?.SetIP(isHost ? GetPublicIPAddress() : $"{ip}", port);
 
         if(!isHost)
             lobby?.SpawnPlayer(player.Value);
@@ -95,18 +114,31 @@ public class Networker : MonoBehaviour
         SceneManager.sceneLoaded -= LoadLobby;
     }
 
+    static string GetPublicIPAddress()
+    {
+        String address = "";
+        WebRequest request = WebRequest.Create("http://checkip.dyndns.org/");
+        using (WebResponse response = request.GetResponse())
+        using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+        {
+            address = stream.ReadToEnd();
+        }
+
+        //Search for the ip in the html
+        int first = address.IndexOf("Address: ") + 9;
+        int last = address.LastIndexOf("</body></html>");
+        address = address.Substring(first, last - first);
+
+        return address;
+    }
+
     // Server
     public void Host()
     {
         isHost = true;
-        
-        // Eventually need to fetch the host's IP here
-        ip = "127.0.0.1";
-        port = 8080;
 
         host = new Player("Host", Team.White, true);
-        
-        server = new TcpListener(IPAddress.Parse(ip), port);
+        server = new TcpListener(IPAddress.Any, port);
 
         try{
             server.Start();
@@ -144,7 +176,7 @@ public class Networker : MonoBehaviour
 
         Debug.Log($"Connected to incoming client: {client.IP()}.");
         
-        mainTreadActions.Enqueue(() => {
+        mainThreadActions.Enqueue(() => {
             if(lobby == null)
                 lobby = GameObject.FindObjectOfType<Lobby>();
 
@@ -200,7 +232,7 @@ public class Networker : MonoBehaviour
         host = new Player("Host", Team.White, true);
         player = new Player($"{client.IP()}", Team.Black, false);
 
-        networker.mainTreadActions.Enqueue(() => {
+        networker.mainThreadActions.Enqueue(() => {
             SceneManager.sceneLoaded += LoadLobby;
             SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
         });
@@ -228,12 +260,18 @@ public class Networker : MonoBehaviour
                 if(!isHost)
                 {
                     Debug.Log("The host closed the socket.");
-                    networker.mainTreadActions.Enqueue(() => Shutdown());
+                    if(lobby != null)
+                        networker.mainThreadActions.Enqueue(() => Shutdown());
+                    else if(multiplayer != null)
+                    {
+                        networker.mainThreadActions.Enqueue(() => multiplayer.Surrender(host.team)); 
+                        networker.Disconnect();
+                    }
                 }
                 else
                 {
                     Debug.Log("The player disconnected.");
-                    networker.mainTreadActions.Enqueue(() => PlayerDisconnected());
+                    networker.mainThreadActions.Enqueue(() => PlayerDisconnected());
                     return;
                 }
             }
@@ -243,7 +281,7 @@ public class Networker : MonoBehaviour
                 byte[] readBytes = new byte[amountOfBytesRead];
                 Buffer.BlockCopy(networker.readBuffer, 0, readBytes, 0, amountOfBytesRead);
                 networker.readQueue.Enqueue(readBytes);
-                networker.mainTreadActions.Enqueue(() => networker.CheckCompleteMessage());                
+                networker.mainThreadActions.Enqueue(() => networker.CheckCompleteMessage());                
             }
             
             // Wait for next message
@@ -251,7 +289,7 @@ public class Networker : MonoBehaviour
             
         } catch (IOException e) {
             Debug.Log($"The socket was closed.\n{e}");
-            networker.mainTreadActions.Enqueue(() => Shutdown());
+            networker.mainThreadActions.Enqueue(() => Shutdown());
         }
         catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
@@ -263,7 +301,7 @@ public class Networker : MonoBehaviour
         if(readQueue.TryDequeue(out byte[] result))
         {
             readMessageFragment.AddRange(result);
-            Span<byte> mySignature = Message.GetSignature();
+            Span<byte> mySignature = global::Message.GetSignature();
 
             if(readMessageFragment.Count >= mySignature.Length)
             {
@@ -289,43 +327,59 @@ public class Networker : MonoBehaviour
                             );
 
                             readMessageFragment.RemoveRange(0, copleteMessageLength);
-                            Dispatch(ref completeMessage);
+                            Dispatch(completeMessage);
                         }
                     }
                 }
                 // Maybe only remove mySignature.Length and check the next set of bytes?
-                // This chould endup looking through a lot of trash though
+                // This could end up looking through a lot of trash though
                 else
                     readMessageFragment.Clear();
             }
         }
     }
 
-    private void Dispatch(ref Message completeMessage)
+    private void Dispatch(Message completeMessage)
     {
-        switch(completeMessage.type)
-        {
-            case MessageType.Disconnect:
-                if(!isHost)
-                    Shutdown();
-                else
-                    PlayerDisconnected();
-                break;
-            case MessageType.Ping:
+        Action action = completeMessage.type switch {
+            MessageType.Disconnect when isHost => PlayerDisconnected,
+            MessageType.Disconnect when !isHost => Shutdown,
+            MessageType.Ping => () => {
+                // All pings should get a pong in response
                 byte[] pong = new Message(MessageType.Pong).Serialize();
-                stream.Write(pong, 0, pong.Length);
-                break;
-            case MessageType.Pong:
+                try {
+                    stream.Write(pong, 0, pong.Length);
+                } catch (Exception e) {
+                    Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+                }
+            },
+            MessageType.Pong => () => {
+                // Measure and update latency when pong received
                 pongReceived = true;
-                mainTreadActions.Enqueue(() => {
+                mainThreadActions.Enqueue(() => {
                     if(latency == null)
                         latency = GameObject.FindObjectOfType<Latency>();
                     latency?.UpdateLatency(Time.timeSinceLevelLoad - pingedAtTime);
                 });
-                break;
-            default:
-                break;
-        }
+            },
+            MessageType.ProposeTeamChange => ReceiveTeamChangeProposal,
+            MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(() => SwapTeams()),
+            MessageType.Ready when isHost => Ready,
+            MessageType.Unready when isHost => Unready,
+            MessageType.StartMatch when !isHost => StartMatch,
+            MessageType.Surrender => () => multiplayer?.Surrender(isHost ? player.Value.team : host.team),
+            MessageType.BoardState => () => multiplayer?.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
+            MessageType.Promotion => () => multiplayer?.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
+            _ => null
+        };
+
+        action?.Invoke();
+    }
+
+    public void SendMessage(Message message)
+    {
+        byte[] messageData = message.Serialize();
+        stream?.Write(messageData, 0, messageData.Length);
     }
 
     private void PlayerDisconnected()
@@ -338,7 +392,126 @@ public class Networker : MonoBehaviour
             lobby.RemovePlayer(player.Value);
             player = null;
             client = null;
-            // server.BeginAcceptTcpClient(new AsyncCallback(AcceptClientCallback), server);
+
+            if(host.team == Team.Black)
+            {
+                lobby.RemovePlayer(host);
+                host.team = Team.White;
+                lobby.SpawnPlayer(host);
+            }
+
+            if(clientIsReady)
+                Unready();
         }
+
+        if(teamChangePanel != null && teamChangePanel.isOpen)
+            teamChangePanel.Close();
+        
+        // For now, assume a loss when the player disconnects, later we should wait for a potential reconnect
+        multiplayer?.Surrender(player.Value.team);
+    }
+
+    public void ProposeTeamChange()
+    {
+        if(client == null)
+            return;
+
+        byte[] ProposeTeamChangeMessage = new Message(MessageType.ProposeTeamChange).Serialize();
+        try {
+            stream.Write(ProposeTeamChangeMessage, 0, ProposeTeamChangeMessage.Length);
+        } catch (Exception e) {
+            Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+        }
+    }
+
+    private void ReceiveTeamChangeProposal()
+    {
+        mainThreadActions.Enqueue(() =>
+        {
+            if(teamChangePanel == null)
+                teamChangePanel = GameObject.FindObjectOfType<QueryTeamChangePanel>();
+            teamChangePanel?.Query();
+        });
+
+        if(!isHost)
+        {
+            ReadyButton ready = GameObject.FindObjectOfType<ReadyButton>();
+            if(ready != null && ready.toggle.isOn)
+                ready.toggle.isOn = false;
+        }
+    }
+
+    public void RespondToTeamChange(MessageType answer)
+    {
+        lobby = GameObject.FindObjectOfType<Lobby>();
+        if(lobby == null)
+            return;
+
+        byte[] response = new Message(answer).Serialize();
+        try {
+            stream.Write(response, 0, response.Length);
+        } catch (Exception e) {
+            Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+        }
+        
+        if(answer == MessageType.ApproveTeamChange)
+            SwapTeams();
+    }
+
+    public void SwapTeams()
+    {
+        if(lobby == null)
+            lobby = GameObject.FindObjectOfType<Lobby>();
+
+        if(!player.HasValue && lobby == null)
+            return;
+
+        lobby?.RemovePlayer(host);
+        lobby?.RemovePlayer(player.Value);
+
+        Team hostTeam = host.team;
+        Player playerModified = player.Value;
+        host.team = playerModified.team;
+        playerModified.team = hostTeam;
+        player = playerModified;
+
+        lobby?.SpawnPlayer(host);
+        lobby?.SpawnPlayer(player.Value);
+    }
+
+    private void Ready()
+    {
+        clientIsReady = true;
+
+        StartMatchButton startButton = GameObject.FindObjectOfType<StartMatchButton>();
+        startButton?.ShowButton();
+    }
+
+    private void Unready()
+    {
+        clientIsReady = false;
+
+        StartMatchButton startButton = GameObject.FindObjectOfType<StartMatchButton>();
+        startButton?.HideButton();
+    }
+
+    public void StartMatch()
+    {
+        if(isHost)
+            SendMessage(new Message(MessageType.StartMatch));
+        
+        // Load scene
+        SceneManager.LoadScene("VersusMode");
+        SceneManager.activeSceneChanged += SendParams;
+    }
+
+    private void SendParams(Scene arg0, Scene arg1)
+    {
+        multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        lobby = null;
+        multiplayer?.SetupGame(new GameParams{
+            localTeam = isHost ? host.team : player.Value.team
+        });
+        SceneManager.activeSceneChanged -= SendParams;
     }
 }

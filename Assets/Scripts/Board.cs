@@ -47,6 +47,8 @@ public class Board : SerializedMonoBehaviour
         foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefabs in piecePrefabs)
         {
             IPiece piece;
+            IPiece jailedPiece = jails[(int)prefabs.Key.team].GetPieceIfInJail(prefabs.Key.piece);
+
             if(activePieces.ContainsKey(prefabs.Key))
             {
                 piece = activePieces[prefabs.Key];
@@ -64,6 +66,8 @@ public class Board : SerializedMonoBehaviour
                     activePieces.Add(prefabs.Key, piece);
                 }
             }
+            else if(jailedPiece != null)
+                piece = jailedPiece;
             else
             {
                 Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
@@ -100,9 +104,9 @@ public class Board : SerializedMonoBehaviour
         turnHistory = game.turnHistory;
         this.game = game;
         
-        (Team team, Piece piece, Index last, Index current) = BoardState.GetLastMove(turnHistory);
-        if(team != Team.None)
-            moveTracker.UpdateText(team, piece, last, current);
+        Move move = BoardState.GetLastMove(turnHistory);
+        if(move.lastTeam != Team.None)
+            moveTracker.UpdateText(move);
 
         foreach(Jail jail in jails)
             jail?.Clear();
@@ -170,7 +174,6 @@ public class Board : SerializedMonoBehaviour
         newState.currentMove = otherTeam;
         turnHistory.Add(newState);
         newTurn.Invoke(newState);
-
     }
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
@@ -237,7 +240,7 @@ public class Board : SerializedMonoBehaviour
         // Move piece
         if(!isQuery)
         {
-            moveTracker.UpdateText(piece.team, piece.piece, piece.location, targetLocation.index);
+            moveTracker.UpdateText(new Move(piece.team, piece.piece, piece.location, targetLocation.index));
             piece.MoveTo(targetLocation);
         }
 
@@ -249,7 +252,20 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public void QueryPromote(Pawn pawn) => promotionDialogue.Display(pieceType => Promote(pawn, pieceType));
+    public void QueryPromote(Pawn pawn) 
+    {
+        // We don't want to display the query promote screen if we're not the team making the promote
+        // That information will arrive to us across the network
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        if(multiplayer != null && multiplayer.localTeam != GetCurrentTurn())
+            return;
+        promotionDialogue.Display(pieceType => {
+            Promote(pawn, pieceType);
+
+            Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+            multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType));
+        });
+    } 
 
     public IPiece Promote(Pawn pawn, Piece type)
     {
@@ -259,7 +275,8 @@ public class Board : SerializedMonoBehaviour
         // This may need changed when doing networking/saving/loading, or some singal will have to be sent about what the pawn is promoted to
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
-        promotions.Add(new Promotion{team = pawn.team, from = pawn.piece, to = type});
+        Promotion newPromo = new Promotion(pawn.team, pawn.piece, type);
+        promotions.Add(newPromo);
         activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
         return newPiece;
@@ -274,7 +291,6 @@ public class Board : SerializedMonoBehaviour
                 if(promo.team == pawn.team && promo.from == p)
                     p = promo.to;
             if(p != pawn.piece)
-            
                 piece = Promote(pawn, p);
         }
 
@@ -288,7 +304,7 @@ public class Board : SerializedMonoBehaviour
         
         if(!isQuery)
         {
-            moveTracker.UpdateText(p1.team, p1.piece, p1StartLoc, p2StartLoc);
+            moveTracker.UpdateText(new Move(p1.team, p1.piece, p1StartLoc, p2StartLoc));
             p1.MoveTo(GetHexIfInBounds(p2.location));
             p2.MoveTo(GetHexIfInBounds(p1StartLoc));
         }
@@ -318,7 +334,7 @@ public class Board : SerializedMonoBehaviour
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
-            moveTracker.UpdateText(pawn.team, pawn.piece, pawn.location, targetHex.index);
+            moveTracker.UpdateText(new Move(pawn.team, pawn.piece, pawn.location, targetHex.index));
             pawn.MoveTo(targetHex);
         }
         
@@ -359,10 +375,13 @@ public class Board : SerializedMonoBehaviour
         return checkingPieces;
     }
 
-    public void Surrender()
+    public void Surrender(Team surrenderingTeam)
     {
         BoardState currentState = GetCurrentBoardState();
-        Winner winner = currentState.currentMove == Team.White ? Winner.Black : Winner.White;
+        if(currentState.currentMove == Team.None)
+            return;
+        
+        Winner winner = surrenderingTeam == Team.White ? Winner.Black : Winner.White;
 
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);

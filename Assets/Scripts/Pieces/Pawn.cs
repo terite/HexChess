@@ -6,14 +6,14 @@ using UnityEngine;
 public class Pawn : MonoBehaviour, IPiece
 {
     public GameObject obj {get => gameObject; set{}}
-    public Team team { get{ return _team; } set{ _team = value; } }
+    public Team team {get => _team; set{_team = value;}}
     private Team _team;
-    public Piece piece { get{ return _piece; } set{ _piece = value; } }
+    public Piece piece {get => _piece; set{_piece = value;}}
     private Piece _piece;
-    public Index location { get{ return _location; } set{ _location = value; } }
+    public Index location {get => _location; set{_location = value;}}
     private Index _location;
     private Index startLoc;
-    public bool captured { get{ return _captured; } set{ _captured = value; } }
+    public bool captured {get => _captured; set{_captured = value;}}
     private bool _captured = false;
 
     public bool passantable = false;
@@ -21,13 +21,14 @@ public class Pawn : MonoBehaviour, IPiece
     public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;
 
     private Board board;
-    
+    bool isSingleplayer;
     public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
         this.piece = piece;
         this.location = startingLocation;
         startLoc = startingLocation;
+        isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
     public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
@@ -124,6 +125,7 @@ public class Pawn : MonoBehaviour, IPiece
         Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
         if(hex.index == boostedLoc)
         {
+            Debug.Log("Boosted.");
             board = hex.board;
             board.newTurn += TurnPassed;
             passantable = true;
@@ -133,7 +135,6 @@ public class Pawn : MonoBehaviour, IPiece
         location = hex.index;
         
         // If the pawn reaches the other side of the board, it can Promote
-        
         if(location.row == goal)
             hex.board.QueryPromote(this);
     }
@@ -142,8 +143,10 @@ public class Pawn : MonoBehaviour, IPiece
     {
         // A pawn may only be EnPassanted on the enemies turn immediately after it used it's boosted move
         // So we track when the turn passes, on the 2nd pass (enemy returning control to us), clear the passant flag
-        if(turnsPassed >= 1)
+        int count = isSingleplayer ? 1 : 2;
+        if(turnsPassed >= count)
         {
+            Debug.Log("Reset en passant");
             passantable = false;
             turnsPassed = 0;
             board.newTurn -= TurnPassed;

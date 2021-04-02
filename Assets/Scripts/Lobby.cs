@@ -31,8 +31,5 @@ public class Lobby : MonoBehaviour
         Destroy(pl.gameObject);
     }
 
-    public void SetIP(string ip, int port)
-    {
-        ipText.text = $"{ip}:{port}";
-    }
+    public void SetIP(string ip, int port) => ipText.text = $"{ip}:{port}";
 }

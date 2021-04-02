@@ -10,10 +10,12 @@ public class TurnPanel : MonoBehaviour
     [SerializeField] private GameObject mainMenuButtonPrefab;
 
     Board board;
+    Multiplayer multiplayer;
     private void Awake() {
         board = GameObject.FindObjectOfType<Board>();
         board.newTurn += NewTurn;
         board.gameOver += GameOver;
+        multiplayer = GameObject.FindObjectOfType<Multiplayer>();
     }
 
     private void GameOver(Game game)
@@ -37,7 +39,10 @@ public class TurnPanel : MonoBehaviour
 
     private void NewTurn(BoardState newState)
     {
-        string text = newState.currentMove == Team.White ? "White's Turn" : "Black's Turn";
+        string text = multiplayer == null 
+            ? newState.currentMove == Team.White ? "White's Turn" : "Black's Turn"
+            : newState.currentMove == multiplayer.localTeam ? "Your Turn" : "Opponent's Turn";
+
         int turnCount = board.turnHistory.Count % 2 == 0 
             ? Mathf.FloorToInt((float)board.turnHistory.Count / 2)
             : Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + 1;

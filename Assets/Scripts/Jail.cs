@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Extensions;
 using UnityEngine;
 
@@ -12,6 +13,9 @@ public class Jail : MonoBehaviour
 
     public void Enprison(IPiece piece)
     {
+        if(prisonedPieces.Contains(piece))
+            return;
+
         piece.captured = true;
 
         Vector3 initialRot = piece.obj.transform.rotation.eulerAngles;
@@ -21,6 +25,15 @@ public class Jail : MonoBehaviour
         );
         piece.obj.transform.parent = transform;
         prisonedPieces.Add(piece);
+    }
+
+    public IPiece GetPieceIfInJail(Piece piece)
+    {
+        IEnumerable<IPiece> pieces = prisonedPieces.Where(iPiece => iPiece.piece == piece);
+        if(pieces.Count() == 1)
+            return pieces.First();
+        else
+            return null;
     }
 
     public Vector3 GetNextPos()

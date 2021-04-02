@@ -16,7 +16,9 @@ public class PlayerLobby : MonoBehaviour
     public void SetPlayer(Player player)
     {
         this.player = player;
-        playerNameText.text = player.name;
+        Networker networker = GameObject.FindObjectOfType<Networker>();
+        string mod = networker?.isHost == player.isHost ? "you" : "opponent";
+        playerNameText.text = $"{player.name} ({mod})";
         teamColor.color = player.team == Team.White ? whiteColor : blackColor;
     }
 }

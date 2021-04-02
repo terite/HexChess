@@ -11,15 +11,15 @@ public class LastMoveTracker : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void UpdateText(Team team, Piece piece, Index from, Index to)
+    public void UpdateText(Move move)
     {
         if(!gameObject.activeSelf)
             gameObject.SetActive(true);
 
-        string sFrom = $"{GetLetter(from)}{GetNumber(from)}";
-        string sTo = $"{GetLetter(to)}{GetNumber(to)}";
-        text.text = $"{GetPieceString(piece)} {sFrom} to {sTo}";
-        text.color = team == Team.White ? Color.white : Color.black;
+        string sFrom = $"{GetLetter(move.from)}{GetNumber(move.from)}";
+        string sTo = $"{GetLetter(move.to)}{GetNumber(move.to)}";
+        text.text = $"{GetPieceString(move.lastPiece)} {sFrom} to {sTo}";
+        text.color = move.lastTeam == Team.White ? Color.white : Color.black;
     }
 
     public int GetNumber(Index i) => ((float)i.row/2f).Floor() + 1;

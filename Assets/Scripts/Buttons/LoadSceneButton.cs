@@ -10,6 +10,15 @@ public class LoadSceneButton : MonoBehaviour
         if(button == null)
             gameObject.GetComponent<Button>();
 
-        button?.onClick.AddListener(() => SceneManager.LoadScene($"{sceneToLoad}"));
+        button?.onClick.AddListener(() => {
+            SceneManager.LoadScene($"{sceneToLoad}");
+
+            if(sceneToLoad == "MainMenu") 
+            {
+                Networker networker = GameObject.FindObjectOfType<Networker>();
+                if(networker != null)
+                    Destroy(networker.gameObject);
+            }
+        });
     }
 }

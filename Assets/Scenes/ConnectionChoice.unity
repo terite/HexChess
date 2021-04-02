@@ -1440,6 +1440,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff4e6669a35332442ae0f00a3e4f9032, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ip: 
+  port: 65530
+  host:
+    name: 
+    team: 0
+    isHost: 0
+  messageMaxSize: 1024
+  pingDelay: 2
 --- !u!4 &1514344869
 Transform:
   m_ObjectHideFlags: 0

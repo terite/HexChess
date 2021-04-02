@@ -20,4 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Lobby.unity
     guid: 8ef8fde1a657fc64fae92ff9d02b1014
+  - enabled: 1
+    path: Assets/Scenes/VersusMode.unity
+    guid: 890ffe2102f34ed4db6c7c00604e48cc
   m_configObjects: {}

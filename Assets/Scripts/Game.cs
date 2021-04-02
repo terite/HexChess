@@ -54,14 +54,6 @@ public struct SerializeableGame
     }
 }
 
-[System.Serializable]
-public struct Promotion
-{
-    public Team team;
-    public Piece from;
-    public Piece to;
-}
-
 public enum Winner {
     Pending = 0,
     White = 1,
