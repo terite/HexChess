@@ -301,7 +301,7 @@ public class Networker : MonoBehaviour
         if(readQueue.TryDequeue(out byte[] result))
         {
             readMessageFragment.AddRange(result);
-            Span<byte> mySignature = global::Message.GetSignature();
+            Span<byte> mySignature = Message.GetSignature();
 
             if(readMessageFragment.Count >= mySignature.Length)
             {
