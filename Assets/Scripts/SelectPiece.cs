@@ -14,13 +14,103 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Color selectedPieceColor;
     private IPiece selectedPiece;
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
+    IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
+    public Color previewColor;
 
     private void Awake() 
     {
         cam = Camera.main;
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
     }
+    private void Update()
+    {
+        if(multiplayer != null)
+        {
+            if(!multiplayer.gameParams.showMovePreviews)
+                return;
+        }
+        // Add a toggle for sandbox mode to turn these on/off, if off, return here
+        
+        if(selectedPiece == null)
+        {
+            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            {
+                BoardState currentBoardState = board.GetCurrentBoardState();
+                IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
+                if(hoveredPiece == null)
+                {
+                    Hex hoveredHex = hit.collider.GetComponent<Hex>();
+                    if(hoveredHex != null)
+                    {
+                        if(currentBoardState.allPiecePositions.ContainsKey(hoveredHex.index))
+                        {
+                            // Get the piece on that hex
+                            hoveredPiece = board.activePieces[currentBoardState.allPiecePositions[hoveredHex.index]];
+                            if(hoveredPiece != null && !hoveredPiece.captured)
+                            {
+                                IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
+                                    hoveredPiece, 
+                                    currentBoardState
+                                );
+                                if(incomingPreviewMoves != previewMoves)
+                                {
+                                    DisablePreview();
+                                    previewMoves = incomingPreviewMoves;
+                                    previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
+                                    EnablePreview();
+                                }
+                            }
+                            else if(previewMoves.Count() > 0)
+                                DisablePreview();
+                        }
+                        else if(previewMoves.Count() > 0)
+                            DisablePreview();
+                    }
+                    else if(previewMoves.Count() > 0)
+                        DisablePreview();
+                }
+                else if(!hoveredPiece.captured)
+                {
+                    IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(hoveredPiece, currentBoardState);
+                    if(incomingPreviewMoves != previewMoves)
+                    {
+                        DisablePreview();
+                        previewMoves = incomingPreviewMoves;
+
+                        Hex hoveredPieceHex = board.GetHexIfInBounds(hoveredPiece.location);
+                        if(hoveredPieceHex != null)
+                            previewMoves = previewMoves.Append((hoveredPieceHex, MoveType.None));
+
+                        EnablePreview();
+                    }
+                }
+                else if(previewMoves.Count() > 0)
+                    DisablePreview();
+            }
+            else if(previewMoves.Count() > 0)
+                DisablePreview();
+        }
+        else if(previewMoves.Count() > 0)
+            DisablePreview();
+    }
+
+    private void EnablePreview()
+    {
+        foreach((Hex hex, MoveType moveType) in previewMoves)
+        {
+            hex.SetOutlineColor(previewColor);
+            hex.ToggleSelect();
+        }
+    }
+
+    private void DisablePreview()
+    {
+        foreach ((Hex hex, MoveType moveType) in previewMoves)
+            hex.ToggleSelect();
+        previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+    }
+
     public void LeftClick(CallbackContext context)
     {
         if(context.started)

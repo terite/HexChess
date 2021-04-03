@@ -40,6 +40,7 @@ public class Networker : MonoBehaviour
     ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
 
     public bool clientIsReady {get; private set;}
+    GameParams gameParams;
     private void Awake()
     {
         List<Networker> networkers = GameObject.FindObjectsOfType<Networker>().ToList();
@@ -81,7 +82,7 @@ public class Networker : MonoBehaviour
     {
         if(isHost)
             server?.Stop();
-        else if(client.Connected)
+        else if(client != null && client.Connected)
         {
             // Write disconnect to socket
             byte[] disconnectMessage = new Message(MessageType.Disconnect).Serialize();
@@ -366,6 +367,8 @@ public class Networker : MonoBehaviour
             MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(SwapTeams),
             MessageType.Ready when isHost => Ready,
             MessageType.Unready when isHost => Unready,
+            MessageType.PreviewMovesOn when lobby => PreviewOn,
+            MessageType.PreviewMovesOff when lobby => PreviewOff,
             MessageType.StartMatch when !isHost => StartMatch,
             MessageType.Surrender => () => multiplayer?.Surrender(isHost ? player.Value.team : host.team),
             MessageType.BoardState => () => multiplayer?.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
@@ -374,6 +377,19 @@ public class Networker : MonoBehaviour
         };
 
         action?.Invoke();
+    }
+
+    private void PreviewOn()
+    {
+        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+        if (previewToggle != null)
+            previewToggle.toggle.isOn = true;
+    }
+    private void PreviewOff()
+    {
+        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+        if (previewToggle != null)
+            previewToggle.toggle.isOn = false;
     }
 
     public void SendMessage(Message message)
@@ -499,6 +515,9 @@ public class Networker : MonoBehaviour
     {
         if(isHost)
             SendMessage(new Message(MessageType.StartMatch));
+
+        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+        gameParams = new GameParams(isHost ? host.team : player.Value.team, previewToggle.toggle.isOn);
         
         // Load scene
         SceneManager.LoadScene("VersusMode");
@@ -509,9 +528,7 @@ public class Networker : MonoBehaviour
     {
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         lobby = null;
-        multiplayer?.SetupGame(new GameParams{
-            localTeam = isHost ? host.team : player.Value.team
-        });
+        multiplayer?.SetupGame(gameParams);
         SceneManager.activeSceneChanged -= SendParams;
     }
 }

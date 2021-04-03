@@ -14,5 +14,7 @@ public enum MessageType : byte {
     Surrender = 10,
     BoardState = 11,
     Promotion = 12,
+    PreviewMovesOn = 13,
+    PreviewMovesOff = 14,
     
 }

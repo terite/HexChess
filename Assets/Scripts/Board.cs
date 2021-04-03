@@ -397,7 +397,6 @@ public class Board : SerializedMonoBehaviour
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
-        HighlightMove(BoardState.GetLastMove(turnHistory));
 
         game = new Game(turnHistory, promotions, winner);
         gameOver.Invoke(game);
