@@ -153,4 +153,10 @@ public class Pawn : MonoBehaviour, IPiece
         else
             turnsPassed++;
     }
+    public void DestroyScript()
+    {
+        Destroy(GetComponent<Rigidbody>());
+        Destroy(GetComponent<Collider>());
+        Destroy(this);
+    }
 }

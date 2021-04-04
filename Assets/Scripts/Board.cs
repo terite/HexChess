@@ -27,6 +27,7 @@ public class Board : SerializedMonoBehaviour
     List<Hex> highlightedHexes = new List<Hex>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
+    public Color lastMoveHighlightColor;
 
     // Used to write the default boardstate out to file
     [Button]
@@ -412,12 +413,12 @@ public class Board : SerializedMonoBehaviour
         Hex fromHex = GetHexIfInBounds(move.from);
         Hex toHex = GetHexIfInBounds(move.to);
 
-        fromHex.Highlight(Color.yellow);
+        fromHex.Highlight(lastMoveHighlightColor);
         toHex.Highlight(move.capturedPiece.HasValue 
             ? Color.red 
             : move.defendedPiece.HasValue 
                 ? Color.green 
-                : Color.yellow
+                : lastMoveHighlightColor
         );
 
         highlightedHexes.Add(fromHex);

@@ -27,6 +27,7 @@ public class Multiplayer : MonoBehaviour
         // rotate camera for black team player
         if(gameParams.localTeam == Team.Black)
         {
+            // OrbitalCamera cam = GameObject.FindObjectOfType<OrbitalCamera>();
             Camera cam = Camera.main;
             cam.transform.rotation = Quaternion.Euler(cam.transform.rotation.eulerAngles.x, cam.transform.rotation.eulerAngles.y, 180);
         }

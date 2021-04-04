@@ -12,6 +12,7 @@ public interface IPiece
     List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState);
     void MoveTo(Hex hex);
     void Init(Team team, Piece piece, Index startingLocation);
+    void DestroyScript();
 }
 
 public enum Piece {

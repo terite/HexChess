@@ -52,4 +52,10 @@ public class King : MonoBehaviour, IPiece
         transform.position = hex.transform.position + Vector3.up;
         location = hex.index;
     }
+    public void DestroyScript()
+    {
+        Destroy(GetComponent<Rigidbody>());
+        Destroy(GetComponent<Collider>());
+        Destroy(this);
+    }
 }

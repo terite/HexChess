@@ -12,11 +12,17 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
     [SerializeField] private Color selectedPieceColor;
-    private IPiece selectedPiece;
+    public IPiece selectedPiece {get; private set;}
+    [SerializeField] private OnMouse onMouse;
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
     IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
     public Color previewColor;
+    public Color okayColor;
+    public Color errColor;
+
+    MeshRenderer lastChangedRenderer;
+    Color lastColor;
 
     private void Awake() 
     {
@@ -25,13 +31,136 @@ public class SelectPiece : MonoBehaviour
     }
     private void Update()
     {
+        HighlightOnHover();
+        ColorizeBasedOnMove();
+    }
+
+    private void ColorizeBasedOnMove()
+    {
+        if(selectedPiece != null && onMouse != null)
+        {
+            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            {
+                IPiece hitPiece = hit.collider.GetComponent<IPiece>();
+                if(hitPiece != null)
+                {
+                    Hex hex = board.GetHexIfInBounds(hitPiece.location);
+                    if(hex != null)
+                    {
+                        SetOnMouseColor(hex);
+
+                        #region Change color of other piece under mouse
+                        MeshRenderer hitRenderer = hitPiece.obj.GetComponentInChildren<MeshRenderer>();
+                        if(hitPiece != selectedPiece && hitRenderer != null)
+                        {
+                            if(hitRenderer != lastChangedRenderer)
+                            {
+                                lastColor = hitRenderer.material.GetColor("_BaseColor");
+                                Color toSet;
+                                if(pieceMoves.Contains((hex, MoveType.Attack)) || pieceMoves.Contains((hex, MoveType.EnPassant)))
+                                    toSet = errColor;
+                                else if(pieceMoves.Contains((hex, MoveType.Defend)))
+                                    toSet = okayColor;
+                                else
+                                {
+                                    if(lastChangedRenderer != null)
+                                        ResetLastChangedRenderer();
+                                    return;
+                                }
+
+                                hitRenderer.material.SetColor("_BaseColor", toSet);
+                                lastChangedRenderer = hitRenderer;
+                            }
+                        }
+                        else if(lastChangedRenderer != null)
+                            ResetLastChangedRenderer();
+                        #endregion
+                    }
+                }
+                else
+                {
+                    Hex hitHex = hit.collider.GetComponent<Hex>();
+                    if(hitHex != null)
+                    {
+                        SetOnMouseColor(hitHex);
+
+                        #region Change color of other piece under mouse
+                        BoardState currentBoardState = board.GetCurrentBoardState();
+                        if(currentBoardState.allPiecePositions.ContainsKey(hitHex.index))
+                        {
+                            (Team occupyingTeam, Piece occupyingPiece) = currentBoardState.allPiecePositions[hitHex.index];
+                            if(board.activePieces.ContainsKey((occupyingTeam, occupyingPiece)))
+                            {
+                                IPiece piece = board.activePieces[(occupyingTeam, occupyingPiece)];
+                                if(piece != selectedPiece)
+                                {
+                                    MeshRenderer hitPieceRenderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+                                    if(hitPieceRenderer != lastChangedRenderer)
+                                    {
+                                        lastColor = hitPieceRenderer.material.GetColor("_BaseColor");
+
+                                        Color toSet;
+                                        if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.EnPassant)))
+                                            toSet = errColor;
+                                        else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
+                                            toSet = okayColor;
+                                        else
+                                        {
+                                            if(lastChangedRenderer != null)
+                                                ResetLastChangedRenderer();
+                                            return;
+                                        }
+
+                                        hitPieceRenderer.material.SetColor("_BaseColor", toSet);
+                                        lastChangedRenderer = hitPieceRenderer;
+                                    }
+                                }
+                                else if(lastChangedRenderer != null)
+                                    ResetLastChangedRenderer();
+                            }
+                            else if(lastChangedRenderer != null)
+                                ResetLastChangedRenderer();
+                        }
+                        else if(lastChangedRenderer != null)
+                            ResetLastChangedRenderer();
+                        #endregion
+                    }
+                }
+            }
+        }
+    }
+
+    private void SetOnMouseColor(Hex hex)
+    {
+        if(pieceMoves.Contains((hex, MoveType.Attack))
+            || pieceMoves.Contains((hex, MoveType.Move))
+            || pieceMoves.Contains((hex, MoveType.Defend))
+            || pieceMoves.Contains((hex, MoveType.EnPassant))
+        )
+        {
+            if(onMouse.currentColor != okayColor)
+                onMouse.SetColor(okayColor);
+        }
+        else if(onMouse.currentColor != errColor)
+            onMouse.SetColor(errColor);
+    }
+
+    private void ResetLastChangedRenderer()
+    {
+        lastChangedRenderer?.material.SetColor("_BaseColor", lastColor);
+        lastChangedRenderer = null;
+    }
+
+    private void HighlightOnHover()
+    {
         if(multiplayer != null)
         {
             if(!multiplayer.gameParams.showMovePreviews)
                 return;
         }
+
         // Add a toggle for sandbox mode to turn these on/off, if off, return here
-        
+
         if(selectedPiece == null)
         {
             if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
@@ -50,7 +179,7 @@ public class SelectPiece : MonoBehaviour
                             if(hoveredPiece != null && !hoveredPiece.captured)
                             {
                                 IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
-                                    hoveredPiece, 
+                                    hoveredPiece,
                                     currentBoardState
                                 );
                                 if(incomingPreviewMoves != previewMoves)
@@ -144,11 +273,15 @@ public class SelectPiece : MonoBehaviour
                     Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
                     selectedHex.SetOutlineColor(selectedPieceColor);
                     selectedHex.ToggleSelect();
+                    onMouse.PickUp(selectedPiece.obj);
                 }
             }
         }
         else if(context.canceled)
         {
+            if(lastChangedRenderer != null)
+                ResetLastChangedRenderer();
+
             if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
@@ -242,6 +375,7 @@ public class SelectPiece : MonoBehaviour
         pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
 
         board.GetHexIfInBounds(fromIndex).ToggleSelect();
+        onMouse.PutDown();
         
         selectedPiece = null;
     }

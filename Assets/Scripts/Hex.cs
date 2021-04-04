@@ -39,7 +39,7 @@ public class Hex : SerializedMonoBehaviour
     public void Highlight(Color highlightColor)
     {
         meshRenderer.material.SetColor("_HighlightColor", highlightColor);
-        meshRenderer.material.SetFloat("_HighlightPower", 0.33f);
+        meshRenderer.material.SetFloat("_HighlightPower", 0.4f);
     }
 
     public void Unhighlight() => meshRenderer.material.SetFloat("_HighlightPower", 0f);
