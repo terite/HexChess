@@ -119,8 +119,8 @@ public class Networker : MonoBehaviour
     {
         String address = "";
         WebRequest request = WebRequest.Create("http://checkip.dyndns.org/");
-        using (WebResponse response = request.GetResponse())
-        using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+        using(WebResponse response = request.GetResponse())
+        using(StreamReader stream = new StreamReader(response.GetResponseStream()))
         {
             address = stream.ReadToEnd();
         }
@@ -344,12 +344,7 @@ public class Networker : MonoBehaviour
     {
         Action action = completeMessage.type switch {
             MessageType.Disconnect when isHost => PlayerDisconnected,
-            MessageType.Disconnect when !isHost => () => {
-                if(lobby == null)
-                    Disconnect();
-                else
-                    Shutdown();
-            },
+            MessageType.Disconnect when !isHost => lobby == null ? (Action)Disconnect : (Action)Shutdown,
             MessageType.Ping => () => {
                 // All pings should get a pong in response
                 byte[] pong = new Message(MessageType.Pong).Serialize();

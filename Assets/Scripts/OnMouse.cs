@@ -4,10 +4,11 @@ using UnityEngine.InputSystem;
 
 public class OnMouse : MonoBehaviour
 {
-    [ReadOnly, ShowInInspector] public GameObject pickedUp {get; private set;}
+    [SerializeField] private MeshRenderer pickedUpRenderer;
+    [SerializeField] private MeshFilter filter;
     Camera cam;
     public float distance;
-    public Color currentColor {get; private set;}
+    public Color? currentColor {get; private set;}
     
     private void Awake() => cam = Camera.main;
 
@@ -19,19 +20,27 @@ public class OnMouse : MonoBehaviour
 
     public void PickUp(GameObject toPickup) 
     {
-        pickedUp = Instantiate(toPickup, transform.position, Quaternion.identity, transform);
-        IPiece piece = pickedUp.GetComponent<IPiece>();
-        piece?.DestroyScript();
+        MeshFilter toPickupFilter = toPickup.GetComponentInChildren<MeshFilter>();
+        filter.mesh = toPickupFilter.mesh;
+        filter.transform.rotation = toPickupFilter.transform.rotation;
     } 
 
-    public void PutDown() => Destroy(pickedUp);
+    public void PutDown()
+    {
+        currentColor = null;
+        filter.mesh = null;
+    }
 
     public void SetColor(Color color)
     {
-        if(pickedUp == null)
+        if(filter.mesh == null)
             return;
+        
+        if(currentColor.HasValue && currentColor.Value == color)
+            return;
+        
         currentColor = color;
-        MeshRenderer renderer = pickedUp.GetComponentInChildren<MeshRenderer>();
-        renderer.material.SetColor("_BaseColor", color);
+        pickedUpRenderer.material.SetColor("_BaseColor", color);
+        // Debug.Log($"Color set to: {pickedUpRenderer.material.GetColor("_BaseColor")}");
     }
 }
