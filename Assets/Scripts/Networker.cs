@@ -344,7 +344,12 @@ public class Networker : MonoBehaviour
     {
         Action action = completeMessage.type switch {
             MessageType.Disconnect when isHost => PlayerDisconnected,
-            MessageType.Disconnect when !isHost => Shutdown,
+            MessageType.Disconnect when !isHost => () => {
+                if(lobby == null)
+                    Disconnect();
+                else
+                    Shutdown();
+            },
             MessageType.Ping => () => {
                 // All pings should get a pong in response
                 byte[] pong = new Message(MessageType.Pong).Serialize();
