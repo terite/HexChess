@@ -31,8 +31,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 748795983797158781}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 6, y: 18, z: 7.7942286}
+  m_LocalRotation: {x: 0.7071007, y: 0, z: 0, w: 0.70711297}
+  m_LocalPosition: {x: 6, y: 19, z: 7.9996867}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -260,6 +260,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: eaa2624b-b875-4938-b7e2-87ef5604de32
     m_ActionName: Keyboard/Mouse/RightClick[/Mouse/rightButton]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 748795983797158535}
+        m_TargetAssemblyTypeName: SmoothHalfOrbitalCamera, Assembly-CSharp
+        m_MethodName: ResetRotation
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 8a08cc5c-fa67-41a4-83cd-80f1eeda22b1
+    m_ActionName: Keyboard/Mouse/ResetCamera[/Keyboard/space]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Keyboard/Mouse
@@ -277,5 +293,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d83e4609a3a4b9b4aa55b0a794518045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distance: 18
-  orbitSpeed: 5
+  cameraDistance: 18
+  origin: {x: 6, y: 1, z: 8}
+  speed: 0.15
+  transitionTime: 0.25
+  defaultRotation: {x: 90, y: 0}

@@ -20,17 +20,17 @@ public class TurnPanel : MonoBehaviour
 
     private void GameOver(Game game)
     {
-        turnText.text = $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!";
-
+        // turnText.text = $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!";
         turnText.color = game.winner switch {
             Winner.White => Color.white,
             Winner.Black => Color.black,
-            _ => Color.gray
+            _ => Color.red
         };
+        string turnPlurality = game.GetTurnCount() > 1 ? "turns" : "turn";
         turnText.text = game.winner switch {
             Winner.Pending => "",
-            Winner.Draw => $"After {game.GetTurnCount()} turns, Draw.",
-            _ => $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!"
+            Winner.Draw => $"Game over! After {game.GetTurnCount()} {turnPlurality}, both teams have agreed to a draw.",
+            _ => $"Game over! In {game.GetTurnCount()} {turnPlurality} {game.winner} is victorius!"
         };
         
         if(mainMenuButton == null)

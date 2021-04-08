@@ -403,6 +403,20 @@ public class Board : SerializedMonoBehaviour
         gameOver.Invoke(game);
     }
 
+    public void Draw()
+    {
+        BoardState currentState = GetCurrentBoardState();
+        if(currentState.currentMove == Team.None)
+            return;
+        
+        currentState.currentMove = Team.None;
+        turnHistory.Add(currentState);
+        newTurn.Invoke(currentState);
+
+        game = new Game(turnHistory, promotions, Winner.Draw);
+        gameOver.Invoke(game);
+    }
+
 
     public void HighlightMove(Move move)
     {

@@ -35,6 +35,7 @@ public class SelectPiece : MonoBehaviour
         if(multiplayer == null)
             singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
     }
+
     private void Update()
     {
         MovePreviewsOnHover();
@@ -177,7 +178,7 @@ public class SelectPiece : MonoBehaviour
 
         if(selectedPiece == null)
         {
-            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
@@ -262,7 +263,7 @@ public class SelectPiece : MonoBehaviour
             if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
                 return;
 
-            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
             {
                 if(hit.collider == null)
                     return;
@@ -298,7 +299,7 @@ public class SelectPiece : MonoBehaviour
             if(lastChangedRenderer != null)
                 ResetLastChangedRenderer();
 
-            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece clickedPiece = hit.collider.GetComponent<IPiece>();

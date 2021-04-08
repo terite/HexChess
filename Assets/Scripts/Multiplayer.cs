@@ -27,9 +27,8 @@ public class Multiplayer : MonoBehaviour
         // rotate camera for black team player
         if(gameParams.localTeam == Team.Black)
         {
-            // OrbitalCamera cam = GameObject.FindObjectOfType<OrbitalCamera>();
-            Camera cam = Camera.main;
-            cam.transform.rotation = Quaternion.Euler(cam.transform.rotation.eulerAngles.x, cam.transform.rotation.eulerAngles.y, 180);
+            SmoothHalfOrbitalCamera cam = GameObject.FindObjectOfType<SmoothHalfOrbitalCamera>();
+            cam?.ChangeDefaultRotation(gameParams.localTeam);
         }
 
         whiteKeys.SetActive(gameParams.localTeam == Team.White);
@@ -37,6 +36,9 @@ public class Multiplayer : MonoBehaviour
     }
 
     public void Surrender(Team surrenderingTeam) => board.Surrender(surrenderingTeam);
+
+    public void Draw() => board.Draw();
+
     public void UpdateBoard(BoardState state)
     {
         if(board.GetCurrentTurn() == gameParams.localTeam)

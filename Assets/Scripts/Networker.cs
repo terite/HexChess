@@ -370,9 +370,11 @@ public class Networker : MonoBehaviour
             MessageType.PreviewMovesOn when lobby => PreviewOn,
             MessageType.PreviewMovesOff when lobby => PreviewOff,
             MessageType.StartMatch when !isHost => StartMatch,
-            MessageType.Surrender => () => multiplayer?.Surrender(isHost ? player.Value.team : host.team),
-            MessageType.BoardState => () => multiplayer?.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
-            MessageType.Promotion => () => multiplayer?.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
+            MessageType.Surrender when multiplayer => () => multiplayer.Surrender(isHost ? player.Value.team : host.team),
+            MessageType.BoardState when multiplayer => () => multiplayer.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
+            MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
+            MessageType.OfferDraw when multiplayer => () => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open(),
+            MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(),
             _ => null
         };
 
@@ -521,14 +523,29 @@ public class Networker : MonoBehaviour
         
         // Load scene
         SceneManager.LoadScene("VersusMode");
-        SceneManager.activeSceneChanged += SendParams;
+        SceneManager.activeSceneChanged += SetupGame;
     }
 
-    private void SendParams(Scene arg0, Scene arg1)
+    private void SetupGame(Scene arg0, Scene arg1)
     {
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         lobby = null;
         multiplayer?.SetupGame(gameParams);
-        SceneManager.activeSceneChanged -= SendParams;
+        SceneManager.activeSceneChanged -= SetupGame;
+    }
+
+    public void RespondToDrawOffer(MessageType answer)
+    {
+        if(multiplayer == null)
+            return;
+        byte[] response = new Message(answer).Serialize();
+        try {
+            stream.Write(response, 0, response.Length);
+        } catch (Exception e) {
+            Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+        }
+
+        if(answer == MessageType.AcceptDraw)
+            multiplayer.Draw();
     }
 }
