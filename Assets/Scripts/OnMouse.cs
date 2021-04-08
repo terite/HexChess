@@ -41,6 +41,5 @@ public class OnMouse : MonoBehaviour
         
         currentColor = color;
         pickedUpRenderer.material.SetColor("_BaseColor", color);
-        // Debug.Log($"Color set to: {pickedUpRenderer.material.GetColor("_BaseColor")}");
     }
 }

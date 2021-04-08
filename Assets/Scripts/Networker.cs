@@ -375,6 +375,24 @@ public class Networker : MonoBehaviour
             MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
             MessageType.OfferDraw when multiplayer => () => mainThreadActions.Enqueue(() => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open()),
             MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(),
+            MessageType.UpdateName when isHost => () => {
+                    if(player.HasValue)
+                    {
+                        lobby?.RemovePlayer(player.Value);
+                        Player p = player.Value;
+                        p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
+                        player = p;
+                        lobby?.SpawnPlayer(player.Value);
+                    }
+                },
+            MessageType.UpdateName when !isHost => () => {
+                if(lobby == null)
+                    return;
+
+                lobby.RemovePlayer(host);
+                host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
+                lobby.SpawnPlayer(host);
+            },
             _ => null
         };
 
@@ -549,5 +567,27 @@ public class Networker : MonoBehaviour
 
         if(answer == MessageType.AcceptDraw)
             multiplayer.Draw();
+    }
+
+    public void UpdateName(string newName)
+    {
+        if(lobby == null)
+            return;
+
+        if(isHost)
+        {
+            lobby.RemovePlayer(host);
+            host.name = newName;
+            lobby.SpawnPlayer(host);
+        }
+        else if(player.HasValue)
+        {
+            lobby.RemovePlayer(player.Value);
+            Player p = player.Value;
+            p.name = newName;
+            player = p;
+            lobby.SpawnPlayer(player.Value);
+        }
+        SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(newName)));
     }
 }

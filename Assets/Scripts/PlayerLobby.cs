@@ -12,13 +12,20 @@ public class PlayerLobby : MonoBehaviour
     public Color whiteColor;
     public Color blackColor;
     [ReadOnly, ShowInInspector] private Player player;
+    Networker networker;
 
     public void SetPlayer(Player player)
     {
         this.player = player;
-        Networker networker = GameObject.FindObjectOfType<Networker>();
-        string mod = networker?.isHost == player.isHost ? "you" : "opponent";
-        playerNameText.text = $"{player.name} ({mod})";
+        networker = GameObject.FindObjectOfType<Networker>();
+        UpdateText(player.name);
         teamColor.color = player.team == Team.White ? whiteColor : blackColor;
+    }
+
+    public void UpdateText(string newName)
+    {
+        string mod = networker?.isHost == player.isHost ? "you" : "opponent";
+        playerNameText.text = $"{newName} ({mod})";
+
     }
 }
