@@ -1447,7 +1447,7 @@ MonoBehaviour:
     team: 0
     isHost: 0
   messageMaxSize: 1024
-  pingDelay: 2
+  pingDelay: 1
 --- !u!4 &1514344869
 Transform:
   m_ObjectHideFlags: 0

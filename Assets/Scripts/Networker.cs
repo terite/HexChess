@@ -373,7 +373,7 @@ public class Networker : MonoBehaviour
             MessageType.Surrender when multiplayer => () => multiplayer.Surrender(isHost ? player.Value.team : host.team),
             MessageType.BoardState when multiplayer => () => multiplayer.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
             MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
-            MessageType.OfferDraw when multiplayer => () => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open(),
+            MessageType.OfferDraw when multiplayer => () => mainThreadActions.Enqueue(() => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open()),
             MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(),
             _ => null
         };
@@ -530,6 +530,7 @@ public class Networker : MonoBehaviour
     {
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         lobby = null;
+        pingAtTime = 0;
         multiplayer?.SetupGame(gameParams);
         SceneManager.activeSceneChanged -= SetupGame;
     }
@@ -538,6 +539,7 @@ public class Networker : MonoBehaviour
     {
         if(multiplayer == null)
             return;
+
         byte[] response = new Message(answer).Serialize();
         try {
             stream.Write(response, 0, response.Length);
