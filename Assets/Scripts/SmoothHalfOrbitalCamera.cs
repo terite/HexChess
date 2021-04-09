@@ -110,7 +110,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Vector2 delta = Mouse.current.delta.ReadValue() * speed;
             temp_rotation += new Vector3(delta.y, delta.x);
 
-            if(IsSandboxMode)
+            if(!IsSandboxMode)
                 switch(team) {
                     case Team.White:
                         temp_rotation.y = Mathf.Clamp(temp_rotation.y, -90, 90);
