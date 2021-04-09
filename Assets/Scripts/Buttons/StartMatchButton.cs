@@ -13,7 +13,7 @@ public class StartMatchButton : MonoBehaviour
         {
             Networker networker = GameObject.FindObjectOfType<Networker>();
             if(networker != null && networker.clientIsReady && networker.isHost)
-                networker.StartMatch();
+                networker.HostMatch();
         });
     }
 

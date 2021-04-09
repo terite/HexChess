@@ -11,6 +11,7 @@ public struct BoardState
 
     public Team check;
     public Team checkmate;
+    public float executedAtTime;
 
     public static Move GetLastMove(List<BoardState> history)
     {
@@ -35,7 +36,8 @@ public struct BoardState
                         from: kvp.Value, 
                         to: nowPos, 
                         capturedPiece: previousTeamAtLocation == kvp.Key.Item1 ? null : previousPieceAtLocation, 
-                        defendedPiece: previousTeamAtLocation != kvp.Key.Item1 ? null : previousPieceAtLocation
+                        defendedPiece: previousTeamAtLocation != kvp.Key.Item1 ? null : previousPieceAtLocation,
+                        duration: nowState.executedAtTime - lastState.executedAtTime
                     );
             }
         }
@@ -61,34 +63,36 @@ public struct BoardState
                 pieces = GetSerializeable(),
                 currentMove = currentMove,
                 check = check,
-                checkmate = checkmate
+                checkmate = checkmate,
+                executedAtTime = executedAtTime
             })
         );
 
     // When deserializing from json, because of the before mentioned dictionary issues, we must deserialize as a list, then construct our dictionary from it.
-    public static BoardState GetBoardStateFromDeserializedBoard(List<SerializedPiece> list, Team currentMove, Team check, Team checkmate)
+    public static BoardState GetBoardStateFromDeserializedBoard(List<SerializedPiece> list, Team currentMove, Team check, Team checkmate, float executedAtTime)
     {
         BidirectionalDictionary<(Team, Piece), Index> newDict = new BidirectionalDictionary<(Team, Piece), Index>();
         foreach(SerializedPiece tpl in list)
             newDict.Add((tpl.t, tpl.p), tpl.i);
 
-        return new BoardState{allPiecePositions = newDict, currentMove = currentMove, check = check, checkmate = checkmate};
+        return new BoardState{allPiecePositions = newDict, currentMove = currentMove, check = check, checkmate = checkmate, executedAtTime = executedAtTime};
     }
 
     public static BoardState Deserialize(byte[] data)
     {
         string json = Encoding.ASCII.GetString(data);
-        SerializedBoard board = JsonConvert.DeserializeObject<SerializedBoard>(json);
+        SerializedBoard boardstate = JsonConvert.DeserializeObject<SerializedBoard>(json);
         
         BidirectionalDictionary<(Team, Piece), Index> newDict = new BidirectionalDictionary<(Team, Piece), Index>();
-        foreach(SerializedPiece tpl in board.pieces)
+        foreach(SerializedPiece tpl in boardstate.pieces)
             newDict.Add((tpl.t, tpl.p), tpl.i);
 
         return new BoardState {
             allPiecePositions = newDict,
-            currentMove = board.currentMove,
-            check = board.check,
-            checkmate = board.checkmate
+            currentMove = boardstate.currentMove,
+            check = boardstate.check,
+            checkmate = boardstate.checkmate,
+            executedAtTime = boardstate.executedAtTime
         };
     }
 }
@@ -99,6 +103,7 @@ public struct SerializedBoard {
     public Team currentMove;
     public Team check;
     public Team checkmate;
+    public float executedAtTime;
 }
 
 [System.Serializable]

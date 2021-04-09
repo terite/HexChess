@@ -360,8 +360,10 @@ public class SelectPiece : MonoBehaviour
         Index startLoc = selectedPiece.location;
         // Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
         BoardState newState = board.Swap(selectedPiece, pieceToDefend, board.GetCurrentBoardState());
+        
         if(multiplayer != null)
             multiplayer.SendBoard(newState);
+
         board.AdvanceTurn(newState);
         DeselectPiece(startLoc);
     }

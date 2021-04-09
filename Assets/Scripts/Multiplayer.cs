@@ -5,6 +5,7 @@ public class Multiplayer : MonoBehaviour
 {
     [SerializeField] private GameObject whiteKeys;
     [SerializeField] private GameObject blackKeys;
+    [SerializeField] private Timers timers;
     Networker networker;
     Board board;
     LastMoveTracker moveTracker;
@@ -13,7 +14,8 @@ public class Multiplayer : MonoBehaviour
     public Team localTeam => gameParams.localTeam;
 
     Promotion? receivedPromotion;
-    private void Awake() {
+    private void Awake()
+    {
         networker = GameObject.FindObjectOfType<Networker>();
         board = GameObject.FindObjectOfType<Board>();
         moveTracker = GameObject.FindObjectOfType<LastMoveTracker>();
@@ -33,6 +35,17 @@ public class Multiplayer : MonoBehaviour
 
         whiteKeys.SetActive(gameParams.localTeam == Team.White);
         blackKeys.SetActive(gameParams.localTeam == Team.Black);
+
+        if(gameParams.timerDuration <= 0)
+        {
+            timers.gameObject.SetActive(gameParams.showClock);
+            timers.isClock = gameParams.showClock;
+        }
+        else
+        {
+            timers.gameObject.SetActive(true);
+            timers.SetTimers(gameParams.timerDuration);
+        }
     }
 
     public void Surrender(Team surrenderingTeam) => board.Surrender(surrenderingTeam);
@@ -45,14 +58,18 @@ public class Multiplayer : MonoBehaviour
             return;
         
         board.SetBoardState(state, board.promotions);
-        board.AdvanceTurn(state);
+        board.AdvanceTurn(state, false);
 
         moveTracker.UpdateText(BoardState.GetLastMove(board.turnHistory));
     }
 
-    public void SendBoard(BoardState state) => networker.SendMessage(
-        new Message(MessageType.BoardState, state.Serialize())
-    );
+    public void SendBoard(BoardState state)
+    {
+        state.executedAtTime = Time.timeSinceLevelLoad;
+        networker.SendMessage(
+            new Message(MessageType.BoardState, state.Serialize())
+        );
+    } 
 
     public void SendPromote(Promotion promo)
     {
