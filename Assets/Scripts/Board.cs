@@ -29,6 +29,7 @@ public class Board : SerializedMonoBehaviour
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
     public Color lastMoveHighlightColor;
 
+
     // Used to write the default boardstate out to file
     [Button]
     public void WriteTurnHistoryToFile()
@@ -136,12 +137,18 @@ public class Board : SerializedMonoBehaviour
 
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
 
-    public void AdvanceTurn(BoardState newState)
+    public void AdvanceTurn(BoardState newState, bool updateTime = true)
     {
         List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
+        
+        if(updateTime)
+            newState.executedAtTime = Time.timeSinceLevelLoad;
+
         newState.check = Team.None;
         newState.checkmate = Team.None;
+
         Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
+        
         if(checkingPieces.Count > 0)
         {
             List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
@@ -252,7 +259,14 @@ public class Board : SerializedMonoBehaviour
         // Move piece
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(piece.team, piece.piece, piece.location, targetLocation.index, takenPieceAtLocation, defendedPieceAtLocation));
+            moveTracker.UpdateText(new Move(
+                piece.team, 
+                piece.piece, 
+                piece.location, 
+                targetLocation.index, 
+                takenPieceAtLocation, 
+                defendedPieceAtLocation
+            ));
             piece.MoveTo(targetLocation);
         }
 
@@ -313,15 +327,22 @@ public class Board : SerializedMonoBehaviour
     {
         Index p1StartLoc = p1.location;
         Index p2StartLoc = p2.location;
+        BoardState currentState = boardState;
         
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(p1.team, p1.piece, p1StartLoc, p2StartLoc, null, p2.piece));
+            moveTracker.UpdateText(new Move(
+                p1.team, 
+                p1.piece, 
+                p1StartLoc, 
+                p2StartLoc, 
+                null, 
+                p2.piece
+            ));
             p1.MoveTo(GetHexIfInBounds(p2.location));
             p2.MoveTo(GetHexIfInBounds(p1StartLoc));
         }
 
-        BoardState currentState = boardState;
         BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.allPiecePositions);
         allPiecePositions.Remove((p1.team, p1.piece));
         allPiecePositions.Remove((p2.team, p2.piece));
@@ -346,7 +367,14 @@ public class Board : SerializedMonoBehaviour
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
-            moveTracker.UpdateText(new Move(pawn.team, pawn.piece, pawn.location, targetHex.index, enemyPiece));
+            moveTracker.UpdateText(new Move(
+                pawn.team, 
+                pawn.piece, 
+                pawn.location, 
+                targetHex.index, 
+                enemyPiece,
+                null
+            ));
             pawn.MoveTo(targetHex);
         }
         
@@ -439,7 +467,15 @@ public class Board : SerializedMonoBehaviour
         highlightedHexes.Add(toHex);
     }
 
-    public void Reset() => SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+    public void Reset() 
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        SceneTransition sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
+        if(sceneTransition != null)
+            sceneTransition.Transition(sceneName);
+        else
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+    }
 
     private void MaybeNewHex()
     {

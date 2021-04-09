@@ -18,6 +18,7 @@ public class Networker : MonoBehaviour
 
     Lobby lobby;
     Multiplayer multiplayer;
+    SceneTransition sceneTransition;
     Latency latency;
     QueryTeamChangePanel teamChangePanel;
     [ReadOnly, ShowInInspector] public Player host;
@@ -43,6 +44,7 @@ public class Networker : MonoBehaviour
     GameParams gameParams;
     private void Awake()
     {
+        sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
         List<Networker> networkers = GameObject.FindObjectsOfType<Networker>().ToList();
         networkers = networkers.Where(networker => networker != this).ToList();
         for(int i = networkers.Count() - 1; i >= 0; i--)
@@ -72,7 +74,10 @@ public class Networker : MonoBehaviour
 
     public void Shutdown()
     {
-        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        if(sceneTransition != null)
+            sceneTransition.Transition("MainMenu");
+        else
+            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
         Destroy(gameObject);
     }
 
@@ -151,7 +156,10 @@ public class Networker : MonoBehaviour
 
         // Load to lobby
         SceneManager.sceneLoaded += LoadLobby;
-        SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+        if(sceneTransition != null)
+            sceneTransition.Transition("Lobby");
+        else
+            SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
     }
 
     private void AcceptClientCallback(IAsyncResult ar)
@@ -235,7 +243,10 @@ public class Networker : MonoBehaviour
 
         networker.mainThreadActions.Enqueue(() => {
             SceneManager.sceneLoaded += LoadLobby;
-            SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+            if(sceneTransition != null)
+                sceneTransition.Transition("Lobby");
+            else
+                SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
         });
 
         networker.readBuffer = new byte[messageMaxSize];
@@ -369,7 +380,7 @@ public class Networker : MonoBehaviour
             MessageType.Unready when isHost => Unready,
             MessageType.PreviewMovesOn when lobby => PreviewOn,
             MessageType.PreviewMovesOff when lobby => PreviewOff,
-            MessageType.StartMatch when !isHost => StartMatch,
+            MessageType.StartMatch when !isHost => () => StartMatch(completeMessage.data),
             MessageType.Surrender when multiplayer => () => multiplayer.Surrender(isHost ? player.Value.team : host.team),
             MessageType.BoardState when multiplayer => () => multiplayer.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
             MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
@@ -393,6 +404,7 @@ public class Networker : MonoBehaviour
                 host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
                 lobby.SpawnPlayer(host);
             },
+            MessageType.FlagFall => () => {},
             _ => null
         };
 
@@ -531,17 +543,52 @@ public class Networker : MonoBehaviour
         startButton?.HideButton();
     }
 
-    public void StartMatch()
+    public void HostMatch()
     {
-        if(isHost)
-            SendMessage(new Message(MessageType.StartMatch));
+        if(!isHost)
+            return;
 
         PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        gameParams = new GameParams(isHost ? host.team : player.Value.team, previewToggle.toggle.isOn);
+        bool previewOn = previewToggle == null ? false : previewToggle.toggle.isOn;
         
-        // Load scene
-        SceneManager.LoadScene("VersusMode");
+        if(lobby.noneToggle.isOn)
+            gameParams = new GameParams(host.team, previewOn);
+        else if(lobby.clockToggle.isOn)
+            gameParams = new GameParams(host.team, previewOn, 0, true);
+        else if(lobby.timerToggle.isOn)
+            gameParams = new GameParams(host.team, previewOn, lobby.GetTimeInSeconds(), false);
+
+        SendMessage(
+            new Message(
+                MessageType.StartMatch,
+                new GameParams(
+                    host.team == Team.White ? Team.Black : Team.White, 
+                    gameParams.showMovePreviews, 
+                    gameParams.timerDuration, 
+                    gameParams.showClock
+                ).Serialize()
+            )
+        );
+
         SceneManager.activeSceneChanged += SetupGame;
+        if(sceneTransition != null)
+            sceneTransition.Transition("VersusMode");
+        else
+            SceneManager.LoadScene("VersusMode");
+    }
+
+    public void StartMatch(byte[] data)
+    {
+        if(isHost)
+            return;
+
+        gameParams = GameParams.Deserialize(data);
+        
+        SceneManager.activeSceneChanged += SetupGame;
+        if(sceneTransition != null)
+            sceneTransition.Transition("VersusMode");
+        else
+            SceneManager.LoadScene("VersusMode");
     }
 
     private void SetupGame(Scene arg0, Scene arg1)

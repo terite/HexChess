@@ -9,9 +9,14 @@ public class LoadSceneButton : MonoBehaviour
     private void Awake() {
         if(button == null)
             gameObject.GetComponent<Button>();
+        
+        SceneTransition sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
 
         button?.onClick.AddListener(() => {
-            SceneManager.LoadScene($"{sceneToLoad}");
+            if(sceneTransition != null)
+                sceneTransition.Transition($"{sceneToLoad}");
+            else
+                SceneManager.LoadScene($"{sceneToLoad}");
 
             if(sceneToLoad == "MainMenu") 
             {

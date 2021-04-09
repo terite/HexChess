@@ -18,11 +18,11 @@ public struct Game
 
     public static string Serialize(List<BoardState> turnHistory, List<Promotion> promotions, Winner winner = Winner.Pending)
     {
-        List<(Team, List<SerializedPiece>, Team, Team)> serializeableBoards = new List<(Team, List<SerializedPiece>, Team, Team)>();
+        List<(Team, List<SerializedPiece>, Team, Team, float)> serializeableBoards = new List<(Team, List<SerializedPiece>, Team, Team, float)>();
         foreach(BoardState bs in turnHistory)
         {
             List<SerializedPiece> serializeableBoardState = bs.GetSerializeable();
-            serializeableBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate));
+            serializeableBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate, bs.executedAtTime));
         }
 
         return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions, winner));
@@ -33,8 +33,8 @@ public struct Game
         List<BoardState> history = new List<BoardState>();
         
         SerializeableGame game = JsonConvert.DeserializeObject<SerializeableGame>(json);
-        foreach((Team team, List<SerializedPiece> pieces, Team check, Team checkmate) in game.serializedBoards)
-            history.Add(BoardState.GetBoardStateFromDeserializedBoard(pieces, team, check, checkmate));
+        foreach((Team team, List<SerializedPiece> pieces, Team check, Team checkmate, float duration) in game.serializedBoards)
+            history.Add(BoardState.GetBoardStateFromDeserializedBoard(pieces, team, check, checkmate, duration));
         return new Game(history,game.promotions, game.winner);
     }
 }
@@ -42,11 +42,11 @@ public struct Game
 [System.Serializable]
 public struct SerializeableGame
 {
-    public List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards;
+    public List<(Team, List<SerializedPiece>, Team, Team, float)> serializedBoards;
     public List<Promotion> promotions;
     public Winner winner;
 
-    public SerializeableGame(List<(Team, List<SerializedPiece>, Team, Team)> serializedBoards, List<Promotion> promotions, Winner winner = Winner.Pending)
+    public SerializeableGame(List<(Team, List<SerializedPiece>, Team, Team, float)> serializedBoards, List<Promotion> promotions, Winner winner = Winner.Pending)
     {
         this.serializedBoards = serializedBoards;
         this.promotions = promotions;
