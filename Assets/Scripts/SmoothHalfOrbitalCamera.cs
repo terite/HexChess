@@ -3,8 +3,6 @@ using UnityEngine.InputSystem;
 
 public class SmoothHalfOrbitalCamera : MonoBehaviour
 {
-    // This is how I do it, though if you rather look for it at start than have Unity find and assign it in the editor, delete this line
-    // and uncomment awake.
     [SerializeField] [HideInInspector] SelectPiece selectPiece;
     public Team team = Team.White;
     public float cameraDistance = 18;
@@ -35,8 +33,6 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         ChangeDefaultRotation(team);
     }
 
-    //private void Awake() => selectPiece = FindObjectOfType<SelectPiece>();
-
     private void Start()
     {
         IsSandboxMode = !FindObjectOfType<Multiplayer>();
@@ -54,11 +50,13 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     public void ChangeDefaultRotation(Team team)
     {
         defaultRotation = team == Team.White ? Vector2.right * 90 : new Vector2(90, 180);
-        ResetRotation();
     }
 
     public void ToggleTeam()
     {
+        if(rotating)
+            return;
+
         team = team switch
         {
             Team.None => Team.White,
@@ -67,6 +65,13 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
         ChangeDefaultRotation(team);
+        StopRotating();
+    }
+
+    public void OnSpacebar(InputAction.CallbackContext context)
+    {
+        if(context.started && IsSandboxMode)
+            ToggleTeam();
     }
 
     public void RightClick(InputAction.CallbackContext context)
@@ -82,7 +87,6 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     void StartRotating()
     {
-        nomalizedElaspedTime = 0;
         rotating = true;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
@@ -94,6 +98,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         release_rotation = temp_rotation;
+        nomalizedElaspedTime = 0;
         float delta = (defaultRotation - release_rotation).magnitude / minimumRotationMagnitude;
         if(delta >= 1)
             adjustedResetTime = cameraResetTime;
@@ -111,7 +116,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             temp_rotation += new Vector3(delta.y, delta.x);
 
             if(!IsSandboxMode)
-                switch(team) {
+                switch(team)
+                {
                     case Team.White:
                         temp_rotation.y = Mathf.Clamp(temp_rotation.y, -90, 90);
                         break;
