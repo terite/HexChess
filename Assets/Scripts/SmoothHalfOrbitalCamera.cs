@@ -92,7 +92,6 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             var mousePos = Mouse.current.position.ReadValue();
             if(mousePos.x >= 0 && mousePos.x <= Screen.width && mousePos.y >= 0 && mousePos.y <= Screen.height)
                 StartRotating();
-
         }
         else if(context.canceled)
             StopRotating();

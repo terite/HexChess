@@ -56,7 +56,6 @@ public class Multiplayer : MonoBehaviour
 
         board.SetBoardState(state, board.promotions);
         board.AdvanceTurn(state, false);
-
         moveTracker.UpdateText(BoardState.GetLastMove(board.turnHistory));
     }
 
