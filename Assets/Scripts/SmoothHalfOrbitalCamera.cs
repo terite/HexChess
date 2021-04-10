@@ -10,7 +10,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     public float cameraDistance = 18;
     public Vector3 origin;
     public float speed = 0.2f;
-    
+
     public Vector2 defaultRotation = Vector2.right * 90;
     public float cameraResetTime = 0.5f;
     // Kind of like rubberbanding so that smaller rotations don't take the same amount of time as big ones
@@ -22,6 +22,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     float adjustedResetTime;
     float nomalizedElaspedTime;
     Vector2 release_rotation;
+
+    public bool IsSandboxMode { get; private set; }
 
     private void OnValidate()
     {
@@ -37,6 +39,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     private void Start()
     {
+        IsSandboxMode = !FindObjectOfType<Multiplayer>();
         ResetRotation();
     }
 
@@ -107,6 +110,16 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Vector2 delta = Mouse.current.delta.ReadValue() * speed;
             temp_rotation += new Vector3(delta.y, delta.x);
 
+            if(!IsSandboxMode)
+                switch(team) {
+                    case Team.White:
+                        temp_rotation.y = Mathf.Clamp(temp_rotation.y, -90, 90);
+                        break;
+                    case Team.Black:
+                        temp_rotation.y = Mathf.Clamp(temp_rotation.y, 90, 270);
+                        break;
+                }
+
             LookTowardsOrigin();
         }
         else
@@ -116,6 +129,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
                 temp_rotation = Vector3.Slerp(release_rotation, defaultRotation, nomalizedElaspedTime);
                 nomalizedElaspedTime += Time.deltaTime / adjustedResetTime;
             }
+            else
+                temp_rotation = defaultRotation;
 
             LookTowardsOrigin();
         }
