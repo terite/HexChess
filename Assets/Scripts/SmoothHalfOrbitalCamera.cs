@@ -50,7 +50,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     public void ResetRotation()
     {
         temp_rotation = defaultRotation;
-        StopRotating(); 
+        StopRotating();
         LookTowardsOrigin();
     }
 
@@ -88,7 +88,12 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             return;
 
         if(context.started)
-            StartRotating();
+        {
+            var mousePos = Mouse.current.position.ReadValue();
+            if(mousePos.x >= 0 && mousePos.x <= Screen.width && mousePos.y >= 0 && mousePos.y <= Screen.height)
+                StartRotating();
+
+        }
         else if(context.canceled)
             StopRotating();
     }
