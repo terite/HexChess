@@ -53,8 +53,10 @@ public class Multiplayer : MonoBehaviour
     {
         if(board.GetCurrentTurn() == gameParams.localTeam)
             return;
+
         board.SetBoardState(state, board.promotions);
         board.AdvanceTurn(state, false);
+
         moveTracker.UpdateText(BoardState.GetLastMove(board.turnHistory));
     }
 
