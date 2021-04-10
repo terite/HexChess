@@ -30,7 +30,7 @@ public class Multiplayer : MonoBehaviour
         if(gameParams.localTeam == Team.Black)
         {
             SmoothHalfOrbitalCamera cam = GameObject.FindObjectOfType<SmoothHalfOrbitalCamera>();
-            cam?.ChangeDefaultRotation(gameParams.localTeam);
+            cam?.SetDefaultTeam(gameParams.localTeam);
         }
 
         whiteKeys.SetActive(gameParams.localTeam == Team.White);

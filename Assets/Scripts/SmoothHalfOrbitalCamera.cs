@@ -3,9 +3,13 @@ using UnityEngine.InputSystem;
 
 public class SmoothHalfOrbitalCamera : MonoBehaviour
 {
+    readonly float hardScrollModifier = 0.01f;
     [SerializeField] [HideInInspector] SelectPiece selectPiece;
     public Team team = Team.White;
-    public float cameraDistance = 18;
+    public float defaultScroll = 18;
+    public float minScroll = 18;
+    public float maxScroll = 21;
+    public float scrollModifier = 0.5f;
     public Vector3 origin;
     public float speed = 0.2f;
 
@@ -17,8 +21,10 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     Vector3 temp_rotation;
     bool rotating;
 
+    float scroll;
     float adjustedResetTime;
     float nomalizedElaspedTime;
+    float released_scroll;
     Vector2 release_rotation;
 
     public bool IsSandboxMode { get; private set; }
@@ -30,12 +36,13 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         defaultRotation.y %= 360f;
         ResetRotation();
         LookTowardsOrigin();
-        ChangeDefaultRotation(team);
+        SetDefaultTeam(team);
     }
 
     private void Start()
     {
         IsSandboxMode = !FindObjectOfType<Multiplayer>();
+        scroll = defaultScroll;
         ResetRotation();
     }
 
@@ -43,12 +50,13 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     public void ResetRotation()
     {
         temp_rotation = defaultRotation;
-        StopRotating();
+        StopRotating(); 
         LookTowardsOrigin();
     }
 
-    public void ChangeDefaultRotation(Team team)
+    public void SetDefaultTeam(Team team)
     {
+        this.team = team;
         defaultRotation = team == Team.White ? Vector2.right * 90 : new Vector2(90, 180);
     }
 
@@ -64,7 +72,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Team.Black => Team.White,
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
-        ChangeDefaultRotation(team);
+        SetDefaultTeam(team);
         StopRotating();
     }
 
@@ -104,6 +112,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             adjustedResetTime = cameraResetTime;
         else
             adjustedResetTime = cameraResetTime * delta;
+        released_scroll = scroll;
     }
 
     void Update()
@@ -112,6 +121,9 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             StopRotating();
         else if(rotating)
         {
+            scroll -= Mouse.current.scroll.ReadValue().y * scrollModifier * hardScrollModifier;
+            scroll = Mathf.Clamp(scroll, minScroll, maxScroll);
+
             Vector2 delta = Mouse.current.delta.ReadValue() * speed;
             temp_rotation += new Vector3(delta.y, delta.x);
 
@@ -133,10 +145,15 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             if(nomalizedElaspedTime < 1)
             {
                 temp_rotation = Vector3.Slerp(release_rotation, defaultRotation, nomalizedElaspedTime);
+                scroll = Mathf.Clamp(Mathf.Lerp(released_scroll, defaultScroll, nomalizedElaspedTime), minScroll, maxScroll);
+
                 nomalizedElaspedTime += Time.deltaTime / adjustedResetTime;
             }
             else
+            {
                 temp_rotation = defaultRotation;
+                scroll = defaultScroll;
+            }
 
             LookTowardsOrigin();
         }
@@ -151,7 +168,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         rot *= Quaternion.Euler(temp_rotation * Vector2.one);
         transform.rotation = rot;
 
-        transform.position = origin - transform.forward * cameraDistance;
+        transform.position = origin - transform.forward * scroll;
 
         transform.LookAt(origin);
     }
