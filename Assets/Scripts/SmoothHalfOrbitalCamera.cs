@@ -78,7 +78,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     public void OnSpacebar(InputAction.CallbackContext context)
     {
-        if(context.started && IsSandboxMode)
+        if(context.performed && IsSandboxMode)
             ToggleTeam();
     }
 

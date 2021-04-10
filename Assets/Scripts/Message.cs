@@ -21,6 +21,13 @@ public struct Message
         this.data = data;
         this.length = (ushort)data.Length;
     }
+    public Message(MessageType type, byte data)
+    {
+        this.signature = GetSignature().ToArray();
+        this.type = type;
+        this.data = new byte[]{data};
+        this.length = (ushort)1;
+    }
     public Message(MessageType type)
     {
         this.signature = GetSignature().ToArray();

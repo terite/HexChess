@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -67,6 +65,9 @@ public class Multiplayer : MonoBehaviour
             new Message(MessageType.BoardState, state.Serialize())
         );
     }
+
+    public void SendFlagfall(Team teamOutOfTime) => networker.SendMessage(new Message(MessageType.FlagFall, (byte)teamOutOfTime));
+    public void ReceiveFlagfall(Team teamOutOfTime) => board.Flagfall(teamOutOfTime);
 
     public void SendPromote(Promotion promo)
     {

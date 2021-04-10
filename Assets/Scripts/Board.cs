@@ -34,7 +34,8 @@ public class Board : SerializedMonoBehaviour
     [Button]
     public void WriteTurnHistoryToFile()
     {
-        string json = Game.Serialize(turnHistory, promotions);
+        Game game = new Game(turnHistory, promotions);
+        string json = game.Serialize();
         File.WriteAllText("Assets/Resources/" + defaultBoardStateFileLoc + ".json", json);
         Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
     }
@@ -118,10 +119,16 @@ public class Board : SerializedMonoBehaviour
 
         SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
 
-        if(game.winner != Winner.Pending)
+        // game.endType may not exist in older game saves, this bit of code supports both new and old save styles
+        if(game.endType != GameEndType.Pending)
             gameOver?.Invoke(game);
         else
-            turnPanel.Reset();
+        {
+            if(game.winner == Winner.Pending)
+                turnPanel.Reset();
+            else
+                gameOver?.Invoke(game);
+        }
     }
 
     public Game GetDefaultGame(string loc) => 
@@ -179,7 +186,7 @@ public class Board : SerializedMonoBehaviour
 
             Winner winner = newState.checkmate == Team.White ? Winner.Black : Winner.White;
 
-            game = new Game(turnHistory, promotions, winner);
+            game = new Game(turnHistory, promotions, winner, GameEndType.Checkmate);
             gameOver.Invoke(game);
             return;
         }
@@ -424,10 +431,11 @@ public class Board : SerializedMonoBehaviour
         Winner winner = surrenderingTeam == Team.White ? Winner.Black : Winner.White;
 
         currentState.currentMove = Team.None;
+        currentState.executedAtTime = Time.timeSinceLevelLoad;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
 
-        game = new Game(turnHistory, promotions, winner);
+        game = new Game(turnHistory, promotions, winner, GameEndType.Surrender);
         gameOver.Invoke(game);
     }
 
@@ -436,12 +444,31 @@ public class Board : SerializedMonoBehaviour
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
             return;
+
+        currentState.executedAtTime = Time.timeSinceLevelLoad;
         
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
 
-        game = new Game(turnHistory, promotions, Winner.Draw);
+        game = new Game(turnHistory, promotions, Winner.Draw, GameEndType.Draw);
+        gameOver.Invoke(game);
+    }
+
+    public void Flagfall(Team teamOutOfTime)
+    {
+        BoardState currentState = GetCurrentBoardState();
+        if(currentState.currentMove == Team.None)
+            return;
+
+        Winner winner = teamOutOfTime == Team.White ? Winner.Black : Winner.White;
+        currentState.executedAtTime = Time.timeSinceLevelLoad;
+        
+        currentState.currentMove = Team.None;
+        turnHistory.Add(currentState);
+        newTurn.Invoke(currentState);
+
+        game = new Game(turnHistory, promotions, winner, GameEndType.Flagfall);
         gameOver.Invoke(game);
     }
 

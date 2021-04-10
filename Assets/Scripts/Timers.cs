@@ -158,7 +158,10 @@ public class Timers : MonoBehaviour
 
         if(seconds == 0)
         {
-            // Timeout
+            Multiplayer mp = GameObject.FindObjectOfType<Multiplayer>();
+            if(mp != null)
+                mp.SendFlagfall(team);
+            board.Flagfall(team);
         }
     }
 }

@@ -387,15 +387,15 @@ public class Networker : MonoBehaviour
             MessageType.OfferDraw when multiplayer => () => mainThreadActions.Enqueue(() => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open()),
             MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(),
             MessageType.UpdateName when isHost => () => {
-                    if(player.HasValue)
-                    {
-                        lobby?.RemovePlayer(player.Value);
-                        Player p = player.Value;
-                        p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
-                        player = p;
-                        lobby?.SpawnPlayer(player.Value);
-                    }
-                },
+                if(player.HasValue)
+                {
+                    lobby?.RemovePlayer(player.Value);
+                    Player p = player.Value;
+                    p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
+                    player = p;
+                    lobby?.SpawnPlayer(player.Value);
+                }
+            },
             MessageType.UpdateName when !isHost => () => {
                 if(lobby == null)
                     return;
@@ -404,7 +404,13 @@ public class Networker : MonoBehaviour
                 host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
                 lobby.SpawnPlayer(host);
             },
-            MessageType.FlagFall => () => {},
+            MessageType.FlagFall when multiplayer => () => {
+                if(completeMessage.data.Length == 1)
+                {
+                    Team teamOutOfTime = (Team)completeMessage.data[0];
+                    multiplayer.ReceiveFlagfall(teamOutOfTime);
+                }
+            },
             _ => null
         };
 

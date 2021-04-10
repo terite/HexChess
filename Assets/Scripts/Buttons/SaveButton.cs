@@ -37,10 +37,12 @@ public class SaveButton : MonoBehaviour
             Debug.Log("Failed to save to file. Path empty.");
             return;
         }
-        
+
+        Game game = board.game.winner > Winner.Pending ? board.game : new Game(board.turnHistory, board.promotions);
+
         File.WriteAllText(
             file, 
-            Game.Serialize(board.turnHistory, board.promotions, board.game.winner)
+            game.Serialize()
         );
 
         Debug.Log($"Saved to file: {file}");

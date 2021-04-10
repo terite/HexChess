@@ -264,8 +264,8 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 748795983797158535}
         m_TargetAssemblyTypeName: SmoothHalfOrbitalCamera, Assembly-CSharp
-        m_MethodName: ResetRotation
-        m_Mode: 1
+        m_MethodName: OnSpacebar
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -293,8 +293,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d83e4609a3a4b9b4aa55b0a794518045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectPiece: {fileID: 0}
+  team: 1
   cameraDistance: 18
   origin: {x: 6, y: 1, z: 8}
   speed: 0.15
-  transitionTime: 0.25
   defaultRotation: {x: 90, y: 0}
+  cameraResetTime: 0.5
+  minimumRotationMagnitude: 100

@@ -16,18 +16,42 @@ public class CheckText : MonoBehaviour
 
     private void GameOver(Game game)
     {
-        BoardState finalState = game.turnHistory[game.turnHistory.Count - 1];
+        if(game.winner == Winner.Pending)
+            return;
+            
+        gameObject.SetActive(true);
+        text.color = Color.red;
 
-        if(finalState.checkmate == Team.None && game.winner != Winner.Draw)
-        {
-            gameObject.SetActive(true);
-            text.color = Color.red;
-            Team loser = game.winner == Winner.White ? Team.Black : Team.White;
-            text.text = $"{loser} surrendered.";
-        }
+        BoardState finalState = game.turnHistory[game.turnHistory.Count - 1];
+        Team loser = game.winner == Winner.White ? Team.Black : Team.White;
+
+        text.text = game.endType switch {
+            GameEndType.Pending => SupportOldSaves(game),
+            GameEndType.Draw => "",
+            GameEndType.Checkmate => "Checkmate.",
+            GameEndType.Surrender => $"{loser} surrendered.",
+            GameEndType.Flagfall => $"{loser} flagfell.",
+            GameEndType.Stalemate => "Stalemate.",
+            _ => $"{loser} has lost."
+        };
+    }
+
+    private string SupportOldSaves(Game game)
+    {
+        Team loser = game.winner == Winner.White ? Team.Black : Team.White;
+
+        if(game.winner == Winner.Pending)
+            return "";
+        else if(game.winner == Winner.Draw)
+            return "Draw.";
+        else if(game.turnHistory[game.turnHistory.Count - 1].checkmate > Team.None)
+            return "Checkmate.";
+        else
+            return $"{loser} surrendered.";
     }
 
     private void NewTurn(BoardState newState)
+
     {
         if(newState.check == Team.None && newState.checkmate == Team.None)
         {

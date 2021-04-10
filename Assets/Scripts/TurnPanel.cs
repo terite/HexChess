@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 public class TurnPanel : MonoBehaviour
 {
@@ -18,23 +19,54 @@ public class TurnPanel : MonoBehaviour
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
     }
 
+    string GetFormat(float seconds) => seconds < 60 
+        ? @"%s\.f" 
+        : seconds < 6000
+            ? @"%m\:%s\.f"
+            : @"%h\:%m\:%s\.f";
+
     private void GameOver(Game game)
     {
-        // turnText.text = $"Game over! In {game.GetTurnCount()} turns {game.winner} is victorius!";
         turnText.color = game.winner switch {
             Winner.White => Color.white,
             Winner.Black => Color.black,
             _ => Color.red
         };
+
+        Team loser = game.winner == Winner.White ? Team.Black : Team.White;
+        float gameLength = game.GetGameLength();
+        string formattedGameLength = TimeSpan.FromSeconds(gameLength).ToString(GetFormat(gameLength));
+
         string turnPlurality = game.GetTurnCount() > 1 ? "turns" : "turn";
-        turnText.text = game.winner switch {
-            Winner.Pending => "",
-            Winner.Draw => $"Game over! After {game.GetTurnCount()} {turnPlurality}, both teams have agreed to a draw.",
-            _ => $"Game over! In {game.GetTurnCount()} {turnPlurality} {game.winner} is victorius!"
+        string durationString = $"Game over! After {game.GetTurnCount()} {turnPlurality} in {formattedGameLength}";
+
+        // Debug.Log(game.endType);
+
+        turnText.text = game.endType switch {
+            GameEndType.Pending => SupportOldSaves(game),
+            GameEndType.Draw => $"{durationString}, both teams have agreed to a draw.",
+            GameEndType.Checkmate => $"{durationString} {game.winner} has won by checkmate!",
+            GameEndType.Surrender => $"{durationString} {game.winner} has won by surrender.",
+            GameEndType.Flagfall => $"{durationString} {game.winner} has flagged {loser}.",
+            GameEndType.Stalemate => $"{durationString} a stalemate has occured.",
+            _ => $"{durationString} {game.winner} is victorius!"
         };
         
         if(mainMenuButton == null)
             mainMenuButton = Instantiate(mainMenuButtonPrefab, buttonContainer);
+    }
+
+    private string SupportOldSaves(Game game)
+    {
+        string turnPlurality = game.GetTurnCount() > 1 ? "turns" : "turn";
+        if(game.winner == Winner.Pending)
+            return "";
+        else if(game.winner == Winner.Draw)
+            return $"After {game.GetTurnCount()} {turnPlurality}, both teams have agreed to a draw.";
+        else if(game.turnHistory[game.turnHistory.Count - 1].checkmate > Team.None)
+            return $"After {game.GetTurnCount()} {turnPlurality}, {game.winner} has won by checkmate!";
+        else
+            return $"After {game.GetTurnCount()} {turnPlurality}, {game.winner} has won by surrender.";
     }
 
     private void NewTurn(BoardState newState)
@@ -54,6 +86,5 @@ public class TurnPanel : MonoBehaviour
     {
         if(mainMenuButton != null)
             Destroy(mainMenuButton);
-        // surrenderButton.Reset();
     }
 }
