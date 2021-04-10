@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -10,7 +11,7 @@ public class Multiplayer : MonoBehaviour
     Board board;
     LastMoveTracker moveTracker;
 
-    public GameParams gameParams {get; private set;}
+    public GameParams gameParams { get; private set; }
     public Team localTeam => gameParams.localTeam;
 
     Promotion? receivedPromotion;
@@ -26,12 +27,8 @@ public class Multiplayer : MonoBehaviour
         Debug.Log($"Setting up game for {gameParams.localTeam} team.");
         this.gameParams = gameParams;
 
-        // rotate camera for black team player
-        if(gameParams.localTeam == Team.Black)
-        {
-            SmoothHalfOrbitalCamera cam = GameObject.FindObjectOfType<SmoothHalfOrbitalCamera>();
-            cam?.SetDefaultTeam(gameParams.localTeam);
-        }
+        SmoothHalfOrbitalCamera cam = GameObject.FindObjectOfType<SmoothHalfOrbitalCamera>();
+        cam?.SetDefaultTeam(gameParams.localTeam);
 
         whiteKeys.SetActive(gameParams.localTeam == Team.White);
         blackKeys.SetActive(gameParams.localTeam == Team.Black);
@@ -56,7 +53,7 @@ public class Multiplayer : MonoBehaviour
     {
         if(board.GetCurrentTurn() == gameParams.localTeam)
             return;
-        
+
         board.SetBoardState(state, board.promotions);
         board.AdvanceTurn(state, false);
 
@@ -69,7 +66,7 @@ public class Multiplayer : MonoBehaviour
         networker.SendMessage(
             new Message(MessageType.BoardState, state.Serialize())
         );
-    } 
+    }
 
     public void SendPromote(Promotion promo)
     {
