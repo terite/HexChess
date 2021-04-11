@@ -30,8 +30,27 @@ public class Timers : MonoBehaviour
             SetDefaultTimers(timerDruation);
     }
 
+    public void SetClock()
+    {
+        if(currentTurn == Team.None)
+        {
+            if(board == null)
+                board = GameObject.FindObjectOfType<Board>();
+            currentTurn = board.GetCurrentTurn();
+        }
+        isClock = true;
+        timerDruation = 0;
+        RecalculateTimers();
+    }
+
     public void SetTimers(float duration)
     {
+        if(currentTurn == Team.None)
+        {
+            if(board == null)
+                board = GameObject.FindObjectOfType<Board>();
+            currentTurn = board.GetCurrentTurn();
+        }
         isClock = false;
         timerDruation = duration;
         SetDefaultTimers(timerDruation);
@@ -55,7 +74,7 @@ public class Timers : MonoBehaviour
     {
         if(currentTurn == Team.None)
             return;
-            
+
         // Recalculate clocks to ensure the times are synced properly, this may catch any differences caused by latency while in multiplayer
         if(isClock)
         {
