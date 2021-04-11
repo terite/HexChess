@@ -1,3 +1,6 @@
+using System;
+using System.Text;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -43,9 +46,10 @@ public class Multiplayer : MonoBehaviour
         }
     }
 
-    public void Surrender(Team surrenderingTeam) => board.Surrender(surrenderingTeam);
+    public void Surrender(Team surrenderingTeam, float timestamp) => board.Surrender(surrenderingTeam, timestamp);
+    public void Surrender(Team surrenderingTeam) => board.Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
 
-    public void Draw() => board.Draw();
+    public void Draw(float timestamp) => board.Draw(timestamp);
 
     public void UpdateBoard(BoardState state)
     {
@@ -60,14 +64,21 @@ public class Multiplayer : MonoBehaviour
 
     public void SendBoard(BoardState state)
     {
-        state.executedAtTime = Time.timeSinceLevelLoad;
+        state.executedAtTime = Time.timeSinceLevelLoad + board.timeOffset;
         networker.SendMessage(
             new Message(MessageType.BoardState, state.Serialize())
         );
     }
 
-    public void SendFlagfall(Team teamOutOfTime) => networker.SendMessage(new Message(MessageType.FlagFall, (byte)teamOutOfTime));
-    public void ReceiveFlagfall(Team teamOutOfTime) => board.Flagfall(teamOutOfTime);
+    public void SendFlagfall(Team flaggedTeam, float timestamp)
+    {
+        byte[] timestampBytes = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp));
+        byte[] messageData = new byte[timestampBytes.Length + 1];
+        messageData[0] = (byte)flaggedTeam;
+        Buffer.BlockCopy(timestampBytes, 0, messageData, 1, timestampBytes.Length);
+        networker.SendMessage(new Message(MessageType.FlagFall, messageData));
+    }
+    public void ReceiveFlagfall(Team flaggedTeam, float timestamp) => board.Flagfall(flaggedTeam, timestamp);
 
     public void SendPromote(Promotion promo)
     {

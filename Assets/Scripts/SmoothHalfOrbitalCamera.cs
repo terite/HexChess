@@ -34,6 +34,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         selectPiece = FindObjectOfType<SelectPiece>();
         defaultRotation.x = Mathf.Clamp(defaultRotation.x, 0, 90f);
         defaultRotation.y %= 360f;
+        scroll = defaultScroll;
         ResetRotation();
         LookTowardsOrigin();
         SetDefaultTeam(team);

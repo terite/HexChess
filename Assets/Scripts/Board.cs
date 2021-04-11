@@ -12,6 +12,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private PromotionDialogue promotionDialogue;
     [SerializeField] private LastMoveTracker moveTracker;
     [SerializeField] private TurnPanel turnPanel;
+    [SerializeField] private Timers timers;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -28,7 +29,7 @@ public class Board : SerializedMonoBehaviour
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
     public Color lastMoveHighlightColor;
-
+    public float timeOffset {get; private set;} = 0f;
 
     // Used to write the default boardstate out to file
     [Button]
@@ -117,6 +118,20 @@ public class Board : SerializedMonoBehaviour
         foreach(Jail jail in jails)
             jail?.Clear();
 
+        if(turnHistory.Count > 1)
+            timeOffset = turnHistory[turnHistory.Count - 1].executedAtTime - Time.timeSinceLevelLoad;
+        
+        if(game.timerDuration <= 0)
+        {
+            timers.gameObject.SetActive(game.hasClock);
+            timers.isClock = game.hasClock;
+        }
+        else
+        {
+            timers.gameObject.SetActive(true);
+            timers.SetTimers(game.timerDuration);
+        }
+    
         SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
 
         // game.endType may not exist in older game saves, this bit of code supports both new and old save styles
@@ -149,7 +164,7 @@ public class Board : SerializedMonoBehaviour
         List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
         
         if(updateTime)
-            newState.executedAtTime = Time.timeSinceLevelLoad;
+            newState.executedAtTime = Time.timeSinceLevelLoad + timeOffset;
 
         newState.check = Team.None;
         newState.checkmate = Team.None;
@@ -175,7 +190,6 @@ public class Board : SerializedMonoBehaviour
                 newState.check = otherTeam;
         }
 
-        
         if(newState.checkmate != Team.None)
         {
             // End game
@@ -186,7 +200,15 @@ public class Board : SerializedMonoBehaviour
 
             Winner winner = newState.checkmate == Team.White ? Winner.Black : Winner.White;
 
-            game = new Game(turnHistory, promotions, winner, GameEndType.Checkmate);
+            game = new Game(
+                turnHistory, 
+                promotions, 
+                winner, 
+                GameEndType.Checkmate, 
+                timers.timerDruation, 
+                timers.isClock
+            );
+
             gameOver.Invoke(game);
             return;
         }
@@ -422,7 +444,7 @@ public class Board : SerializedMonoBehaviour
         return checkingPieces;
     }
 
-    public void Surrender(Team surrenderingTeam)
+    public void Surrender(Team surrenderingTeam, float timestamp)
     {
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
@@ -431,44 +453,67 @@ public class Board : SerializedMonoBehaviour
         Winner winner = surrenderingTeam == Team.White ? Winner.Black : Winner.White;
 
         currentState.currentMove = Team.None;
-        currentState.executedAtTime = Time.timeSinceLevelLoad;
+        currentState.executedAtTime = timestamp;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
 
-        game = new Game(turnHistory, promotions, winner, GameEndType.Surrender);
+        game = new Game(
+            turnHistory, 
+            promotions, 
+            winner, 
+            GameEndType.Surrender, 
+            timers.timerDruation, 
+            timers.isClock
+        );
+
         gameOver.Invoke(game);
     }
 
-    public void Draw()
+    public void Draw(float timestamp)
     {
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
             return;
-
-        currentState.executedAtTime = Time.timeSinceLevelLoad;
         
+        currentState.executedAtTime = timestamp;
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
 
-        game = new Game(turnHistory, promotions, Winner.Draw, GameEndType.Draw);
+        game = new Game(
+            turnHistory, 
+            promotions, 
+            Winner.Draw, 
+            GameEndType.Draw, 
+            timers.timerDruation, 
+            timers.isClock
+        );
+
         gameOver.Invoke(game);
     }
 
-    public void Flagfall(Team teamOutOfTime)
+    public void Flagfall(Team teamOutOfTime, float timestamp)
     {
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
             return;
 
         Winner winner = teamOutOfTime == Team.White ? Winner.Black : Winner.White;
-        currentState.executedAtTime = Time.timeSinceLevelLoad;
-        
+
+        currentState.executedAtTime = timestamp;
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);
 
-        game = new Game(turnHistory, promotions, winner, GameEndType.Flagfall);
+        game = new Game(
+            turnHistory, 
+            promotions, 
+            winner, 
+            GameEndType.Flagfall, 
+            timers.timerDruation, 
+            timers.isClock
+        );
+
         gameOver.Invoke(game);
     }
 

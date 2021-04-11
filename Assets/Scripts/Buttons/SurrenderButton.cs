@@ -1,3 +1,5 @@
+using System.Text;
+using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,13 +14,17 @@ public class SurrenderButton : MonoBehaviour
         board = GameObject.FindObjectOfType<Board>();
         button.onClick.AddListener(() => {
             Networker networker = GameObject.FindObjectOfType<Networker>();
+            float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
             if(networker != null)
             {
-                networker.SendMessage(new Message(MessageType.Surrender));
-                board.Surrender(networker.isHost ? networker.host.team : networker.player.Value.team);
+                networker.SendMessage(new Message(
+                    type: MessageType.Surrender, 
+                    data: Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
+                ));
+                board.Surrender(networker.isHost ? networker.host.team : networker.player.Value.team, timestamp);
             }
             else
-                board.Surrender(board.GetCurrentTurn());
+                board.Surrender(board.GetCurrentTurn(), timestamp);
         });
         board.gameOver += gameOver;
     }

@@ -3621,6 +3621,12 @@ MonoBehaviour:
     - Name: endType
       Entry: 3
       Data: 0
+    - Name: timerDuration
+      Entry: 4
+      Data: 0
+    - Name: hasClock
+      Entry: 5
+      Data: false
     - Name: 
       Entry: 8
       Data: 
@@ -5540,6 +5546,7 @@ MonoBehaviour:
   promotionDialogue: {fileID: 1447485345}
   moveTracker: {fileID: 1575216244}
   turnPanel: {fileID: 1428896168}
+  timers: {fileID: 2014511283}
   jails:
   - {fileID: 0}
   - {fileID: 821376221}
@@ -9676,6 +9683,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   board: {fileID: 155833291}
+  timers: {fileID: 2014511283}
 --- !u!21 &549877500
 Material:
   serializedVersion: 6
@@ -9962,12 +9970,12 @@ PrefabInstance:
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 19
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.9996867
+      value: 7.794229
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
@@ -9977,7 +9985,7 @@ PrefabInstance:
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.7071007
+      value: 0.70710063
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}

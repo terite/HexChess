@@ -36,13 +36,12 @@ public class TurnPanel : MonoBehaviour
         Team loser = game.winner == Winner.White ? Team.Black : Team.White;
         float gameLength = game.GetGameLength();
         string formattedGameLength = TimeSpan.FromSeconds(gameLength).ToString(GetFormat(gameLength));
-
-        string turnPlurality = game.GetTurnCount() > 1 ? "turns" : "turn";
-        string durationString = $"Game over! After {game.GetTurnCount()} {turnPlurality} in {formattedGameLength}";
-
-        // Debug.Log(game.endType);
+        int turnCount = game.GetTurnCount();
+        string turnPlurality = turnCount > 1 ? "turns" : "turn";
+        string durationString = $"Game over! After {turnCount} {turnPlurality} in {formattedGameLength}";
 
         turnText.text = game.endType switch {
+            // game.endType was added in v1.0.8 to support flagfalls and stalemates, any game saves from before then will default to Pendind
             GameEndType.Pending => SupportOldSaves(game),
             GameEndType.Draw => $"{durationString}, both teams have agreed to a draw.",
             GameEndType.Checkmate => $"{durationString} {game.winner} has won by checkmate!",
@@ -58,15 +57,17 @@ public class TurnPanel : MonoBehaviour
 
     private string SupportOldSaves(Game game)
     {
-        string turnPlurality = game.GetTurnCount() > 1 ? "turns" : "turn";
+        int turnCount = game.GetTurnCount();
+        // We can figure out most of what we need here, including if it actually is a pending game
+        string turnPlurality = turnCount > 1 ? "turns" : "turn";
         if(game.winner == Winner.Pending)
             return "";
         else if(game.winner == Winner.Draw)
-            return $"After {game.GetTurnCount()} {turnPlurality}, both teams have agreed to a draw.";
+            return $"After {turnCount} {turnPlurality}, both teams have agreed to a draw.";
         else if(game.turnHistory[game.turnHistory.Count - 1].checkmate > Team.None)
-            return $"After {game.GetTurnCount()} {turnPlurality}, {game.winner} has won by checkmate!";
+            return $"After {turnCount} {turnPlurality}, {game.winner} has won by checkmate!";
         else
-            return $"After {game.GetTurnCount()} {turnPlurality}, {game.winner} has won by surrender.";
+            return $"After {turnCount} {turnPlurality}, {game.winner} has won by surrender.";
     }
 
     private void NewTurn(BoardState newState)

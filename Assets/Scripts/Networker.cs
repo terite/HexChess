@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Extensions;
+using Newtonsoft.Json;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -381,11 +383,11 @@ public class Networker : MonoBehaviour
             MessageType.PreviewMovesOn when lobby => PreviewOn,
             MessageType.PreviewMovesOff when lobby => PreviewOff,
             MessageType.StartMatch when !isHost => () => StartMatch(completeMessage.data),
-            MessageType.Surrender when multiplayer => () => multiplayer.Surrender(isHost ? player.Value.team : host.team),
+            MessageType.Surrender when multiplayer => () => ReceiveSurrender(completeMessage.data),
             MessageType.BoardState when multiplayer => () => multiplayer.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
             MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
             MessageType.OfferDraw when multiplayer => () => mainThreadActions.Enqueue(() => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open()),
-            MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(),
+            MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(completeMessage.data))),
             MessageType.UpdateName when isHost => () => {
                 if(player.HasValue)
                 {
@@ -405,10 +407,13 @@ public class Networker : MonoBehaviour
                 lobby.SpawnPlayer(host);
             },
             MessageType.FlagFall when multiplayer => () => {
-                if(completeMessage.data.Length == 1)
+                if(completeMessage.data.Length > 1)
                 {
                     Team teamOutOfTime = (Team)completeMessage.data[0];
-                    multiplayer.ReceiveFlagfall(teamOutOfTime);
+                    byte[] data = new byte[completeMessage.length - 1];
+                    Buffer.BlockCopy(completeMessage.data, 1, data, 0, completeMessage.length - 1);
+                    float timestamp = JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(data));
+                    multiplayer.ReceiveFlagfall(teamOutOfTime, timestamp);
                 }
             },
             _ => null
@@ -416,6 +421,11 @@ public class Networker : MonoBehaviour
 
         action?.Invoke();
     }
+
+    private void ReceiveSurrender(byte[] data) => multiplayer.Surrender(
+        surrenderingTeam: isHost ? player.Value.team : host.team,
+        timestamp: JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(data))
+    );
 
     private void PreviewOn()
     {
@@ -611,15 +621,22 @@ public class Networker : MonoBehaviour
         if(multiplayer == null)
             return;
 
-        byte[] response = new Message(answer).Serialize();
+        Board board = GameObject.FindObjectOfType<Board>();
+        float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
+
+        if(answer == MessageType.AcceptDraw)
+            multiplayer.Draw(timestamp);
+
+        byte[] response = new Message(
+            answer, 
+            Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
+        ).Serialize();
+
         try {
             stream.Write(response, 0, response.Length);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
-
-        if(answer == MessageType.AcceptDraw)
-            multiplayer.Draw();
     }
 
     public void UpdateName(string newName)

@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 public class SaveButton : MonoBehaviour
 {
     [SerializeField] private Board board;
+    [SerializeField] private Timers timers;
 
     private void Awake() 
     {
@@ -38,7 +39,17 @@ public class SaveButton : MonoBehaviour
             return;
         }
 
-        Game game = board.game.winner > Winner.Pending ? board.game : new Game(board.turnHistory, board.promotions);
+
+        Game game = board.game.winner > Winner.Pending 
+            ? board.game 
+            : new Game(
+                board.turnHistory, 
+                board.promotions, 
+                Winner.Pending,
+                GameEndType.Pending, 
+                timers.timerDruation, 
+                timers.isClock
+            );
 
         File.WriteAllText(
             file, 

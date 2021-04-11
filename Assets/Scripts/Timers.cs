@@ -20,9 +20,7 @@ public class Timers : MonoBehaviour
     private void Awake() {
         board = GameObject.FindObjectOfType<Board>();
         board.newTurn += NewTurn;
-    }
-
-    private void Start() {
+        
         if(isClock)
         {
             UpdateClock(0, Team.White);
@@ -43,8 +41,8 @@ public class Timers : MonoBehaviour
     {
         whiteTimer = duration;
         blackTimer = duration;
-        UpdateTimerAndCheckForTimeout(duration, Team.White);
-        UpdateTimerAndCheckForTimeout(duration, Team.Black);
+        UpdateTimerAndCheckForFlagfall(duration, Team.White);
+        UpdateTimerAndCheckForFlagfall(duration, Team.Black);
     }
 
     private void NewTurn(BoardState newState)
@@ -53,54 +51,50 @@ public class Timers : MonoBehaviour
         RecalculateTimers();
     }
 
-    private void RecalculateTimers()
+    public void RecalculateTimers()
     {
+        if(currentTurn == Team.None)
+            return;
+            
         // Recalculate clocks to ensure the times are synced properly, this may catch any differences caused by latency while in multiplayer
         if(isClock)
         {
-            if(currentTurn == Team.Black)
+            float whiteTotal = 0f;
+            float blackTotal = 0f;
+
+            for(int i = 1; i < board.turnHistory.Count; i++)
             {
-                // It's black's turn, so that means white just made a move, recalculate the clock
-                float total = 0f;
-                for(int i = 1; i < board.turnHistory.Count; i += 2)
-                    total += board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                whiteTimer = total;
-                UpdateClock(total, Team.White);
+                float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
+                if(i % 2 == 0)
+                    blackTotal += duration;
+                else
+                    whiteTotal += duration;
             }
-            else if(currentTurn == Team.White)
-            {
-                // It's whites's turn, so that means black just made a move, recalculate the clock
-                float total = 0f;
-                for(int i = 2; i < board.turnHistory.Count; i += 2)
-                    total += board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                blackTimer = total;
-                UpdateClock(total, Team.Black);
-            }
+
+            whiteTimer = whiteTotal;
+            blackTimer = blackTotal;
+            UpdateClock(whiteTotal, Team.White);
+            UpdateClock(blackTotal, Team.Black);
+
         }
         else if(timerDruation > 0)
         {
-            if(currentTurn == Team.Black)
+            float whiteTotal = timerDruation;
+            float blackTotal = timerDruation;
+
+            for(int i = 1; i < board.turnHistory.Count; i++)
             {
-                float total = timerDruation;
-                for(int i = 1; i < board.turnHistory.Count; i += 2)
-                {
-                    float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                    total = total - duration > 0 ? total - duration : 0;
-                }
-                whiteTimer = total;
-                UpdateTimerAndCheckForTimeout(total, Team.White);
+                float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
+                if(i % 2 == 0)
+                    blackTotal = blackTotal - duration > 0 ? blackTotal - duration : 0;
+                else
+                    whiteTotal = whiteTotal - duration > 0 ? whiteTotal - duration : 0;
             }
-            else if(currentTurn == Team.White)
-            {
-                float total = timerDruation;
-                for(int i = 2; i < board.turnHistory.Count; i += 2)
-                {
-                    float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                    total = total - duration > 0 ? total - duration : 0;
-                }
-                blackTimer = total;
-                UpdateTimerAndCheckForTimeout(total, Team.Black);
-            }
+            
+            whiteTimer = whiteTotal;
+            blackTimer = blackTotal;
+            UpdateTimerAndCheckForFlagfall(whiteTotal, Team.White);
+            UpdateTimerAndCheckForFlagfall(blackTotal, Team.Black);
         }
     }
 
@@ -125,7 +119,7 @@ public class Timers : MonoBehaviour
             else
                 blackTimer = blackTimer - Time.deltaTime > 0 ? blackTimer - Time.deltaTime : 0;
             
-            UpdateTimerAndCheckForTimeout(GetTeamTime(currentTurn), currentTurn);
+            UpdateTimerAndCheckForFlagfall(GetTeamTime(currentTurn), currentTurn);
         }
     }
 
@@ -146,7 +140,7 @@ public class Timers : MonoBehaviour
         GetTeamText(team).text = TimeSpan.FromSeconds(seconds).ToString(GetFormat(seconds));
     }
 
-    private void UpdateTimerAndCheckForTimeout(float seconds, Team team)
+    private void UpdateTimerAndCheckForFlagfall(float seconds, Team team)
     {
         if(team == Team.None)
             return;
@@ -159,9 +153,17 @@ public class Timers : MonoBehaviour
         if(seconds == 0)
         {
             Multiplayer mp = GameObject.FindObjectOfType<Multiplayer>();
+            float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
             if(mp != null)
-                mp.SendFlagfall(team);
-            board.Flagfall(team);
+            {
+                if(mp.localTeam == team)
+                {
+                    mp.SendFlagfall(team, timestamp);
+                    board.Flagfall(team, timestamp);
+                }
+            }
+            else
+                board.Flagfall(team, timestamp);
         }
     }
 }

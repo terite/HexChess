@@ -3062,6 +3062,12 @@ MonoBehaviour:
     - Name: endType
       Entry: 3
       Data: 0
+    - Name: timerDuration
+      Entry: 4
+      Data: 0
+    - Name: hasClock
+      Entry: 5
+      Data: false
     - Name: 
       Entry: 8
       Data: 
@@ -4981,6 +4987,7 @@ MonoBehaviour:
   promotionDialogue: {fileID: 1447485345}
   moveTracker: {fileID: 1575216244}
   turnPanel: {fileID: 1428896168}
+  timers: {fileID: 1688065793125500796}
   jails:
   - {fileID: 0}
   - {fileID: 821376221}
@@ -10051,6 +10058,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   board: {fileID: 155833291}
+  timers: {fileID: 1688065793125500796}
 --- !u!1 &508386814
 GameObject:
   m_ObjectHideFlags: 0
@@ -32411,12 +32419,12 @@ PrefabInstance:
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 19
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.9996867
+      value: 7.794229
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
@@ -32426,7 +32434,7 @@ PrefabInstance:
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.7071007
+      value: 0.70710063
       objectReference: {fileID: 0}
     - target: {fileID: 748795983797158528, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
@@ -32655,10 +32663,22 @@ PrefabInstance:
     - target: {fileID: 5444349334522011137, guid: f832d4e27aa92ff498470dc2ff7e2b09,
         type: 3}
       propertyPath: isClock
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f832d4e27aa92ff498470dc2ff7e2b09, type: 3}
+--- !u!114 &1688065793125500796 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5444349334522011137, guid: f832d4e27aa92ff498470dc2ff7e2b09,
+    type: 3}
+  m_PrefabInstance: {fileID: 1688065793125500795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f78ba01056f9f34297909c9b2daaa19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &5409363547773459635
 PrefabInstance:
   m_ObjectHideFlags: 0

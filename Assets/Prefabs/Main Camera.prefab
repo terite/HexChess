@@ -31,8 +31,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 748795983797158781}
-  m_LocalRotation: {x: 0.7071007, y: 0, z: 0, w: 0.70711297}
-  m_LocalPosition: {x: 6, y: 19, z: 7.9996867}
+  m_LocalRotation: {x: 0.70710063, y: 0, z: 0, w: 0.70711297}
+  m_LocalPosition: {x: 6, y: 1, z: 7.794229}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -295,8 +295,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectPiece: {fileID: 0}
   team: 1
-  cameraDistance: 18
-  origin: {x: 6, y: 1, z: 8}
+  defaultScroll: 18
+  minScroll: 18
+  maxScroll: 21
+  scrollModifier: 0.5
+  origin: {x: 6, y: 1, z: 7.794229}
   speed: 0.15
   defaultRotation: {x: 90, y: 0}
   cameraResetTime: 0.5
