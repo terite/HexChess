@@ -12,5 +12,6 @@ public enum MessageType : byte {
     PreviewMovesOn = 13, PreviewMovesOff = 14,
     OfferDraw = 15, AcceptDraw = 16, DenyDraw = 17,
     UpdateName = 18,
-    FlagFall = 19
+    FlagFall = 19,
+    Connect = 20,
 }

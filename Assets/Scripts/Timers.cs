@@ -173,16 +173,17 @@ public class Timers : MonoBehaviour
         {
             Multiplayer mp = GameObject.FindObjectOfType<Multiplayer>();
             float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
+            Flagfall flagfall = new Flagfall(team, timestamp);
             if(mp != null)
             {
                 if(mp.localTeam == team)
                 {
-                    mp.SendFlagfall(team, timestamp);
-                    board.Flagfall(team, timestamp);
+                    mp.SendFlagfall(flagfall);
+                    board.Flagfall(flagfall);
                 }
             }
             else
-                board.Flagfall(team, timestamp);
+                board.Flagfall(flagfall);
         }
     }
 }

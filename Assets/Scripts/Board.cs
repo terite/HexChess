@@ -492,15 +492,15 @@ public class Board : SerializedMonoBehaviour
         gameOver.Invoke(game);
     }
 
-    public void Flagfall(Team teamOutOfTime, float timestamp)
+    public void Flagfall(Flagfall flagfall)
     {
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
             return;
 
-        Winner winner = teamOutOfTime == Team.White ? Winner.Black : Winner.White;
+        Winner winner = flagfall.flaggedTeam == Team.White ? Winner.Black : Winner.White;
 
-        currentState.executedAtTime = timestamp;
+        currentState.executedAtTime = flagfall.timestamp;
         currentState.currentMove = Team.None;
         turnHistory.Add(currentState);
         newTurn.Invoke(currentState);

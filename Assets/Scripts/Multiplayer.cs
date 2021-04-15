@@ -70,15 +70,9 @@ public class Multiplayer : MonoBehaviour
         );
     }
 
-    public void SendFlagfall(Team flaggedTeam, float timestamp)
-    {
-        byte[] timestampBytes = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp));
-        byte[] messageData = new byte[timestampBytes.Length + 1];
-        messageData[0] = (byte)flaggedTeam;
-        Buffer.BlockCopy(timestampBytes, 0, messageData, 1, timestampBytes.Length);
-        networker.SendMessage(new Message(MessageType.FlagFall, messageData));
-    }
-    public void ReceiveFlagfall(Team flaggedTeam, float timestamp) => board.Flagfall(flaggedTeam, timestamp);
+    public void SendFlagfall(Flagfall flagfall) => 
+        networker.SendMessage(new Message(MessageType.FlagFall, flagfall.Serialize()));
+    public void ReceiveFlagfall(Flagfall flagfall) => board.Flagfall(flagfall);
 
     public void SendPromote(Promotion promo)
     {

@@ -193,7 +193,10 @@ public class Networker : MonoBehaviour
 
             player = new Player($"{client.IP()}", Team.Black, false);
             lobby?.SpawnPlayer(player.Value);
+            
         });
+
+        SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
         
         readBuffer = new byte[messageMaxSize];
 
@@ -239,17 +242,6 @@ public class Networker : MonoBehaviour
             return;
         }
         Debug.Log("Sucessfully connected.");
-        
-        host = new Player("Host", Team.White, true);
-        player = new Player($"{client.IP()}", Team.Black, false);
-
-        networker.mainThreadActions.Enqueue(() => {
-            SceneManager.sceneLoaded += LoadLobby;
-            if(sceneTransition != null)
-                sceneTransition.Transition("Lobby");
-            else
-                SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
-        });
 
         networker.readBuffer = new byte[messageMaxSize];
         try {
@@ -356,6 +348,20 @@ public class Networker : MonoBehaviour
     private void Dispatch(Message completeMessage)
     {
         Action action = completeMessage.type switch {
+            MessageType.Connect when !isHost => () => {
+                string hostName = Encoding.UTF8.GetString(completeMessage.data);
+                
+                host = new Player(string.IsNullOrEmpty(hostName) ? "Host" : hostName, Team.White, true);
+                player = new Player($"{client.IP()}", Team.Black, false);
+
+                mainThreadActions.Enqueue(() => {
+                    SceneManager.sceneLoaded += LoadLobby;
+                    if(sceneTransition != null)
+                        sceneTransition.Transition("Lobby");
+                    else
+                        SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+                });
+            },
             MessageType.Disconnect when isHost => PlayerDisconnected,
             MessageType.Disconnect when !isHost => lobby == null ? (Action)Disconnect : (Action)Shutdown,
             MessageType.Ping => () => {
@@ -403,19 +409,14 @@ public class Networker : MonoBehaviour
                     return;
 
                 lobby.RemovePlayer(host);
+                if(player.HasValue)
+                    lobby.RemovePlayer(player.Value);
                 host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
                 lobby.SpawnPlayer(host);
+                if(player.HasValue)
+                    lobby.SpawnPlayer(player.Value);
             },
-            MessageType.FlagFall when multiplayer => () => {
-                if(completeMessage.data.Length > 1)
-                {
-                    Team teamOutOfTime = (Team)completeMessage.data[0];
-                    byte[] data = new byte[completeMessage.length - 1];
-                    Buffer.BlockCopy(completeMessage.data, 1, data, 0, completeMessage.length - 1);
-                    float timestamp = JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(data));
-                    multiplayer.ReceiveFlagfall(teamOutOfTime, timestamp);
-                }
-            },
+            MessageType.FlagFall when multiplayer => () => multiplayer.ReceiveFlagfall(Flagfall.Deserialize(completeMessage.data)),
             _ => null
         };
 
@@ -647,8 +648,12 @@ public class Networker : MonoBehaviour
         if(isHost)
         {
             lobby.RemovePlayer(host);
+            if(player.HasValue)
+                lobby.RemovePlayer(player.Value);
             host.name = newName;
             lobby.SpawnPlayer(host);
+            if(player.HasValue)
+                lobby.SpawnPlayer(player.Value);
         }
         else if(player.HasValue)
         {
