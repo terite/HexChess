@@ -1,6 +1,3 @@
-using System;
-using System.Text;
-using Newtonsoft.Json;
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -46,10 +43,11 @@ public class Multiplayer : MonoBehaviour
         }
     }
 
-    public void Surrender(Team surrenderingTeam, float timestamp) => board.Surrender(surrenderingTeam, timestamp);
-    public void Surrender(Team surrenderingTeam) => board.Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
+    public void Surrender(Team surrenderingTeam, float timestamp) => board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
+    // public void Surrender(Team surrenderingTeam, float timestamp) => board.Surrender(surrenderingTeam, timestamp);
+    public void Surrender(Team surrenderingTeam) => Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
 
-    public void Draw(float timestamp) => board.Draw(timestamp);
+    public void Draw(float timestamp) => board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
 
     public void UpdateBoard(BoardState state)
     {
@@ -72,7 +70,11 @@ public class Multiplayer : MonoBehaviour
 
     public void SendFlagfall(Flagfall flagfall) => 
         networker.SendMessage(new Message(MessageType.FlagFall, flagfall.Serialize()));
-    public void ReceiveFlagfall(Flagfall flagfall) => board.Flagfall(flagfall);
+    public void ReceiveFlagfall(Flagfall flagfall) => board.EndGame(
+        flagfall.timestamp, 
+        GameEndType.Flagfall, 
+        flagfall.flaggedTeam == Team.White ? Winner.Black : Winner.White
+    );
 
     public void SendPromote(Promotion promo)
     {

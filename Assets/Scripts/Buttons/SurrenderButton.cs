@@ -21,10 +21,11 @@ public class SurrenderButton : MonoBehaviour
                     type: MessageType.Surrender, 
                     data: Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
                 ));
-                board.Surrender(networker.isHost ? networker.host.team : networker.player.Value.team, timestamp);
+                Team surrenderingTeam = networker.isHost ? networker.host.team : networker.player.Value.team;
+                board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
             }
             else
-                board.Surrender(board.GetCurrentTurn(), timestamp);
+                board.EndGame(timestamp, GameEndType.Surrender, board.GetCurrentTurn() == Team.White ? Winner.Black : Winner.White);
         });
         board.gameOver += gameOver;
     }

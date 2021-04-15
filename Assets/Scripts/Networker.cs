@@ -431,13 +431,13 @@ public class Networker : MonoBehaviour
     private void PreviewOn()
     {
         PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        if (previewToggle != null)
+        if(previewToggle != null)
             previewToggle.toggle.isOn = true;
     }
     private void PreviewOff()
     {
         PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        if (previewToggle != null)
+        if(previewToggle != null)
             previewToggle.toggle.isOn = false;
     }
 

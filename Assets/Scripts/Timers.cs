@@ -179,11 +179,11 @@ public class Timers : MonoBehaviour
                 if(mp.localTeam == team)
                 {
                     mp.SendFlagfall(flagfall);
-                    board.Flagfall(flagfall);
+                    board.EndGame(flagfall.timestamp, GameEndType.Flagfall, flagfall.flaggedTeam == Team.White ? Winner.Black : Winner.White);
                 }
             }
             else
-                board.Flagfall(flagfall);
+                board.EndGame(flagfall.timestamp, GameEndType.Flagfall, flagfall.flaggedTeam == Team.White ? Winner.Black : Winner.White);
         }
     }
 }
