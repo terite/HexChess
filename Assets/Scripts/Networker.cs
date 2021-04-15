@@ -221,8 +221,8 @@ public class Networker : MonoBehaviour
 
         Debug.Log($"Attempting to connect to {ip}:{port}.");
         client = new TcpClient();
-        try{
-            client.BeginConnect(IPAddress.Parse(ip), port, new AsyncCallback(ClientConnectCallback), this);
+        try {
+            client.BeginConnect(ip, port, new AsyncCallback(ClientConnectCallback), this);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to connect to {ip}:{port} with error:\n{e}");
         }
@@ -252,6 +252,12 @@ public class Networker : MonoBehaviour
     }
 
     // Both client + server
+    public void SendMessage(Message message)
+    {
+        byte[] messageData = message.Serialize();
+        stream?.Write(messageData, 0, messageData.Length);
+    }
+    
     private void ReceiveMessage(IAsyncResult ar)
     {
         Networker networker = (Networker)ar.AsyncState;
@@ -350,7 +356,7 @@ public class Networker : MonoBehaviour
         Action action = completeMessage.type switch {
             MessageType.Connect when !isHost => () => {
                 string hostName = Encoding.UTF8.GetString(completeMessage.data);
-                
+
                 host = new Player(string.IsNullOrEmpty(hostName) ? "Host" : hostName, Team.White, true);
                 player = new Player($"{client.IP()}", Team.Black, false);
 
@@ -364,58 +370,25 @@ public class Networker : MonoBehaviour
             },
             MessageType.Disconnect when isHost => PlayerDisconnected,
             MessageType.Disconnect when !isHost => lobby == null ? (Action)Disconnect : (Action)Shutdown,
-            MessageType.Ping => () => {
-                // All pings should get a pong in response
-                byte[] pong = new Message(MessageType.Pong).Serialize();
-                try {
-                    stream.Write(pong, 0, pong.Length);
-                } catch (Exception e) {
-                    Debug.LogWarning($"Failed to write to socket with error:\n{e}");
-                }
-            },
-            MessageType.Pong => () => {
-                // Measure and update latency when pong received
-                pongReceived = true;
-                mainThreadActions.Enqueue(() => {
-                    if(latency == null)
-                        latency = GameObject.FindObjectOfType<Latency>();
-                    latency?.UpdateLatency(Time.timeSinceLevelLoad - pingedAtTime);
-                });
-            },
+            MessageType.Ping => ReceivePing,
+            MessageType.Pong => ReceivePong,
             MessageType.ProposeTeamChange => ReceiveTeamChangeProposal,
             MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(SwapTeams),
             MessageType.Ready when isHost => Ready,
             MessageType.Unready when isHost => Unready,
             MessageType.PreviewMovesOn when lobby => PreviewOn,
             MessageType.PreviewMovesOff when lobby => PreviewOff,
-            MessageType.StartMatch when !isHost => () => StartMatch(completeMessage.data),
-            MessageType.Surrender when multiplayer => () => ReceiveSurrender(completeMessage.data),
-            MessageType.BoardState when multiplayer => () => multiplayer.UpdateBoard(BoardState.Deserialize(completeMessage.data)),
+            MessageType.StartMatch when !isHost => () => StartMatch(GameParams.Deserialize(completeMessage.data)),
+            MessageType.Surrender when multiplayer => () => multiplayer.Surrender(
+                surrenderingTeam: isHost ? player.Value.team : host.team,
+                timestamp: JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(completeMessage.data))
+            ),
+            MessageType.BoardState when multiplayer => () => multiplayer.ReceiveBoard(BoardState.Deserialize(completeMessage.data)),
             MessageType.Promotion when multiplayer => () => multiplayer.ReceivePromotion(Promotion.Deserialize(completeMessage.data)),
             MessageType.OfferDraw when multiplayer => () => mainThreadActions.Enqueue(() => GameObject.FindObjectOfType<OfferDrawPanel>()?.Open()),
             MessageType.AcceptDraw when multiplayer => () => multiplayer.Draw(JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(completeMessage.data))),
-            MessageType.UpdateName when isHost => () => {
-                if(player.HasValue)
-                {
-                    lobby?.RemovePlayer(player.Value);
-                    Player p = player.Value;
-                    p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
-                    player = p;
-                    lobby?.SpawnPlayer(player.Value);
-                }
-            },
-            MessageType.UpdateName when !isHost => () => {
-                if(lobby == null)
-                    return;
-
-                lobby.RemovePlayer(host);
-                if(player.HasValue)
-                    lobby.RemovePlayer(player.Value);
-                host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
-                lobby.SpawnPlayer(host);
-                if(player.HasValue)
-                    lobby.SpawnPlayer(player.Value);
-            },
+            MessageType.UpdateName when isHost => () => UpdateClientName(completeMessage),
+            MessageType.UpdateName when !isHost => () => UpdateHostName(completeMessage),
             MessageType.FlagFall when multiplayer => () => multiplayer.ReceiveFlagfall(Flagfall.Deserialize(completeMessage.data)),
             _ => null
         };
@@ -423,10 +396,54 @@ public class Networker : MonoBehaviour
         action?.Invoke();
     }
 
-    private void ReceiveSurrender(byte[] data) => multiplayer.Surrender(
-        surrenderingTeam: isHost ? player.Value.team : host.team,
-        timestamp: JsonConvert.DeserializeObject<float>(Encoding.ASCII.GetString(data))
-    );
+    private void ReceivePing()
+    {
+        // All pings should get a pong in response
+        byte[] pong = new Message(MessageType.Pong).Serialize();
+        try {
+            stream.Write(pong, 0, pong.Length);
+        } catch (Exception e) {
+            Debug.LogWarning($"Failed to write to socket with error:\n{e}");
+        }
+    }
+
+    private void ReceivePong()
+    {
+        // Measure and update latency when pong received
+        pongReceived = true;
+        mainThreadActions.Enqueue(() =>
+        {
+            if(latency == null)
+                latency = GameObject.FindObjectOfType<Latency>();
+            latency?.UpdateLatency(Time.timeSinceLevelLoad - pingedAtTime);
+        });
+    }
+
+    private void UpdateHostName(Message completeMessage)
+    {
+        if(lobby == null)
+            return;
+
+        lobby.RemovePlayer(host);
+        if(player.HasValue)
+            lobby.RemovePlayer(player.Value);
+        host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
+        lobby.SpawnPlayer(host);
+        if(player.HasValue)
+            lobby.SpawnPlayer(player.Value);
+    }
+
+    private void UpdateClientName(Message completeMessage)
+    {
+        if (!player.HasValue)
+            return;
+
+        lobby?.RemovePlayer(player.Value);
+        Player p = player.Value;
+        p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
+        player = p;
+        lobby?.SpawnPlayer(player.Value);
+    }
 
     private void PreviewOn()
     {
@@ -439,12 +456,6 @@ public class Networker : MonoBehaviour
         PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
         if(previewToggle != null)
             previewToggle.toggle.isOn = false;
-    }
-
-    public void SendMessage(Message message)
-    {
-        byte[] messageData = message.Serialize();
-        stream?.Write(messageData, 0, messageData.Length);
     }
 
     private void PlayerDisconnected()
@@ -594,13 +605,13 @@ public class Networker : MonoBehaviour
             SceneManager.LoadScene("VersusMode");
     }
 
-    public void StartMatch(byte[] data)
+    public void StartMatch(GameParams gameParams)
     {
         if(isHost)
             return;
 
-        gameParams = GameParams.Deserialize(data);
-        
+        this.gameParams = gameParams;
+
         SceneManager.activeSceneChanged += SetupGame;
         if(sceneTransition != null)
             sceneTransition.Transition("VersusMode");

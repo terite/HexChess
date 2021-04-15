@@ -12,7 +12,6 @@ public class Multiplayer : MonoBehaviour
     public GameParams gameParams { get; private set; }
     public Team localTeam => gameParams.localTeam;
 
-    Promotion? receivedPromotion;
     private void Awake()
     {
         networker = GameObject.FindObjectOfType<Networker>();
@@ -43,13 +42,7 @@ public class Multiplayer : MonoBehaviour
         }
     }
 
-    public void Surrender(Team surrenderingTeam, float timestamp) => board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
-    // public void Surrender(Team surrenderingTeam, float timestamp) => board.Surrender(surrenderingTeam, timestamp);
-    public void Surrender(Team surrenderingTeam) => Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
-
-    public void Draw(float timestamp) => board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
-
-    public void UpdateBoard(BoardState state)
+    public void ReceiveBoard(BoardState state)
     {
         if(board.GetCurrentTurn() == gameParams.localTeam)
             return;
@@ -68,6 +61,14 @@ public class Multiplayer : MonoBehaviour
         );
     }
 
+    public void Surrender(Team surrenderingTeam, float timestamp) => 
+        board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
+    public void Surrender(Team surrenderingTeam) => 
+        Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
+
+    public void Draw(float timestamp) => 
+        board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+
     public void SendFlagfall(Flagfall flagfall) => 
         networker.SendMessage(new Message(MessageType.FlagFall, flagfall.Serialize()));
     public void ReceiveFlagfall(Flagfall flagfall) => board.EndGame(
@@ -85,7 +86,6 @@ public class Multiplayer : MonoBehaviour
     }
     public void ReceivePromotion(Promotion promo)
     {
-        receivedPromotion = promo;
         if(board.activePieces.ContainsKey((promo.team, promo.from)))
         {
             IPiece piece = board.activePieces[(promo.team, promo.from)];

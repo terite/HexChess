@@ -314,7 +314,6 @@ public class Board : SerializedMonoBehaviour
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn, 
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
-        // This may need changed when doing networking/saving/loading, or some singal will have to be sent about what the pawn is promoted to
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
         Promotion newPromo = new Promotion(pawn.team, pawn.piece, type);

@@ -15,10 +15,15 @@ public class SceneTransition : MonoBehaviour
     private string toLoad;
     private void Awake() 
     {
+        SceneTransition[] existingSTs = GameObject.FindObjectsOfType<SceneTransition>();
+        if(existingSTs.Length > 1)
+            Destroy(gameObject);
+
         group.alpha = 0;
         group.interactable = false;
         group.blocksRaycasts = false;
         DontDestroyOnLoad(gameObject);
+
     } 
 
     private void Update() {
