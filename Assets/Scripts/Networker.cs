@@ -62,9 +62,8 @@ public class Networker : MonoBehaviour
         // To track latency, every pingDelay seconds we ping the socket, we expect back a pong in a timely fashion
         if(Time.timeSinceLevelLoad >= pingAtTime && stream != null && pongReceived)
         {
-            byte[] ping = new Message(MessageType.Ping).Serialize();
             try {
-                stream.Write(ping, 0, ping.Length);
+                SendMessage(new Message(MessageType.Ping));
                 pingedAtTime = Time.timeSinceLevelLoad;
                 pingAtTime = Time.timeSinceLevelLoad + pingDelay;
                 pongReceived = false;
@@ -92,9 +91,8 @@ public class Networker : MonoBehaviour
         else if(client != null && client.Connected)
         {
             // Write disconnect to socket
-            byte[] disconnectMessage = new Message(MessageType.Disconnect).Serialize();
             try {
-                stream.Write(disconnectMessage, 0, disconnectMessage.Length);
+                SendMessage(new Message(MessageType.Disconnect));
             } catch (Exception e) {
                 Debug.LogWarning($"Failed to write to socket with error:\n{e}");
             }
@@ -254,8 +252,15 @@ public class Networker : MonoBehaviour
     // Both client + server
     public void SendMessage(Message message)
     {
-        byte[] messageData = message.Serialize();
-        stream?.Write(messageData, 0, messageData.Length);
+        if (stream != null)
+        {
+            byte[] messageData = message.Serialize();
+            stream.Write(messageData, 0, messageData.Length);
+        }
+        else
+        {
+            Debug.LogWarning($"No stream, cannot send message: {message}");
+        }
     }
     
     private void ReceiveMessage(IAsyncResult ar)
@@ -399,9 +404,8 @@ public class Networker : MonoBehaviour
     private void ReceivePing()
     {
         // All pings should get a pong in response
-        byte[] pong = new Message(MessageType.Pong).Serialize();
         try {
-            stream.Write(pong, 0, pong.Length);
+            SendMessage(new Message(MessageType.Pong));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -492,9 +496,8 @@ public class Networker : MonoBehaviour
         if(client == null)
             return;
 
-        byte[] ProposeTeamChangeMessage = new Message(MessageType.ProposeTeamChange).Serialize();
         try {
-            stream.Write(ProposeTeamChangeMessage, 0, ProposeTeamChangeMessage.Length);
+            SendMessage(new Message(MessageType.ProposeTeamChange));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -523,9 +526,8 @@ public class Networker : MonoBehaviour
         if(lobby == null)
             return;
 
-        byte[] response = new Message(answer).Serialize();
         try {
-            stream.Write(response, 0, response.Length);
+            SendMessage(new Message(answer));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -640,13 +642,13 @@ public class Networker : MonoBehaviour
         if(answer == MessageType.AcceptDraw)
             multiplayer.Draw(timestamp);
 
-        byte[] response = new Message(
-            answer, 
+        Message response = new Message(
+            answer,
             Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
-        ).Serialize();
+        );
 
         try {
-            stream.Write(response, 0, response.Length);
+            SendMessage(response);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
