@@ -52,6 +52,11 @@ public struct Message
 
         return serializedMessage;
     }
-    
+
+    public override string ToString()
+    {
+        return $"Message({type}, len={data.Length})";
+    }
+
     public static Span<byte> GetSignature() => new byte[5] {1, 2, 3, 4, 5};
 }
