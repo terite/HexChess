@@ -32,7 +32,7 @@ public struct Message
     {
         this.signature = GetSignature().ToArray();
         this.type = type;
-        this.data = new byte[0];
+        this.data = Array.Empty<byte>();
         this.length = (ushort)0;
     }
 
