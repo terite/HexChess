@@ -59,4 +59,27 @@ public struct Message
     }
 
     public static Span<byte> GetSignature() => new byte[5] {1, 2, 3, 4, 5};
+
+    public static (int msgLen, Message message)? ReadMessage(ReadOnlySpan<byte> buffer)
+    {
+        int headerLength = 5 + 2 + 1; 
+        if (buffer.Length < headerLength)
+            return null;
+
+        var signatureSpan = buffer.Slice(0, 5);
+        if (!signatureSpan.SequenceEqual(GetSignature()))
+            throw new ArgumentException("Invalid message signature!");
+
+        var payloadLenSpan = buffer.Slice(5, 2);
+        ushort payloadLength = BitConverter.ToUInt16(payloadLenSpan.ToArray(), 0);
+        var messageType = (MessageType)buffer[7];
+
+        var totalLength = headerLength + payloadLength;
+        if (totalLength < buffer.Length)
+            return null;
+
+        var payload = buffer.Slice(headerLength, payloadLength).ToArray();
+
+        return (totalLength, new Message(messageType, payload));
+    }
 }
