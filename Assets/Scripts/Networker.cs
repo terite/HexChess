@@ -30,7 +30,7 @@ public class Networker : MonoBehaviour
     TcpClient client;
     NetworkStream stream;
 
-    public int messageMaxSize = 1024;
+    const int messageMaxSize = 2048;
     public float pingDelay = 2f;
     float pingAtTime;
     float pingedAtTime;
@@ -304,13 +304,27 @@ public class Networker : MonoBehaviour
                 // process incoming message
                 networker.CheckCompleteMessage();
             }
-            
+
             // Wait for next message
-            networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
+            var availableBufferBytes = networker.readBuffer.Length - networker.readBufferEnd;
+            if (availableBufferBytes > 10)
+            {
+                networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
+            }
+            else
+            {
+                Debug.LogError($"Other player sent too big of a message!");
+                networker.readBufferStart = 0;
+                networker.readBufferEnd = 0;
+            }
+
             
         } catch (IOException e) {
             Debug.Log($"The socket was closed.\n{e}");
             networker.mainThreadActions.Enqueue(Shutdown);
+        }
+        catch (ObjectDisposedException) {
+            // ignore object disposed exceptions, connection is in the process of being torn down
         }
         catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
