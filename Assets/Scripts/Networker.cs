@@ -30,15 +30,15 @@ public class Networker : MonoBehaviour
     TcpClient client;
     NetworkStream stream;
 
-    public int messageMaxSize = 1024;
+    const int messageMaxSize = 2048;
     public float pingDelay = 2f;
     float pingAtTime;
     float pingedAtTime;
     bool pongReceived = true;
 
     byte[] readBuffer;
-    ConcurrentQueue<byte[]> readQueue = new ConcurrentQueue<byte[]>();
-    List<byte> readMessageFragment = new List<byte>();
+    int readBufferStart;
+    int readBufferEnd;
     
     ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
 
@@ -62,9 +62,8 @@ public class Networker : MonoBehaviour
         // To track latency, every pingDelay seconds we ping the socket, we expect back a pong in a timely fashion
         if(Time.timeSinceLevelLoad >= pingAtTime && stream != null && pongReceived)
         {
-            byte[] ping = new Message(MessageType.Ping).Serialize();
             try {
-                stream.Write(ping, 0, ping.Length);
+                SendMessage(new Message(MessageType.Ping));
                 pingedAtTime = Time.timeSinceLevelLoad;
                 pingAtTime = Time.timeSinceLevelLoad + pingDelay;
                 pongReceived = false;
@@ -92,9 +91,8 @@ public class Networker : MonoBehaviour
         else if(client != null && client.Connected)
         {
             // Write disconnect to socket
-            byte[] disconnectMessage = new Message(MessageType.Disconnect).Serialize();
             try {
-                stream.Write(disconnectMessage, 0, disconnectMessage.Length);
+                SendMessage(new Message(MessageType.Disconnect));
             } catch (Exception e) {
                 Debug.LogWarning($"Failed to write to socket with error:\n{e}");
             }
@@ -199,9 +197,11 @@ public class Networker : MonoBehaviour
         SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
         
         readBuffer = new byte[messageMaxSize];
+        readBufferStart = 0;
+        readBufferEnd = 0;
 
         try {
-            stream.BeginRead(readBuffer, 0, messageMaxSize, new AsyncCallback(ReceiveMessage), this);
+            stream.BeginRead(readBuffer, readBufferEnd, readBuffer.Length - readBufferEnd, new AsyncCallback(ReceiveMessage), this);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
         }
@@ -244,8 +244,10 @@ public class Networker : MonoBehaviour
         Debug.Log("Sucessfully connected.");
 
         networker.readBuffer = new byte[messageMaxSize];
+        networker.readBufferStart = 0;
+        networker.readBufferEnd = 0;
         try {
-            networker.stream.BeginRead(networker.readBuffer, 0, messageMaxSize, new AsyncCallback(ReceiveMessage), networker);
+            networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
         }
@@ -254,20 +256,30 @@ public class Networker : MonoBehaviour
     // Both client + server
     public void SendMessage(Message message)
     {
-        byte[] messageData = message.Serialize();
-        stream?.Write(messageData, 0, messageData.Length);
+        if (stream != null)
+        {
+            byte[] messageData = message.Serialize();
+            stream.Write(messageData, 0, messageData.Length);
+        }
+        else
+        {
+            Debug.LogWarning($"No stream, cannot send message: {message}");
+        }
     }
     
     private void ReceiveMessage(IAsyncResult ar)
     {
         Networker networker = (Networker)ar.AsyncState;
         if(networker == null)
+        {
+            Debug.LogWarning("ReceiveMessage: abort: has no networker");
             return;
-
+        }
         try {
             int amountOfBytesRead = networker.stream.EndRead(ar);
+            networker.readBufferEnd += amountOfBytesRead;
 
-            if(amountOfBytesRead == 0)
+            if (amountOfBytesRead == 0)
             {
                 if(!isHost)
                 {
@@ -290,18 +302,29 @@ public class Networker : MonoBehaviour
             else
             {
                 // process incoming message
-                byte[] readBytes = new byte[amountOfBytesRead];
-                Buffer.BlockCopy(networker.readBuffer, 0, readBytes, 0, amountOfBytesRead);
-                networker.readQueue.Enqueue(readBytes);
-                networker.mainThreadActions.Enqueue(networker.CheckCompleteMessage);                
+                networker.CheckCompleteMessage();
             }
-            
+
             // Wait for next message
-            networker.stream.BeginRead(networker.readBuffer, 0, messageMaxSize, new AsyncCallback(ReceiveMessage), networker);
+            var availableBufferBytes = networker.readBuffer.Length - networker.readBufferEnd;
+            if (availableBufferBytes > 10)
+            {
+                networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
+            }
+            else
+            {
+                Debug.LogError($"Other player sent too big of a message!");
+                networker.readBufferStart = 0;
+                networker.readBufferEnd = 0;
+            }
+
             
         } catch (IOException e) {
             Debug.Log($"The socket was closed.\n{e}");
             networker.mainThreadActions.Enqueue(Shutdown);
+        }
+        catch (ObjectDisposedException) {
+            // ignore object disposed exceptions, connection is in the process of being torn down
         }
         catch (Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
@@ -310,44 +333,44 @@ public class Networker : MonoBehaviour
 
     private void CheckCompleteMessage()
     {
-        if(readQueue.TryDequeue(out byte[] result))
+        int readBufferLen = readBufferEnd - readBufferStart;
+        if (readBufferLen < 1)
+            return;
+
+        var received = ((ReadOnlySpan<byte>)readBuffer).Slice(readBufferStart, readBufferLen);
+
+        int pos = 0;
+        while (pos < received.Length)
         {
-            readMessageFragment.AddRange(result);
-            Span<byte> mySignature = Message.GetSignature();
-
-            if(readMessageFragment.Count >= mySignature.Length)
+            (int msgLen, Message message)? readResult;
+            try
             {
-                byte[] messageSig = readMessageFragment.Take(mySignature.Length).ToArray();
-                // If the message came from another copy of this game and not some rando in the internet cesspool, it should have a matching signature
-                // This doesn't prevent targeted attacks, but it's a good way to eliminate a lot of garbage
-                if(mySignature.SequenceEqual(new ReadOnlySpan<byte>(messageSig)))
-                {
-                    // The first 2 bytes should be the message length
-                    if(readMessageFragment.Count >= mySignature.Length + 2)
-                    {
-                        byte[] messageLength = readMessageFragment.Skip(mySignature.Length).Take(2).ToArray();
-                        ushort dataLength = BitConverter.ToUInt16(messageLength, 0);
-                        // The 3rd byte should be the type
-                        int copleteMessageLength = mySignature.Length + 3 + dataLength;
-                        if(readMessageFragment.Count >= copleteMessageLength)
-                        {
-                            // The incomming message matches our format
-                            Message completeMessage = new Message(
-                                signature: messageSig,
-                                type: (MessageType)readMessageFragment.Skip(mySignature.Length + 2).First(),
-                                data: readMessageFragment.Skip(mySignature.Length + 3).Take(dataLength).ToArray()
-                            );
-
-                            readMessageFragment.RemoveRange(0, copleteMessageLength);
-                            Dispatch(completeMessage);
-                        }
-                    }
-                }
-                // Maybe only remove mySignature.Length and check the next set of bytes?
-                // This could end up looking through a lot of trash though
-                else
-                    readMessageFragment.Clear();
+                readResult = Message.ReadMessage(received.Slice(pos));
+            } catch (ArgumentException err)
+            {
+                readBufferStart = readBufferEnd;
+                Debug.LogError($"Error reading message: {err}");
+                break;
             }
+            if (!readResult.HasValue)
+                break;
+
+            var (msgLen, message) = readResult.Value;
+
+            mainThreadActions.Enqueue(() =>
+            {
+                Dispatch(message);
+            });
+
+            pos += msgLen;
+        }
+
+        readBufferStart = pos;
+
+        if (readBufferStart == readBufferEnd)
+        {
+            readBufferStart = 0;
+            readBufferEnd = 0;
         }
     }
 
@@ -399,9 +422,8 @@ public class Networker : MonoBehaviour
     private void ReceivePing()
     {
         // All pings should get a pong in response
-        byte[] pong = new Message(MessageType.Pong).Serialize();
         try {
-            stream.Write(pong, 0, pong.Length);
+            SendMessage(new Message(MessageType.Pong));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -492,9 +514,8 @@ public class Networker : MonoBehaviour
         if(client == null)
             return;
 
-        byte[] ProposeTeamChangeMessage = new Message(MessageType.ProposeTeamChange).Serialize();
         try {
-            stream.Write(ProposeTeamChangeMessage, 0, ProposeTeamChangeMessage.Length);
+            SendMessage(new Message(MessageType.ProposeTeamChange));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -523,9 +544,8 @@ public class Networker : MonoBehaviour
         if(lobby == null)
             return;
 
-        byte[] response = new Message(answer).Serialize();
         try {
-            stream.Write(response, 0, response.Length);
+            SendMessage(new Message(answer));
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
@@ -640,13 +660,13 @@ public class Networker : MonoBehaviour
         if(answer == MessageType.AcceptDraw)
             multiplayer.Draw(timestamp);
 
-        byte[] response = new Message(
-            answer, 
+        Message response = new Message(
+            answer,
             Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
-        ).Serialize();
+        );
 
         try {
-            stream.Write(response, 0, response.Length);
+            SendMessage(response);
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }

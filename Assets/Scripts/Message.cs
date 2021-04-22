@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public struct Message 
 {
@@ -32,7 +33,7 @@ public struct Message
     {
         this.signature = GetSignature().ToArray();
         this.type = type;
-        this.data = new byte[0];
+        this.data = Array.Empty<byte>();
         this.length = (ushort)0;
     }
 
@@ -52,6 +53,34 @@ public struct Message
 
         return serializedMessage;
     }
-    
+
+    public override string ToString()
+    {
+        return $"Message({type}, len={data.Length})";
+    }
+
     public static Span<byte> GetSignature() => new byte[5] {1, 2, 3, 4, 5};
+
+    public static (int msgLen, Message message)? ReadMessage(ReadOnlySpan<byte> buffer)
+    {
+        int headerLength = 5 + 2 + 1; 
+        if (buffer.Length < headerLength)
+            return null;
+
+        var signatureSpan = buffer.Slice(0, 5);
+        if (!signatureSpan.SequenceEqual(GetSignature()))
+            throw new ArgumentException("Invalid message signature!");
+
+        var payloadLenSpan = buffer.Slice(5, 2);
+        ushort payloadLength = BitConverter.ToUInt16(payloadLenSpan.ToArray(), 0);
+        var messageType = (MessageType)buffer[7];
+
+        var totalLength = headerLength + payloadLength;
+        if (buffer.Length < totalLength)
+            return null;
+
+        var payload = buffer.Slice(headerLength, payloadLength).ToArray();
+
+        return (totalLength, new Message(messageType, payload));
+    }
 }
