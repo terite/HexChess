@@ -102,7 +102,7 @@ public class Board : SerializedMonoBehaviour
         }
 
         newTurn?.Invoke(newState);
-        if(turnHistory.Count > 1)
+        if(newState.currentMove != Team.None && turnHistory.Count > 1)
             HighlightMove(BoardState.GetLastMove(turnHistory));
     }
 
