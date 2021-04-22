@@ -10,13 +10,15 @@ public class PreviewMovesToggle : MonoBehaviour
     public Color readyColor;
 
     private void Awake() {
-        networker = GameObject.FindObjectOfType<Networker>();
+        toggle.isOn = true;
+        image.color = readyColor;
 
+        networker = GameObject.FindObjectOfType<Networker>();
+        
         toggle.onValueChanged.AddListener(newVal => {
             MessageType previewMovesType = newVal ? MessageType.PreviewMovesOn : MessageType.PreviewMovesOff;
             networker?.SendMessage(new Message(previewMovesType));
             image.color = newVal ? readyColor : uncheckedColor;
         });
-        toggle.isOn = true;
     }
 }
