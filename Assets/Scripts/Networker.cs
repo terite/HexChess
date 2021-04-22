@@ -557,6 +557,7 @@ public class Networker : MonoBehaviour
 
     private void Ready()
     {
+        Debug.Log("Client Ready.");
         clientIsReady = true;
 
         StartMatchButton startButton = GameObject.FindObjectOfType<StartMatchButton>();

@@ -135,7 +135,7 @@ MeshCollider:
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 2190622540023885545, guid: ea5486c088d182740906f787bbe44352, type: 3}
+  m_Mesh: {fileID: 4300000, guid: a1d2698aa9e67a84e9f97b11e0a3e839, type: 2}
 --- !u!54 &2959384293376661828
 Rigidbody:
   m_ObjectHideFlags: 0

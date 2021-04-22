@@ -41,7 +41,7 @@ public class TurnPanel : MonoBehaviour
         string durationString = $"Game over! After {turnCount} {turnPlurality} in {formattedGameLength}";
 
         turnText.text = game.endType switch {
-            // game.endType was added in v1.0.8 to support flagfalls and stalemates, any game saves from before then will default to Pendind
+            // game.endType was added in v1.0.8 to support flagfalls and stalemates, any game saves from before then will default to Pending
             GameEndType.Pending => SupportOldSaves(game),
             GameEndType.Draw => $"{durationString}, both teams have agreed to a draw.",
             GameEndType.Checkmate => $"{durationString} {game.winner} has won by checkmate!",
