@@ -208,7 +208,11 @@ public class Board : SerializedMonoBehaviour
         
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
-            cam.SetToTeam(newState.currentMove);
+        {
+            FlipCameraToggle flipCameraToggle = GameObject.FindObjectOfType<FlipCameraToggle>();
+            if(flipCameraToggle != null && flipCameraToggle.toggle.isOn)
+                cam.SetToTeam(newState.currentMove);
+        }
     }
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
@@ -225,7 +229,7 @@ public class Board : SerializedMonoBehaviour
                 possibleMoves.RemoveAt(i);
                 continue;
             }
-            
+
             BoardState newState = default;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
                 newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
