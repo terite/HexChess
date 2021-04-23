@@ -15,7 +15,7 @@ public class Pawn : MonoBehaviour, IPiece
     private Index startLoc;
     public bool captured {get => _captured; set{_captured = value;}}
     private bool _captured = false;
-
+    public ushort value {get => 1; set{}}
     public bool passantable = false;
     public int turnsPassed = 0;
     public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;

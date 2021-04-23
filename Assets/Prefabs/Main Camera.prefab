@@ -293,6 +293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d83e4609a3a4b9b4aa55b0a794518045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  keys: {fileID: 0}
   selectPiece: {fileID: 0}
   team: 1
   defaultScroll: 18

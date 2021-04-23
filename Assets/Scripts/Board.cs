@@ -13,6 +13,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private LastMoveTracker moveTracker;
     [SerializeField] private TurnPanel turnPanel;
     [SerializeField] private Timers timers;
+    [SerializeField] private SmoothHalfOrbitalCamera cam;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -204,6 +205,10 @@ public class Board : SerializedMonoBehaviour
         turnHistory.Add(newState);
         newTurn.Invoke(newState);
         HighlightMove(BoardState.GetLastMove(turnHistory));
+        
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        if(multiplayer == null)
+            cam.SetToTeam(newState.currentMove);
     }
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
@@ -220,7 +225,7 @@ public class Board : SerializedMonoBehaviour
                 possibleMoves.RemoveAt(i);
                 continue;
             }
-
+            
             BoardState newState = default;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
                 newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);

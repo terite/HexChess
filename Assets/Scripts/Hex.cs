@@ -135,6 +135,8 @@ public struct Index
         this.col = col;
     }
 
+    public override string ToString() => $"{row}, {col}";
+
     public override bool Equals(object obj) => 
         obj is Index index &&
         row == index.row &&

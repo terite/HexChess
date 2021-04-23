@@ -13,7 +13,7 @@ public class Jail : MonoBehaviour
 
     public void Enprison(IPiece piece)
     {
-        if(prisonedPieces.Contains(piece))
+        if (prisonedPieces.Contains(piece))
             return;
 
         piece.captured = true;
@@ -25,6 +25,19 @@ public class Jail : MonoBehaviour
         );
         piece.obj.transform.parent = transform;
         prisonedPieces.Add(piece);
+        Sort();
+    }
+
+    private void Sort()
+    {
+        IPiece[] children = gameObject.GetComponentsInChildren<IPiece>();
+        IEnumerable<IPiece> sorted = from child in children orderby child.value descending select child;
+        for (int i = 0; i < sorted.Count(); i++)
+        {
+            IPiece sortPiece = sorted.ElementAt(i);
+            sortPiece.obj.transform.SetSiblingIndex(i);
+            sortPiece.obj.transform.position = GetPos(i);
+        }
     }
 
     public IPiece GetPieceIfInJail(Piece piece)
@@ -36,10 +49,12 @@ public class Jail : MonoBehaviour
             return null;
     }
 
-    public Vector3 GetNextPos()
+    public Vector3 GetNextPos() => GetPos(prisonedPieces.Count);
+
+    public Vector3 GetPos(int index)
     {
-        int xCount = (prisonedPieces.Count % piecesAcross);
-        int zCount = ((float)prisonedPieces.Count / (float)piecesAcross).Floor();
+        int xCount = (index % piecesAcross);
+        int zCount = ((float)index / (float)piecesAcross).Floor();
         return new Vector3(
             x: transform.position.x + (xzOffsets.x * xCount),
             y: transform.position.y,

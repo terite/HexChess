@@ -9,6 +9,7 @@ public interface IPiece
     Piece piece {get; set;}
     Index location {get; set;}
     bool captured {get; set;}
+    ushort value {get; set;}
     List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false);
     void MoveTo(Hex hex);
     void Init(Team team, Piece piece, Index startingLocation);

@@ -13,6 +13,7 @@ public class Squire : MonoBehaviour, IPiece
     private Index _location;
     public bool captured { get{ return _captured; } set{ _captured = value; } }
     private bool _captured = false;
+    public ushort value {get => 2; set{}}
 
     public void Init(Team team, Piece piece, Index startingLocation)
     {

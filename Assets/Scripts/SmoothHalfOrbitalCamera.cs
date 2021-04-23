@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class SmoothHalfOrbitalCamera : MonoBehaviour
 {
+    [SerializeField] private Keys keys;
     readonly float hardScrollModifier = 0.01f;
     [SerializeField] [HideInInspector] SelectPiece selectPiece;
     public Team team = Team.White;
@@ -61,6 +62,17 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         defaultRotation = team == Team.White ? Vector2.right * 90 : new Vector2(90, 180);
     }
 
+    public void SetToTeam(Team team)
+    {
+        if(rotating)
+            return;
+
+        this.team = team;
+        keys.SetKeys(team);
+        SetDefaultTeam(team);
+        StopRotating();
+    }
+
     public void ToggleTeam()
     {
         if(rotating)
@@ -73,6 +85,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Team.Black => Team.White,
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
+        keys.SetKeys(team);
         SetDefaultTeam(team);
         StopRotating();
     }
