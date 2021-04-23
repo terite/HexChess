@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
 using System.Linq;
+using System;
 
 public class SelectPiece : MonoBehaviour
 {
@@ -23,6 +24,8 @@ public class SelectPiece : MonoBehaviour
     public Color greenColor;
     public Color redColor;
 
+
+    IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
     public Color whiteColor;
@@ -203,6 +206,9 @@ public class SelectPiece : MonoBehaviour
                                     DisablePreview();
                                     previewMoves = incomingPreviewMoves;
                                     previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
+                                    
+                                    threateningPieces = board.GetThreateningPieces(hoveredHex);
+
                                     EnablePreview();
                                 }
                             }
@@ -231,6 +237,8 @@ public class SelectPiece : MonoBehaviour
                         if(hoveredPieceHex != null)
                             previewMoves = previewMoves.Append((hoveredPieceHex, MoveType.None));
 
+                        threateningPieces = board.GetThreateningPieces(hoveredPieceHex);
+
                         EnablePreview();
                     }
                 }
@@ -244,6 +252,24 @@ public class SelectPiece : MonoBehaviour
             DisablePreview();
     }
 
+    private void ColorizeThreat()
+    {
+        foreach(IPiece piece in threateningPieces)
+        {
+            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+            renderer.material.SetColor("_BaseColor", redColor);
+        }
+    }
+
+    private void ClearThreatHighlight()
+    {
+        foreach(IPiece piece in threateningPieces)
+        {
+            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+            renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
+        }
+    }
+
     private void EnablePreview()
     {
         foreach((Hex hex, MoveType moveType) in previewMoves)
@@ -251,6 +277,8 @@ public class SelectPiece : MonoBehaviour
             hex.SetOutlineColor(previewColor);
             hex.ToggleSelect();
         }
+
+        ColorizeThreat();
     }
 
     private void DisablePreview()
@@ -258,6 +286,8 @@ public class SelectPiece : MonoBehaviour
         foreach ((Hex hex, MoveType moveType) in previewMoves)
             hex.ToggleSelect();
         previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+
+        ClearThreatHighlight();
     }
 
     public void LeftClick(CallbackContext context)
@@ -380,7 +410,7 @@ public class SelectPiece : MonoBehaviour
         (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
         BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
 
-        if (multiplayer != null)
+        if(multiplayer != null)
             multiplayer.SendBoard(newState);
 
         board.AdvanceTurn(newState);

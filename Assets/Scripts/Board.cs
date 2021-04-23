@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Linq;
 using System.IO;
+using System;
 
 public class Board : SerializedMonoBehaviour
 {
@@ -250,6 +251,19 @@ public class Board : SerializedMonoBehaviour
                 possibleMoves.RemoveAt(i);
         }
         return possibleMoves;
+    }
+
+    public IEnumerable<IPiece> GetThreateningPieces(Hex hoveredHex)
+    {
+        BoardState currentState = GetCurrentBoardState();
+        List<IPiece> threateningPieces = new List<IPiece>();
+        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
+        {
+            List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, false);
+            if(possibleMoves.Where(move => move.Item1 == hoveredHex && move.Item2 == MoveType.Attack).Count() == 1)
+                threateningPieces.Add(piece.Value);
+        }
+        return threateningPieces;
     }
 
     public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
