@@ -206,11 +206,11 @@ public class Board : SerializedMonoBehaviour
         HighlightMove(BoardState.GetLastMove(turnHistory));
     }
 
-    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
         // Eliminate invalid moves
         // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState);
+        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
         // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
         for(int i = possibleMoves.Count - 1; i >= 0; i--)
         {
@@ -223,7 +223,7 @@ public class Board : SerializedMonoBehaviour
 
             BoardState newState = default;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true);
+                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
             else if(possibleMoveType == MoveType.Defend)
                 newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex.index]], boardState, true);
             else if(possibleMoveType == MoveType.EnPassant)
@@ -243,7 +243,7 @@ public class Board : SerializedMonoBehaviour
         return possibleMoves;
     }
 
-    public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false)
+    public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
         // Copy the existing board state
         BoardState currentState = boardState;
@@ -255,7 +255,7 @@ public class Board : SerializedMonoBehaviour
         if(currentState.allPiecePositions.Contains(targetLocation.index))
         {
             (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
-            if(occupyingTeam != piece.team)
+            if(occupyingTeam != piece.team || includeBlocking)
             {
                 takenPieceAtLocation = occupyingType;
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];

@@ -21,7 +21,7 @@ public class Squire : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int squireOffset = location.row % 2 == 0 ? 1 : -1;
@@ -43,7 +43,7 @@ public class Squire : MonoBehaviour, IPiece
             if(boardState.allPiecePositions.ContainsKey(possibleHex.index))
             {
                 (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[possibleHex.index];
-                if(occupyingTeam == team)
+                if(occupyingTeam == team && !includeBlocking)
                     possible.RemoveAt(i);
                 else
                     possible[i] = (possibleHex, MoveType.Attack);
@@ -56,11 +56,5 @@ public class Squire : MonoBehaviour, IPiece
     {
         transform.position = hex.transform.position + Vector3.up;
         location = hex.index;
-    }
-    public void DestroyScript()
-    {
-        Destroy(GetComponent<Rigidbody>());
-        Destroy(GetComponent<Collider>());
-        Destroy(this);
     }
 }

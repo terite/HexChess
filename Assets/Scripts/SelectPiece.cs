@@ -195,7 +195,8 @@ public class SelectPiece : MonoBehaviour
                             {
                                 IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
                                     hoveredPiece,
-                                    currentBoardState
+                                    currentBoardState,
+                                    true
                                 );
                                 if(incomingPreviewMoves != previewMoves)
                                 {
@@ -216,7 +217,11 @@ public class SelectPiece : MonoBehaviour
                 }
                 else if(!hoveredPiece.captured)
                 {
-                    IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(hoveredPiece, currentBoardState);
+                    IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
+                        hoveredPiece,
+                        currentBoardState,
+                        true
+                    );
                     if(incomingPreviewMoves != previewMoves)
                     {
                         DisablePreview();

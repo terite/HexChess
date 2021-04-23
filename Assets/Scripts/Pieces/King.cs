@@ -22,7 +22,7 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possibleMoves = new List<(Hex, MoveType)>();
         foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
@@ -34,9 +34,8 @@ public class King : MonoBehaviour, IPiece
             if(boardState.allPiecePositions.ContainsKey(hex.index))
             {
                 (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
-                if(occuypingTeam == team)
-                    continue;
-                else
+                
+                if(includeBlocking || occuypingTeam != team)
                 {
                     possibleMoves.Add((hex, MoveType.Attack));
                     continue;
@@ -51,11 +50,5 @@ public class King : MonoBehaviour, IPiece
     {
         transform.position = hex.transform.position + Vector3.up;
         location = hex.index;
-    }
-    public void DestroyScript()
-    {
-        Destroy(GetComponent<Rigidbody>());
-        Destroy(GetComponent<Collider>());
-        Destroy(this);
     }
 }

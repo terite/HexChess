@@ -44,6 +44,7 @@ public class Networker : MonoBehaviour
 
     public bool clientIsReady {get; private set;}
     GameParams gameParams;
+    public bool attemptingConnection {get; private set;} = false;
     private void Awake()
     {
         sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
@@ -202,13 +203,13 @@ public class Networker : MonoBehaviour
 
         try {
             stream.BeginRead(readBuffer, readBufferEnd, readBuffer.Length - readBufferEnd, new AsyncCallback(ReceiveMessage), this);
-        } catch (Exception e) {
+        } catch(Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
         }
    
         try {
             server.BeginAcceptTcpClient(new AsyncCallback(AcceptClientCallback), server);
-        } catch (Exception e) {
+        } catch(Exception e) {
             Debug.LogWarning($"Failed to connect to incoming client:\n{e}");
         }
     }
@@ -216,6 +217,7 @@ public class Networker : MonoBehaviour
     // Client
     public void TryConnectClient(string ip, int port)
     {
+        attemptingConnection = true;
         this.ip = ip;
         this.port = port;
 
@@ -223,32 +225,30 @@ public class Networker : MonoBehaviour
         client = new TcpClient();
         try {
             client.BeginConnect(ip, port, new AsyncCallback(ClientConnectCallback), this);
-        } catch (Exception e) {
+        } catch(Exception e) {
             Debug.LogWarning($"Failed to connect to {ip}:{port} with error:\n{e}");
+            attemptingConnection = false;
         }
     }
 
     private void ClientConnectCallback(IAsyncResult ar)
     {
-        Networker networker = (Networker)ar.AsyncState;
-        if(networker == null)
-            return;
-        
-        try{
-            networker.client.EndConnect(ar);
-            networker.stream = networker.client.GetStream();
-        } catch (Exception e) {
+        try { 
+            client.EndConnect(ar);
+            stream = client.GetStream();
+        } catch(Exception e) {
             Debug.LogWarning($"Failed to connect with error:\n{e}");
+            attemptingConnection = false;
             return;
         }
         Debug.Log("Sucessfully connected.");
-
-        networker.readBuffer = new byte[messageMaxSize];
-        networker.readBufferStart = 0;
-        networker.readBufferEnd = 0;
+        attemptingConnection = false;
+        readBuffer = new byte[messageMaxSize];
+        readBufferStart = 0;
+        readBufferEnd = 0;
         try {
-            networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
-        } catch (Exception e) {
+            stream.BeginRead(readBuffer, readBufferEnd, readBuffer.Length - readBufferEnd, new AsyncCallback(ReceiveMessage), this);
+        } catch(Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
         }
     }
@@ -262,71 +262,58 @@ public class Networker : MonoBehaviour
             stream.Write(messageData, 0, messageData.Length);
         }
         else
-        {
             Debug.LogWarning($"No stream, cannot send message: {message}");
-        }
     }
     
     private void ReceiveMessage(IAsyncResult ar)
     {
-        Networker networker = (Networker)ar.AsyncState;
-        if(networker == null)
-        {
-            Debug.LogWarning("ReceiveMessage: abort: has no networker");
-            return;
-        }
         try {
-            int amountOfBytesRead = networker.stream.EndRead(ar);
-            networker.readBufferEnd += amountOfBytesRead;
+            int amountOfBytesRead = stream.EndRead(ar);
+            readBufferEnd += amountOfBytesRead;
 
-            if (amountOfBytesRead == 0)
+            if(amountOfBytesRead == 0)
             {
                 if(!isHost)
                 {
                     Debug.Log("The host closed the socket.");
                     if(lobby != null)
-                        networker.mainThreadActions.Enqueue(Shutdown);
+                        mainThreadActions.Enqueue(Shutdown);
                     else if(multiplayer != null)
                     {
-                        networker.mainThreadActions.Enqueue(() => multiplayer.Surrender(host.team)); 
-                        networker.Disconnect();
+                        mainThreadActions.Enqueue(() => multiplayer.Surrender(host.team)); 
+                        Disconnect();
                     }
                 }
                 else
                 {
                     Debug.Log("The player disconnected.");
-                    networker.mainThreadActions.Enqueue(PlayerDisconnected);
+                    mainThreadActions.Enqueue(PlayerDisconnected);
                     return;
                 }
             }
             else
-            {
-                // process incoming message
-                networker.CheckCompleteMessage();
-            }
+                CheckCompleteMessage();
 
             // Wait for next message
-            var availableBufferBytes = networker.readBuffer.Length - networker.readBufferEnd;
-            if (availableBufferBytes > 10)
-            {
-                networker.stream.BeginRead(networker.readBuffer, networker.readBufferEnd, networker.readBuffer.Length - networker.readBufferEnd, new AsyncCallback(ReceiveMessage), networker);
-            }
+            var availableBufferBytes = readBuffer.Length - readBufferEnd;
+            if(availableBufferBytes > 10)
+                stream.BeginRead(readBuffer, readBufferEnd, readBuffer.Length - readBufferEnd, new AsyncCallback(ReceiveMessage), this);
             else
             {
                 Debug.LogError($"Other player sent too big of a message!");
-                networker.readBufferStart = 0;
-                networker.readBufferEnd = 0;
+                readBufferStart = 0;
+                readBufferEnd = 0;
             }
 
             
-        } catch (IOException e) {
+        } catch(IOException e) {
             Debug.Log($"The socket was closed.\n{e}");
-            networker.mainThreadActions.Enqueue(Shutdown);
+            mainThreadActions.Enqueue(Shutdown);
         }
-        catch (ObjectDisposedException) {
+        catch(ObjectDisposedException) {
             // ignore object disposed exceptions, connection is in the process of being torn down
         }
-        catch (Exception e) {
+        catch(Exception e) {
             Debug.LogWarning($"Failed to read from socket:\n{e}");
         }
     }
@@ -340,34 +327,29 @@ public class Networker : MonoBehaviour
         var received = ((ReadOnlySpan<byte>)readBuffer).Slice(readBufferStart, readBufferLen);
 
         int pos = 0;
-        while (pos < received.Length)
+        while(pos < received.Length)
         {
-            (int msgLen, Message message)? readResult;
-            try
-            {
+            Message? readResult;
+            try {
                 readResult = Message.ReadMessage(received.Slice(pos));
-            } catch (ArgumentException err)
-            {
+            } catch (ArgumentException err) {
                 readBufferStart = readBufferEnd;
                 Debug.LogError($"Error reading message: {err}");
                 break;
             }
-            if (!readResult.HasValue)
+            if(!readResult.HasValue)
                 break;
 
-            var (msgLen, message) = readResult.Value;
+            Message message = readResult.Value;
 
-            mainThreadActions.Enqueue(() =>
-            {
-                Dispatch(message);
-            });
+            mainThreadActions.Enqueue(() => Dispatch(message));
 
-            pos += msgLen;
+            pos += message.totalLength;
         }
 
         readBufferStart = pos;
 
-        if (readBufferStart == readBufferEnd)
+        if(readBufferStart == readBufferEnd)
         {
             readBufferStart = 0;
             readBufferEnd = 0;

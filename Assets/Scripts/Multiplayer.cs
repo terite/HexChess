@@ -5,6 +5,7 @@ public class Multiplayer : MonoBehaviour
     [SerializeField] private GameObject whiteKeys;
     [SerializeField] private GameObject blackKeys;
     [SerializeField] private Timers timers;
+    [SerializeField] private TurnChangePanel turnChangePanel;
     Networker networker;
     Board board;
     LastMoveTracker moveTracker;
@@ -40,12 +41,20 @@ public class Multiplayer : MonoBehaviour
             timers.gameObject.SetActive(true);
             timers.SetTimers(gameParams.timerDuration);
         }
+
+        if(gameParams.localTeam == Team.White)
+            turnChangePanel.Display(gameParams.localTeam);
     }
 
     public void ReceiveBoard(BoardState state)
     {
         if(board.GetCurrentTurn() == gameParams.localTeam)
             return;
+
+        // Advance Turn is going to flip the current move to the next team
+        // So we want to display the turn change panel if it's going to become our turn    
+        if(state.currentMove != gameParams.localTeam)
+            turnChangePanel.Display(gameParams.localTeam);
 
         board.SetBoardState(state, board.promotions);
         board.AdvanceTurn(state, false);

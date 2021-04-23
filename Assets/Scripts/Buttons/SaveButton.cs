@@ -39,7 +39,6 @@ public class SaveButton : MonoBehaviour
             return;
         }
 
-
         Game game = board.game.winner > Winner.Pending 
             ? board.game 
             : new Game(

@@ -7,6 +7,7 @@ public struct Message
     public ushort length;
     public MessageType type;
     public byte[] data;
+    public int totalLength => length + 8;
 
     public Message(byte[] signature, MessageType type, byte[] data)
     {
@@ -61,7 +62,7 @@ public struct Message
 
     public static Span<byte> GetSignature() => new byte[5] {1, 2, 3, 4, 5};
 
-    public static (int msgLen, Message message)? ReadMessage(ReadOnlySpan<byte> buffer)
+    public static Message? ReadMessage(ReadOnlySpan<byte> buffer)
     {
         int headerLength = 5 + 2 + 1; 
         if (buffer.Length < headerLength)
@@ -81,6 +82,6 @@ public struct Message
 
         var payload = buffer.Slice(headerLength, payloadLength).ToArray();
 
-        return (totalLength, new Message(messageType, payload));
+        return new Message(messageType, payload);
     }
 }

@@ -15,8 +15,8 @@ public class ToggleClockButton : MonoBehaviour
             }
             else
             {
-                timers.SetClock();
                 timers.gameObject.SetActive(true);
+                timers.SetClock();
             }
         });
     }

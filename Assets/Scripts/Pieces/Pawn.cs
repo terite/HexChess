@@ -31,7 +31,7 @@ public class Pawn : MonoBehaviour, IPiece
         isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int pawnOffset = team == Team.White ? 2 : -2;
@@ -39,11 +39,11 @@ public class Pawn : MonoBehaviour, IPiece
 
         // Check takes
         Hex take1 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);
-        if(CanTake(take1, boardState))
+        if(CanTake(take1, boardState, includeBlocking))
             possible.Add((take1, MoveType.Attack));
         
         Hex take2 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col);
-        if(CanTake(take2, boardState))
+        if(CanTake(take2, boardState, includeBlocking))
             possible.Add((take2, MoveType.Attack));
         
         // Check en passant
@@ -82,7 +82,7 @@ public class Pawn : MonoBehaviour, IPiece
         return false;
     }
 
-    private bool CanTake(Hex hex, BoardState boardState)
+    private bool CanTake(Hex hex, BoardState boardState, bool includeBlocking = false)
     {
         if(hex == null)
             return false;
@@ -90,7 +90,7 @@ public class Pawn : MonoBehaviour, IPiece
         if(boardState.allPiecePositions.ContainsKey(hex.index))
         {
             (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
-            if(occupyingTeam != team)
+            if(occupyingTeam != team || includeBlocking)
                 return true;
         }
         return false;
@@ -152,11 +152,5 @@ public class Pawn : MonoBehaviour, IPiece
         }
         else
             turnsPassed++;
-    }
-    public void DestroyScript()
-    {
-        Destroy(GetComponent<Rigidbody>());
-        Destroy(GetComponent<Collider>());
-        Destroy(this);
     }
 }

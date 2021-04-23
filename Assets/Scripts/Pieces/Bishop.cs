@@ -20,7 +20,7 @@ public class Bishop : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState)
+    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int offset = location.row % 2;
@@ -31,7 +31,7 @@ public class Bishop : MonoBehaviour, IPiece
             row <= board.hexGrid.rows && col >= 0; 
             row++, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -43,7 +43,7 @@ public class Bishop : MonoBehaviour, IPiece
             row <= board.hexGrid.rows && col <= board.hexGrid.cols;
             row++, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -55,7 +55,7 @@ public class Bishop : MonoBehaviour, IPiece
             row >= 0 && col >= 0;
             row--, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -67,7 +67,7 @@ public class Bishop : MonoBehaviour, IPiece
             row >= 0 && col <= board.hexGrid.cols;
             row--, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible))
+            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -78,7 +78,7 @@ public class Bishop : MonoBehaviour, IPiece
     }
 
 
-    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible)
+    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible, bool includeBlocking = false)
     {
         Hex hex = board.GetHexIfInBounds(row, col);
         if(hex != null)
@@ -86,7 +86,7 @@ public class Bishop : MonoBehaviour, IPiece
             if(boardState.allPiecePositions.ContainsKey(hex.index))
             {
                 (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
-                if(occupyingTeam != team)
+                if(occupyingTeam != team || includeBlocking)
                     possible.Add((hex, MoveType.Attack));
                 return false;
             }
@@ -100,12 +100,5 @@ public class Bishop : MonoBehaviour, IPiece
     {
         transform.position = hex.transform.position + Vector3.up;
         location = hex.index;
-    }
-
-    public void DestroyScript()
-    {
-        Destroy(GetComponent<Rigidbody>());
-        Destroy(GetComponent<Collider>());
-        Destroy(this);
     }
 }
