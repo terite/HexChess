@@ -14,4 +14,7 @@ public enum MessageType : byte {
     UpdateName = 18,
     FlagFall = 19,
     Connect = 20,
+    Checkmate = 21,
+    Stalemate = 22,
+    
 }

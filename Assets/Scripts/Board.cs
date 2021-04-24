@@ -164,9 +164,11 @@ public class Board : SerializedMonoBehaviour
     public void AdvanceTurn(BoardState newState, bool updateTime = true)
     {
         List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        float timestamp = Time.timeSinceLevelLoad + timeOffset;
         
         if(updateTime)
-            newState.executedAtTime = Time.timeSinceLevelLoad + timeOffset;
+            newState.executedAtTime = timestamp;
 
         newState.check = Team.None;
         newState.checkmate = Team.None;
@@ -192,13 +194,51 @@ public class Board : SerializedMonoBehaviour
                 newState.check = otherTeam;
         }
 
+        // Handle potential checkmate
         if(newState.checkmate != Team.None)
         {
+            if(multiplayer)
+            {
+                if(multiplayer.gameParams.localTeam == newState.checkmate)
+                    multiplayer.SendGameEnd(timestamp, MessageType.Checkmate);
+                else
+                    return;
+            }
+            
             EndGame(
-                timestamp: Time.timeSinceLevelLoad + timeOffset, 
+                timestamp, 
                 endType: GameEndType.Checkmate, 
                 winner: newState.checkmate == Team.White ? Winner.Black : Winner.White
             );
+            return;
+        }
+
+        // Check for stalemate
+        IEnumerable<KeyValuePair<(Team, Piece), IPiece>> otherTeamPieces = activePieces.Where(piece => piece.Key.Item1 == otherTeam);
+        List<(Hex, MoveType)> validMovesForStalemateCheck = new List<(Hex, MoveType)>();
+        foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
+        {
+            List<(Hex, MoveType)> validMove = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
+            validMovesForStalemateCheck.AddRange(validMove);
+        }
+
+        // Handle potential stalemate
+        if(validMovesForStalemateCheck.Count() == 0)
+        {
+            if(multiplayer)
+            {
+                if(multiplayer.gameParams.localTeam == otherTeam)
+                    multiplayer.SendGameEnd(timestamp, MessageType.Stalemate);
+                else
+                    return;
+            }
+
+            newState.currentMove = otherTeam;
+            turnHistory.Add(newState);
+            newTurn.Invoke(newState);
+            HighlightMove(BoardState.GetLastMove(turnHistory));
+
+            EndGame(timestamp, GameEndType.Stalemate, Winner.None);
             return;
         }
 
@@ -207,7 +247,6 @@ public class Board : SerializedMonoBehaviour
         newTurn.Invoke(newState);
         HighlightMove(BoardState.GetLastMove(turnHistory));
         
-        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
         {
             FlipCameraToggle flipCameraToggle = GameObject.FindObjectOfType<FlipCameraToggle>();

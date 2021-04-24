@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -77,6 +78,17 @@ public class Multiplayer : MonoBehaviour
 
     public void Draw(float timestamp) => 
         board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+
+    public void SendGameEnd(float timestamp, MessageType endType) => 
+        networker.SendMessage(new Message(endType, BitConverter.GetBytes(timestamp)));
+    public void ReceiveCheckmate(float timestamp) => board.EndGame(
+        timestamp, 
+        GameEndType.Checkmate, 
+        gameParams.localTeam == Team.White ? Winner.White : Winner.Black
+    );
+
+    public void ReceiveStalemate(float timestamp) => 
+        board.EndGame(timestamp, GameEndType.Stalemate, Winner.None);
 
     public void SendFlagfall(Flagfall flagfall) => 
         networker.SendMessage(new Message(MessageType.FlagFall, flagfall.Serialize()));

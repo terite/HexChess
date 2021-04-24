@@ -121,7 +121,7 @@ public class Networker : MonoBehaviour
         SceneManager.sceneLoaded -= LoadLobby;
     }
 
-    static string GetPublicIPAddress()
+    public static string GetPublicIPAddress()
     {
         String address = "";
         WebRequest request = WebRequest.Create("http://checkip.dyndns.org/");
@@ -395,6 +395,8 @@ public class Networker : MonoBehaviour
             MessageType.UpdateName when isHost => () => UpdateClientName(completeMessage),
             MessageType.UpdateName when !isHost => () => UpdateHostName(completeMessage),
             MessageType.FlagFall when multiplayer => () => multiplayer.ReceiveFlagfall(Flagfall.Deserialize(completeMessage.data)),
+            MessageType.Checkmate when multiplayer => () => multiplayer.ReceiveCheckmate(BitConverter.ToSingle(completeMessage.data, 0)),
+            MessageType.Stalemate when multiplayer => () => multiplayer.ReceiveStalemate(BitConverter.ToSingle(completeMessage.data, 0)),
             _ => null
         };
 

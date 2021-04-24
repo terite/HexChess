@@ -72,9 +72,6 @@ public class Timers : MonoBehaviour
 
     public void RecalculateTimers()
     {
-        if(currentTurn == Team.None)
-            return;
-
         // Recalculate clocks to ensure the times are synced properly, this may catch any differences caused by latency while in multiplayer
         if(isClock)
         {
@@ -83,8 +80,18 @@ public class Timers : MonoBehaviour
 
             for(int i = 1; i < board.turnHistory.Count; i++)
             {
-                float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                if(i % 2 == 0)
+                BoardState nowState = board.turnHistory[i];
+                BoardState lastState = board.turnHistory[i - 1];
+                float duration = nowState.executedAtTime - lastState.executedAtTime;
+
+                if(nowState.currentMove == Team.None)
+                {
+                    if(lastState.currentMove == Team.White)
+                        whiteTotal += duration;
+                    else if(lastState.currentMove == Team.Black)
+                        blackTotal += duration;
+                }
+                else if(i % 2 == 0)
                     blackTotal += duration;
                 else
                     whiteTotal += duration;
@@ -103,8 +110,17 @@ public class Timers : MonoBehaviour
 
             for(int i = 1; i < board.turnHistory.Count; i++)
             {
-                float duration = board.turnHistory[i].executedAtTime - board.turnHistory[i - 1].executedAtTime;
-                if(i % 2 == 0)
+                BoardState nowState = board.turnHistory[i];
+                BoardState lastState = board.turnHistory[i - 1];
+                float duration = nowState.executedAtTime - lastState.executedAtTime;
+                if(nowState.currentMove == Team.None)
+                {
+                    if(lastState.currentMove == Team.White)
+                        whiteTotal = whiteTotal - duration > 0 ? whiteTotal - duration : 0;
+                    else if(lastState.currentMove == Team.Black)
+                        blackTotal = blackTotal - duration > 0 ? blackTotal - duration : 0;
+                }
+                else if(i % 2 == 0)
                     blackTotal = blackTotal - duration > 0 ? blackTotal - duration : 0;
                 else
                     whiteTotal = whiteTotal - duration > 0 ? whiteTotal - duration : 0;
