@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Jail : MonoBehaviour 
 {
-    [SerializeField] private Team teamToPrison;
+    [SerializeField] public Team teamToPrison;
 
     List<IPiece> prisonedPieces = new List<IPiece>();
     [SerializeField] private int piecesAcross;
@@ -13,7 +13,7 @@ public class Jail : MonoBehaviour
 
     public void Enprison(IPiece piece)
     {
-        if (prisonedPieces.Contains(piece))
+        if(prisonedPieces.Contains(piece))
             return;
 
         piece.captured = true;
@@ -25,6 +25,20 @@ public class Jail : MonoBehaviour
         );
         piece.obj.transform.parent = transform;
         prisonedPieces.Add(piece);
+        Sort();
+    }
+
+    public void RemoveFromPrison(IPiece piece)
+    {
+        if(!prisonedPieces.Contains(piece))
+            return;
+        
+        piece.captured = false;
+        piece.obj.transform.parent = null;
+
+        Vector3 rot = piece.obj.transform.rotation.eulerAngles;
+        piece.obj.transform.rotation = Quaternion.Euler(rot.x, 0, rot.z);
+        prisonedPieces.Remove(piece);
         Sort();
     }
 

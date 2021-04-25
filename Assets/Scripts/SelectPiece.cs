@@ -16,6 +16,7 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Color selectedPieceColor;
     public IPiece selectedPiece {get; private set;}
     [SerializeField] private OnMouse onMouse;
+    [SerializeField] private FreePlaceModeToggle freePlaceMode;
     private bool hoverExitedInitialHex = false;
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
     IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
@@ -305,27 +306,15 @@ public class SelectPiece : MonoBehaviour
                 
                 BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
-                if(clickedPiece != null && !clickedPiece.captured && clickedPiece.team == currentBoardState.currentMove)
+                if(clickedPiece != null && clickedPiece.team == currentBoardState.currentMove)
                 {
-                    if(selectedPiece != null)
-                        DeselectPiece(selectedPiece.location);
-
-                    // Select new piece and highlight all of the places it can move to on the current board state
-                    selectedPiece = clickedPiece;
-                    onMouse.PickUp(selectedPiece.obj);
-                    onMouse.SetColor(selectedPiece.team == Team.White ? whiteColor : blackColor);
-                    pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
-                    
-                    // Highlight each possible move the correct color
-                    foreach((Hex hex, MoveType moveType) in pieceMoves)
+                    if(!clickedPiece.captured)
+                        Select(currentBoardState, clickedPiece);
+                    else if(!multiplayer && freePlaceMode.toggle.isOn)
                     {
-                        hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
-                        hex.ToggleSelect();
+                        GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == clickedPiece.team).First().RemoveFromPrison(clickedPiece);
+                        Select(currentBoardState, clickedPiece, true);
                     }
-
-                    Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
-                    selectedHex.SetOutlineColor(selectedPieceColor);
-                    selectedHex.ToggleSelect();
                 }
             }
         }
@@ -341,31 +330,65 @@ public class SelectPiece : MonoBehaviour
 
                 if(clickedPiece != null && selectedPiece != null)
                 {
-                    // Rooks can defend (swap positions with a near by ally)
-                    if(clickedPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                    if(!clickedPiece.captured)
                     {
-                        Defend(clickedPiece);
-                        return;
+                        // Rooks can defend (swap positions with a near by ally)
+                        if(clickedPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                        {
+                            Defend(clickedPiece);
+                            return;
+                        }
+                        else
+                        {
+                            Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
+                            // Check if this attack is within our possible moves
+                            if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
+                                MoveOrAttack(enemyHex);
+                            else if(!multiplayer && freePlaceMode.toggle.isOn)
+                            {
+                                // Swap with ally, or take enemy, regardless of if the move is a potenial move
+                                if(clickedPiece.team == selectedPiece.team)
+                                    Defend(clickedPiece);
+                                else
+                                    MoveOrAttack(enemyHex);
+                            }
+                        }
                     }
-                    else
-                    {
-                        Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
-                        // Check if this attack is within our possible moves
-                        if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
-                            MoveOrAttack(enemyHex);
-                    }
+                    // The piece was dropped on top of a piece in jail
+                    else if(!multiplayer && freePlaceMode.toggle.isOn)
+                        board.Enprison(selectedPiece);
                 }
 
                 // Clicked on a hex
                 Hex hitHex = hit.collider.GetComponent<Hex>();
                 if(hitHex != null && selectedPiece != null)
                 {
+                    IPiece otherPiece = currentBoardState.allPiecePositions.ContainsKey(hitHex.index) 
+                        ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
+                        : null;
+
                     if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                         MoveOrAttack(hitHex);
                     else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                        Defend(board.activePieces[currentBoardState.allPiecePositions[hitHex.index]]);
+                        Defend(otherPiece);
                     else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
                         EnPassant(currentBoardState, hitHex);
+                    else if(!multiplayer && freePlaceMode.toggle.isOn)
+                    {
+                        // Swap with ally, or take enemy, regardless of if the move is a potenial move
+                        if(otherPiece != null && otherPiece.team == selectedPiece.team)
+                            Defend(otherPiece);
+                        else
+                            MoveOrAttack(hitHex);
+                    }
+                }
+
+                if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece != null)
+                {
+                    // Piece dropped on top of jail
+                    Jail jail = hit.collider.GetComponent<Jail>();
+                    if(jail)
+                        board.Enprison(selectedPiece);
                 }
             }
 
@@ -374,9 +397,45 @@ public class SelectPiece : MonoBehaviour
         }
     }
 
+    private void Select(BoardState currentBoardState, IPiece clickedPiece, bool fromJail = false)
+    {
+        if(selectedPiece != null)
+            DeselectPiece(selectedPiece.location);
+
+        // Select new piece and highlight all of the places it can move to on the current board state
+        selectedPiece = clickedPiece;
+        onMouse.PickUp(selectedPiece.obj);
+        onMouse.SetColor(selectedPiece.team == Team.White ? whiteColor : blackColor);
+        
+        if(!fromJail)
+        {
+            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
+            
+            // Highlight each possible move the correct color
+            foreach((Hex hex, MoveType moveType) in pieceMoves)
+            {
+                hex.SetOutlineColor(moveTypeHighlightColors[(int)moveType]);
+                hex.ToggleSelect();
+            }
+
+            Hex selectedHex = board.GetHexIfInBounds(selectedPiece.location);
+            selectedHex.SetOutlineColor(selectedPieceColor);
+            selectedHex.ToggleSelect();
+        }
+    }
+
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
+
+        bool fromJail = false;
+
+        if(!board.activePieces.ContainsKey((selectedPiece.team, selectedPiece.piece)))
+        {
+            fromJail = true;
+            board.activePieces.Add((selectedPiece.team, selectedPiece.piece), selectedPiece);
+        }
+        
         BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
         
         if(multiplayer != null)
@@ -387,20 +446,26 @@ public class SelectPiece : MonoBehaviour
         }
 
         board.AdvanceTurn(newState);
-        DeselectPiece(pieceStartLoc);
+        DeselectPiece(pieceStartLoc, fromJail);
     }
 
     private void Defend(IPiece pieceToDefend)
     {
         Index startLoc = selectedPiece.location;
-        // Hex startHex = board.GetHexIfInBounds(startLoc.row, startLoc.col);
+        bool fromJail = false;
+        if(!board.activePieces.ContainsKey((selectedPiece.team, selectedPiece.piece)))
+        {
+            fromJail = true;
+            board.activePieces.Add((selectedPiece.team, selectedPiece.piece), selectedPiece);
+        }
+
         BoardState newState = board.Swap(selectedPiece, pieceToDefend, board.GetCurrentBoardState());
         
         if(multiplayer != null)
             multiplayer.SendBoard(newState);
 
         board.AdvanceTurn(newState);
-        DeselectPiece(startLoc);
+        DeselectPiece(startLoc, fromJail);
     }
 
     private void EnPassant(BoardState currentBoardState, Hex hitHex)
@@ -419,7 +484,7 @@ public class SelectPiece : MonoBehaviour
 
     private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
 
-    public void DeselectPiece(Index fromIndex)
+    public void DeselectPiece(Index fromIndex, bool fromJail = false)
     {
         if(selectedPiece == null)
             return;
@@ -428,7 +493,9 @@ public class SelectPiece : MonoBehaviour
             hex.ToggleSelect();
         pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
 
-        board.GetHexIfInBounds(fromIndex).ToggleSelect();
+        if(!fromJail)
+            board.GetHexIfInBounds(fromIndex).ToggleSelect();
+
         onMouse.PutDown();
         hoverExitedInitialHex = false;
         

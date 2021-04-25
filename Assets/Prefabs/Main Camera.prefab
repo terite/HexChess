@@ -192,6 +192,7 @@ MonoBehaviour:
     m_Bits: 192
   selectedPieceColor: {r: 0, g: 0.8734226, b: 1, a: 1}
   onMouse: {fileID: 0}
+  freePlaceMode: {fileID: 0}
   moveTypeHighlightColors:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 0, g: 1, b: 0, a: 1}

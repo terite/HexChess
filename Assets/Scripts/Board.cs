@@ -349,7 +349,8 @@ public class Board : SerializedMonoBehaviour
         }
 
         // Update boardstate
-        allPiecePositions.Remove((piece.team, piece.piece));
+        if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
+            allPiecePositions.Remove((piece.team, piece.piece));
         allPiecePositions.Add((piece.team, piece.piece), targetLocation.index);
         currentState.allPiecePositions = allPiecePositions;
         
@@ -402,6 +403,9 @@ public class Board : SerializedMonoBehaviour
 
     public BoardState Swap(IPiece p1, IPiece p2, BoardState boardState, bool isQuery = false)
     {
+        if(p1 == p2)
+            return boardState;
+
         Index p1StartLoc = p1.location;
         Index p2StartLoc = p2.location;
         BoardState currentState = boardState;
@@ -461,6 +465,18 @@ public class Board : SerializedMonoBehaviour
         
         currentState.allPiecePositions = allPiecePositions;
         return currentState;
+    }
+
+    public void Enprison(IPiece toPrison)
+    {
+        jails[(int)toPrison.team].Enprison(toPrison);
+        BoardState currentState = GetCurrentBoardState();
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(currentState.allPiecePositions);
+        allPiecePositions.Remove((toPrison.team, toPrison.piece));
+        currentState.allPiecePositions = allPiecePositions;
+        activePieces.Remove((toPrison.team, toPrison.piece));
+
+        AdvanceTurn(currentState);
     }
 
     public List<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
