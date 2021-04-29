@@ -416,12 +416,14 @@ public class Networker : MonoBehaviour
     private void ReceivePong()
     {
         // Measure and update latency when pong received
-        pongReceived = true;
+        int latencyMs = ((Time.realtimeSinceStartup - pingedAtTime) * 1000).Ceil();
         mainThreadActions.Enqueue(() =>
         {
-            if(latency == null)
+            pongReceived = true;
+
+            if (latency == null)
                 latency = GameObject.FindObjectOfType<Latency>();
-            latency?.UpdateLatency(Time.realtimeSinceStartup - pingedAtTime);
+            latency?.UpdateLatency(latencyMs);
         });
     }
 
