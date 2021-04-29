@@ -61,12 +61,12 @@ public class Networker : MonoBehaviour
             a.Invoke();
         
         // To track latency, every pingDelay seconds we ping the socket, we expect back a pong in a timely fashion
-        if(Time.timeSinceLevelLoad >= pingAtTime && stream != null && pongReceived)
+        if(Time.realtimeSinceStartup >= pingAtTime && stream != null && pongReceived)
         {
             try {
                 SendMessage(new Message(MessageType.Ping));
-                pingedAtTime = Time.timeSinceLevelLoad;
-                pingAtTime = Time.timeSinceLevelLoad + pingDelay;
+                pingedAtTime = Time.realtimeSinceStartup;
+                pingAtTime = Time.realtimeSinceStartup + pingDelay;
                 pongReceived = false;
             } catch (Exception e) {
                 Debug.LogWarning($"Failed to write ping to socket with error:\n{e}");
@@ -421,7 +421,7 @@ public class Networker : MonoBehaviour
         {
             if(latency == null)
                 latency = GameObject.FindObjectOfType<Latency>();
-            latency?.UpdateLatency(Time.timeSinceLevelLoad - pingedAtTime);
+            latency?.UpdateLatency(Time.realtimeSinceStartup - pingedAtTime);
         });
     }
 
