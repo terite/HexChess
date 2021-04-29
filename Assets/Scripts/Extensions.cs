@@ -14,6 +14,7 @@ namespace Extensions
         public static float Sqr(this float value) => value * value;
         public static float Sqrt(this float value) => Mathf.Sqrt(value);
         public static int Floor(this float val) => Mathf.FloorToInt(val);
+        public static int Ceil(this float val) => Mathf.CeilToInt(val);
 
         public static void ForEach<T>(this IEnumerable<T> source, System.Action<T> action)
         {
