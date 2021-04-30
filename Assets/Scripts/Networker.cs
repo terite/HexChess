@@ -231,13 +231,13 @@ public class Networker : MonoBehaviour
     }
 
     // Client
-    public void TryConnectClient(string ip, int port)
+    public void TryConnectClient(string ip, int port, bool dns = false)
     {
         attemptingConnection = true;
         this.ip = ip;
         this.port = port;
 
-        IPAddress addy = IPAddress.Parse(ip);
+        IPAddress addy = dns ? Dns.GetHostAddresses(ip).First() : IPAddress.Parse(ip);
 
         Debug.Log($"Attempting to connect to {ip}:{port}.");
         client = new TcpClient(addy.AddressFamily);
