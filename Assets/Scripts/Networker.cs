@@ -11,6 +11,9 @@ using Newtonsoft.Json;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Open.Nat;
+using System.Threading.Tasks;
+using System.Threading;
 
 public class Networker : MonoBehaviour
 {
@@ -45,6 +48,7 @@ public class Networker : MonoBehaviour
     public bool clientIsReady {get; private set;}
     GameParams gameParams;
     public bool attemptingConnection {get; private set;} = false;
+    
     private void Awake()
     {
         sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
@@ -101,6 +105,9 @@ public class Networker : MonoBehaviour
 
         stream?.Close();
         client?.Close();
+
+        NatDiscoverer.ReleaseAll();
+
         Debug.Log($"Disconnected.");
     }
 
@@ -143,9 +150,22 @@ public class Networker : MonoBehaviour
     public void Host()
     {
         isHost = true;
+        host = new Player("Host", Team.White, isHost);
 
-        host = new Player("Host", Team.White, true);
-        server = new TcpListener(IPAddress.Any, port);
+        Task t = Task.Run(async () => {
+            NatDiscoverer discoverer = new NatDiscoverer();
+            CancellationTokenSource cts = new CancellationTokenSource(5000);
+            NatDevice device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, cts);
+            await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, port, port, "Hexachessagon (Session lifetime)"));
+        });
+
+        try {
+            t.Wait();
+        } catch (Exception e) {
+            Debug.LogWarning(e);
+        }
+
+        server = TcpListener.Create(port);
 
         try{
             server.Start();
@@ -165,10 +185,6 @@ public class Networker : MonoBehaviour
 
     private void AcceptClientCallback(IAsyncResult ar)
     {
-        TcpListener server = (TcpListener)ar.AsyncState;
-        if(server == null)
-            return;
-        
         try{
             TcpClient incommingClient = server.EndAcceptTcpClient(ar);
             if(client == null)
@@ -221,10 +237,12 @@ public class Networker : MonoBehaviour
         this.ip = ip;
         this.port = port;
 
+        IPAddress addy = IPAddress.Parse(ip);
+
         Debug.Log($"Attempting to connect to {ip}:{port}.");
-        client = new TcpClient();
+        client = new TcpClient(addy.AddressFamily);
         try {
-            client.BeginConnect(ip, port, new AsyncCallback(ClientConnectCallback), this);
+            client.BeginConnect(addy, port, new AsyncCallback(ClientConnectCallback), this);
         } catch(Exception e) {
             Debug.LogWarning($"Failed to connect to {ip}:{port} with error:\n{e}");
             attemptingConnection = false;
@@ -432,25 +450,19 @@ public class Networker : MonoBehaviour
         if(lobby == null)
             return;
 
-        lobby.RemovePlayer(host);
-        if(player.HasValue)
-            lobby.RemovePlayer(player.Value);
         host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
-        lobby.SpawnPlayer(host);
-        if(player.HasValue)
-            lobby.SpawnPlayer(player.Value);
+        lobby.UpdateName(host);
     }
 
     private void UpdateClientName(Message completeMessage)
     {
-        if (!player.HasValue)
+        if(!player.HasValue)
             return;
 
-        lobby?.RemovePlayer(player.Value);
         Player p = player.Value;
         p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
         player = p;
-        lobby?.SpawnPlayer(player.Value);
+        lobby.UpdateName(p);
     }
 
     private void PreviewOn()
@@ -548,17 +560,13 @@ public class Networker : MonoBehaviour
         if(!player.HasValue && lobby == null)
             return;
 
-        lobby?.RemovePlayer(host);
-        lobby?.RemovePlayer(player.Value);
-
         Team hostTeam = host.team;
         Player playerModified = player.Value;
         host.team = playerModified.team;
         playerModified.team = hostTeam;
         player = playerModified;
 
-        lobby?.SpawnPlayer(host);
-        lobby?.SpawnPlayer(player.Value);
+        lobby?.SwapTeams(host, player.Value);
     }
 
     private void Ready()
@@ -665,21 +673,23 @@ public class Networker : MonoBehaviour
 
         if(isHost)
         {
-            lobby.RemovePlayer(host);
-            if(player.HasValue)
-                lobby.RemovePlayer(player.Value);
+            // lobby.RemovePlayer(host);
+            // if(player.HasValue)
+            //     lobby.RemovePlayer(player.Value);
             host.name = newName;
-            lobby.SpawnPlayer(host);
-            if(player.HasValue)
-                lobby.SpawnPlayer(player.Value);
+            lobby.UpdateName(host);
+            // lobby.SpawnPlayer(host);
+            // if(player.HasValue)
+            //     lobby.SpawnPlayer(player.Value);
         }
         else if(player.HasValue)
         {
-            lobby.RemovePlayer(player.Value);
+            // lobby.RemovePlayer(player.Value);
             Player p = player.Value;
             p.name = newName;
             player = p;
-            lobby.SpawnPlayer(player.Value);
+            lobby.UpdateName(p);
+            // lobby.SpawnPlayer(player.Value);
         }
         SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(newName)));
     }

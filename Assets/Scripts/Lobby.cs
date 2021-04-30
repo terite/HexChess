@@ -3,6 +3,7 @@ using UnityEngine;
 using TMPro;
 using Sirenix.OdinInspector;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Lobby : MonoBehaviour
 {
@@ -10,7 +11,9 @@ public class Lobby : MonoBehaviour
     [SerializeField] private PlayerLobby playerLobbyPrefab;
     [SerializeField] private Transform playerContainer;
     [SerializeField] private TextMeshProUGUI ipText;
-    [ReadOnly, ShowInInspector] Dictionary<Player, PlayerLobby> lobbyDict = new Dictionary<Player, PlayerLobby>();
+    // [ReadOnly, ShowInInspector] Dictionary<Player, PlayerLobby> lobbyDict = new Dictionary<Player, PlayerLobby>();
+    PlayerLobby host;
+    PlayerLobby client;
 
     [SerializeField] private GameObject timerPanel;
     public Toggle noneToggle;
@@ -72,22 +75,34 @@ public class Lobby : MonoBehaviour
     
     public void SpawnPlayer(Player player)
     {
-        if(lobbyDict.ContainsKey(player))
-            return;
-
-        PlayerLobby pl = Instantiate(playerLobbyPrefab, playerContainer);
-        pl.SetPlayer(player);
-        lobbyDict.Add(player, pl);
+        if(player.isHost)
+        {
+            host = Instantiate(playerLobbyPrefab, playerContainer);
+            host.SetPlayer(player);
+        }
+        else
+        {
+            client = Instantiate(playerLobbyPrefab, playerContainer);
+            client.SetPlayer(player);
+        }
     }
 
     public void RemovePlayer(Player player)
     {
-        if(!lobbyDict.ContainsKey(player))
-            return;
-        
-        PlayerLobby pl = lobbyDict[player];
-        lobbyDict.Remove(player);
-        Destroy(pl.gameObject);
+        PlayerLobby lobbyToDestroy = player.isHost ? host : client;
+        Destroy(lobbyToDestroy.gameObject);
+    }
+
+    public void UpdateName(Player player)
+    {
+        PlayerLobby toChange = player.isHost ? host : client;
+        toChange.SetPlayer(player);
+    }
+
+    public void SwapTeams(Player hostPlayer, Player clientPlayer)
+    {
+        host.SetPlayer(hostPlayer);
+        client.SetPlayer(clientPlayer);
     }
 
     public void SetIP(string ip, int port) => ipText.text = $"{ip}:{port}";

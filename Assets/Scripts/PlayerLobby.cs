@@ -11,7 +11,7 @@ public class PlayerLobby : MonoBehaviour
     [SerializeField] private Image teamColor;
     public Color whiteColor;
     public Color blackColor;
-    [ReadOnly, ShowInInspector] private Player player;
+    [ReadOnly, ShowInInspector] public Player player {get; private set;}
     Networker networker;
 
     public void SetPlayer(Player player)
