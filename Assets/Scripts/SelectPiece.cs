@@ -34,6 +34,8 @@ public class SelectPiece : MonoBehaviour
     public Color whiteColor;
     public Color blackColor;
 
+    private Hex lastHoveredHex = null;
+
     private void Awake() 
     {
         cam = Camera.main;
@@ -193,6 +195,10 @@ public class SelectPiece : MonoBehaviour
                     Hex hoveredHex = hit.collider.GetComponent<Hex>();
                     if(hoveredHex != null)
                     {
+                        if(lastHoveredHex == hoveredHex)
+                            return;
+                        
+                        lastHoveredHex = hoveredHex;
                         if(currentBoardState.allPiecePositions.ContainsKey(hoveredHex.index))
                         {
                             // Get the piece on that hex
@@ -222,21 +228,30 @@ public class SelectPiece : MonoBehaviour
                             DisablePreview();
                     }
                     else if(previewMoves.Count() > 0)
+                    {
+                        lastHoveredHex = null;
                         DisablePreview();
+                    }
                 }
                 else if(!hoveredPiece.captured)
                 {
+                    Hex hoveredPieceHex = board.GetHexIfInBounds(hoveredPiece.location);
+                    if(lastHoveredHex == hoveredPieceHex)
+                        return;
+
+                    lastHoveredHex = hoveredPieceHex;
+                    
                     IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
                         hoveredPiece,
                         currentBoardState,
                         true
                     );
+
                     if(incomingPreviewMoves != previewMoves)
                     {
                         DisablePreview();
                         previewMoves = incomingPreviewMoves;
 
-                        Hex hoveredPieceHex = board.GetHexIfInBounds(hoveredPiece.location);
                         if(hoveredPieceHex != null)
                             previewMoves = previewMoves.Append((hoveredPieceHex, MoveType.None));
 
@@ -313,10 +328,7 @@ public class SelectPiece : MonoBehaviour
                     if(!clickedPiece.captured)
                         Select(currentBoardState, clickedPiece);
                     else if(!multiplayer && freePlaceMode.toggle.isOn)
-                    {
-                        
                         Select(currentBoardState, clickedPiece, true);
-                    }
 
                     audioSource.PlayOneShot(pickupNoise);
                 }
@@ -336,7 +348,7 @@ public class SelectPiece : MonoBehaviour
                 {
                     if(!hoveredPiece.captured)
                     {
-                        if(freePlaceMode.toggle.isOn && selectedPiece.captured)
+                        if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece.captured)
                             GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
 
                         // Rooks can defend (swap positions with a near by ally)
@@ -378,7 +390,7 @@ public class SelectPiece : MonoBehaviour
                         ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
                         : null;
 
-                    if(freePlaceMode.toggle.isOn && selectedPiece.captured)
+                    if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece.captured)
                         GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
 
                     if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
