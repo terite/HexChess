@@ -385,7 +385,7 @@ public class Networker : MonoBehaviour
 
                 mainThreadActions.Enqueue(() => {
                     SceneManager.sceneLoaded += LoadLobby;
-                    if(sceneTransition != null)
+                    if(sceneTransition)
                         sceneTransition.Transition("Lobby");
                     else
                         SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
@@ -439,7 +439,7 @@ public class Networker : MonoBehaviour
         {
             pongReceived = true;
 
-            if (latency == null)
+            if(!latency)
                 latency = GameObject.FindObjectOfType<Latency>();
             latency?.UpdateLatency(latencyMs);
         });
@@ -673,23 +673,15 @@ public class Networker : MonoBehaviour
 
         if(isHost)
         {
-            // lobby.RemovePlayer(host);
-            // if(player.HasValue)
-            //     lobby.RemovePlayer(player.Value);
             host.name = newName;
             lobby.UpdateName(host);
-            // lobby.SpawnPlayer(host);
-            // if(player.HasValue)
-            //     lobby.SpawnPlayer(player.Value);
         }
         else if(player.HasValue)
         {
-            // lobby.RemovePlayer(player.Value);
             Player p = player.Value;
             p.name = newName;
             player = p;
             lobby.UpdateName(p);
-            // lobby.SpawnPlayer(player.Value);
         }
         SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(newName)));
     }

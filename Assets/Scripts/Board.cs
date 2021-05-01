@@ -15,6 +15,9 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private TurnPanel turnPanel;
     [SerializeField] private Timers timers;
     [SerializeField] private SmoothHalfOrbitalCamera cam;
+    [SerializeField] private AudioSource audioSource;
+    public AudioClip moveClip;
+    public AudioClip winFanfare;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -163,6 +166,8 @@ public class Board : SerializedMonoBehaviour
 
     public void AdvanceTurn(BoardState newState, bool updateTime = true)
     {
+        audioSource.PlayOneShot(moveClip);
+
         List<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         float timestamp = Time.timeSinceLevelLoad + timeOffset;
@@ -513,6 +518,21 @@ public class Board : SerializedMonoBehaviour
         BoardState currentState = GetCurrentBoardState();
         if(currentState.currentMove == Team.None)
             return;
+
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        if(multiplayer)
+        {
+            Team winningTeam = Team.None;
+            if(winner == Winner.White)
+                winningTeam = Team.White;
+            else if(winner == Winner.Black)
+                winningTeam = Team.Black;
+
+            if(multiplayer.gameParams.localTeam == winningTeam)
+                audioSource.PlayOneShot(winFanfare);
+        }
+        else
+            audioSource.PlayOneShot(winFanfare);
 
         currentState.currentMove = Team.None;
         currentState.executedAtTime = timestamp;

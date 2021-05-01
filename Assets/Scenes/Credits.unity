@@ -158,7 +158,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 240}
+  m_SizeDelta: {x: 0, y: 310}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &172204656
 MonoBehaviour:
@@ -182,12 +182,14 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Avea Krause - Developer
 
+    Terite - Contributor
+
     Z_Doctor - Contributor
 
-    Jacob Christ
-    - Contributor
+    Jacob
+    Christ - Contributor
 
-    Terite - Matchmaking
+    Doug Walters - Audio
 
     Saro Chalian - Mac Client
 

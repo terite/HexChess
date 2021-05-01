@@ -14,6 +14,9 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
     [SerializeField] private Color selectedPieceColor;
+    [SerializeField] private AudioSource audioSource;
+    public AudioClip cancelNoise;
+    public AudioClip pickupNoise;
     public IPiece selectedPiece {get; private set;}
     [SerializeField] private OnMouse onMouse;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
@@ -315,6 +318,8 @@ public class SelectPiece : MonoBehaviour
                         GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == clickedPiece.team).First().RemoveFromPrison(clickedPiece);
                         Select(currentBoardState, clickedPiece, true);
                     }
+
+                    audioSource.PlayOneShot(pickupNoise);
                 }
             }
         }
@@ -326,29 +331,29 @@ public class SelectPiece : MonoBehaviour
             if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
-                IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
+                IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
 
-                if(clickedPiece != null && selectedPiece != null)
+                if(hoveredPiece != null && selectedPiece != null)
                 {
-                    if(!clickedPiece.captured)
+                    if(!hoveredPiece.captured)
                     {
                         // Rooks can defend (swap positions with a near by ally)
-                        if(clickedPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(clickedPiece.location), MoveType.Defend)))
+                        if(hoveredPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(hoveredPiece.location), MoveType.Defend)))
                         {
-                            Defend(clickedPiece);
+                            Defend(hoveredPiece);
                             return;
                         }
                         else
                         {
-                            Hex enemyHex = board.GetHexIfInBounds(clickedPiece.location);
+                            Hex enemyHex = board.GetHexIfInBounds(hoveredPiece.location);
                             // Check if this attack is within our possible moves
                             if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
                                 MoveOrAttack(enemyHex);
                             else if(!multiplayer && freePlaceMode.toggle.isOn)
                             {
                                 // Swap with ally, or take enemy, regardless of if the move is a potenial move
-                                if(clickedPiece.team == selectedPiece.team)
-                                    Defend(clickedPiece);
+                                if(hoveredPiece.team == selectedPiece.team)
+                                    Defend(hoveredPiece);
                                 else
                                     MoveOrAttack(enemyHex);
                             }
@@ -393,7 +398,10 @@ public class SelectPiece : MonoBehaviour
             }
 
             if(selectedPiece != null)
+            {
+                audioSource.PlayOneShot(cancelNoise);
                 DeselectPiece(selectedPiece.location);
+            }
         }
     }
 
