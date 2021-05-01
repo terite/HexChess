@@ -24,10 +24,9 @@ public class SelectPiece : MonoBehaviour
     IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
     IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
-    public Color previewColor;
     public Color greenColor;
     public Color redColor;
-
+    public Color orangeColor;
 
     IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
     MeshRenderer lastChangedRenderer;
@@ -261,7 +260,7 @@ public class SelectPiece : MonoBehaviour
         foreach(IPiece piece in threateningPieces)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", redColor);
+            renderer.material.SetColor("_BaseColor", orangeColor);
         }
     }
 
@@ -278,7 +277,7 @@ public class SelectPiece : MonoBehaviour
     {
         foreach((Hex hex, MoveType moveType) in previewMoves)
         {
-            hex.SetOutlineColor(previewColor);
+            hex.SetOutlineColor(orangeColor);
             hex.ToggleSelect();
         }
 
@@ -315,7 +314,7 @@ public class SelectPiece : MonoBehaviour
                         Select(currentBoardState, clickedPiece);
                     else if(!multiplayer && freePlaceMode.toggle.isOn)
                     {
-                        GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == clickedPiece.team).First().RemoveFromPrison(clickedPiece);
+                        
                         Select(currentBoardState, clickedPiece, true);
                     }
 
@@ -337,6 +336,9 @@ public class SelectPiece : MonoBehaviour
                 {
                     if(!hoveredPiece.captured)
                     {
+                        if(freePlaceMode.toggle.isOn && selectedPiece.captured)
+                            GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
+
                         // Rooks can defend (swap positions with a near by ally)
                         if(hoveredPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(hoveredPiece.location), MoveType.Defend)))
                         {
@@ -358,10 +360,14 @@ public class SelectPiece : MonoBehaviour
                                     MoveOrAttack(enemyHex);
                             }
                         }
+
                     }
                     // The piece was dropped on top of a piece in jail
                     else if(!multiplayer && freePlaceMode.toggle.isOn)
-                        board.Enprison(selectedPiece);
+                    {
+                        if(!selectedPiece.captured)
+                            board.Enprison(selectedPiece);
+                    }
                 }
 
                 // Clicked on a hex
@@ -371,6 +377,9 @@ public class SelectPiece : MonoBehaviour
                     IPiece otherPiece = currentBoardState.allPiecePositions.ContainsKey(hitHex.index) 
                         ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
                         : null;
+
+                    if(freePlaceMode.toggle.isOn && selectedPiece.captured)
+                        GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
 
                     if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                         MoveOrAttack(hitHex);
@@ -392,7 +401,7 @@ public class SelectPiece : MonoBehaviour
                 {
                     // Piece dropped on top of jail
                     Jail jail = hit.collider.GetComponent<Jail>();
-                    if(jail)
+                    if(jail && !selectedPiece.captured)
                         board.Enprison(selectedPiece);
                 }
             }
@@ -400,7 +409,7 @@ public class SelectPiece : MonoBehaviour
             if(selectedPiece != null)
             {
                 audioSource.PlayOneShot(cancelNoise);
-                DeselectPiece(selectedPiece.location);
+                DeselectPiece(selectedPiece.location, selectedPiece.captured);
             }
         }
     }
