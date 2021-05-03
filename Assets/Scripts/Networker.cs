@@ -186,15 +186,26 @@ public class Networker : MonoBehaviour
     private void AcceptClientCallback(IAsyncResult ar)
     {
         try{
-            TcpClient incommingClient = server.EndAcceptTcpClient(ar);
+            TcpClient incomingClient = server.EndAcceptTcpClient(ar);
             if(client == null)
             {
-                client = incommingClient;
+                client = incomingClient;
                 stream = client.GetStream();
             }
             // In chess, there is only ever 2 players, (1 host, 1 player), so reject any connection trying to come in if the player slot is already full
             else
-                incommingClient.Close();
+            {
+                incomingClient.Close();
+                try
+                {
+                    server.BeginAcceptTcpClient(new AsyncCallback(AcceptClientCallback), server);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Failed to connect to incoming client:\n{e}");
+                }
+                return;
+            }
         } catch (Exception e) {
             Debug.LogWarning($"Failed to connect to incoming client:\n{e}");
             return;
