@@ -219,7 +219,6 @@ public class Networker : MonoBehaviour
 
             player = new Player($"{client.IP()}", Team.Black, false);
             lobby?.SpawnPlayer(player.Value);
-            
         });
 
         SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
@@ -349,18 +348,11 @@ public class Networker : MonoBehaviour
 
     private void CheckCompleteMessage()
     {
-        int readBufferLen = readBufferEnd - readBufferStart;
-        if (readBufferLen < 1)
-            return;
-
-        var received = ((ReadOnlySpan<byte>)readBuffer).Slice(readBufferStart, readBufferLen);
-
-        int pos = 0;
-        while(pos < received.Length)
+        while(readBufferStart < readBufferEnd)
         {
             Message? readResult;
             try {
-                readResult = Message.ReadMessage(received.Slice(pos));
+                readResult = Message.ReadMessage(new ReadOnlySpan<byte>(readBuffer, readBufferStart, readBufferEnd - readBufferStart));
             } catch (ArgumentException err) {
                 readBufferStart = readBufferEnd;
                 Debug.LogError($"Error reading message: {err}");
@@ -370,13 +362,10 @@ public class Networker : MonoBehaviour
                 break;
 
             Message message = readResult.Value;
+            readBufferStart += message.totalLength;
 
             mainThreadActions.Enqueue(() => Dispatch(message));
-
-            pos += message.totalLength;
         }
-
-        readBufferStart = pos;
 
         if(readBufferStart == readBufferEnd)
         {
