@@ -488,6 +488,7 @@ public class Networker : MonoBehaviour
             lobby.RemovePlayer(player.Value);
             player = null;
             client = null;
+            stream = null;
 
             if(host.team == Team.Black)
             {
