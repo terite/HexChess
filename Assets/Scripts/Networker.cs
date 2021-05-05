@@ -186,15 +186,26 @@ public class Networker : MonoBehaviour
     private void AcceptClientCallback(IAsyncResult ar)
     {
         try{
-            TcpClient incommingClient = server.EndAcceptTcpClient(ar);
+            TcpClient incomingClient = server.EndAcceptTcpClient(ar);
             if(client == null)
             {
-                client = incommingClient;
+                client = incomingClient;
                 stream = client.GetStream();
             }
             // In chess, there is only ever 2 players, (1 host, 1 player), so reject any connection trying to come in if the player slot is already full
             else
-                incommingClient.Close();
+            {
+                incomingClient.Close();
+                try
+                {
+                    server.BeginAcceptTcpClient(new AsyncCallback(AcceptClientCallback), server);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Failed to connect to incoming client:\n{e}");
+                }
+                return;
+            }
         } catch (Exception e) {
             Debug.LogWarning($"Failed to connect to incoming client:\n{e}");
             return;
@@ -208,7 +219,6 @@ public class Networker : MonoBehaviour
 
             player = new Player($"{client.IP()}", Team.Black, false);
             lobby?.SpawnPlayer(player.Value);
-            
         });
 
         SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
@@ -338,18 +348,11 @@ public class Networker : MonoBehaviour
 
     private void CheckCompleteMessage()
     {
-        int readBufferLen = readBufferEnd - readBufferStart;
-        if (readBufferLen < 1)
-            return;
-
-        var received = ((ReadOnlySpan<byte>)readBuffer).Slice(readBufferStart, readBufferLen);
-
-        int pos = 0;
-        while(pos < received.Length)
+        while(readBufferStart < readBufferEnd)
         {
             Message? readResult;
             try {
-                readResult = Message.ReadMessage(received.Slice(pos));
+                readResult = Message.ReadMessage(new ReadOnlySpan<byte>(readBuffer, readBufferStart, readBufferEnd - readBufferStart));
             } catch (ArgumentException err) {
                 readBufferStart = readBufferEnd;
                 Debug.LogError($"Error reading message: {err}");
@@ -359,13 +362,10 @@ public class Networker : MonoBehaviour
                 break;
 
             Message message = readResult.Value;
+            readBufferStart += message.totalLength;
 
             mainThreadActions.Enqueue(() => Dispatch(message));
-
-            pos += message.totalLength;
         }
-
-        readBufferStart = pos;
 
         if(readBufferStart == readBufferEnd)
         {
@@ -488,6 +488,7 @@ public class Networker : MonoBehaviour
             lobby.RemovePlayer(player.Value);
             player = null;
             client = null;
+            stream = null;
 
             if(host.team == Team.Black)
             {
