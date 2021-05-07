@@ -160,7 +160,7 @@ public class Timers : MonoBehaviour
 
     string GetFormat(float seconds) => seconds < 60 
         ? @"%s\.f" 
-        : seconds < 6000
+        : seconds < 3600
             ? @"%m\:%s\.f"
             : @"%h\:%m\:%s\.f";
         
