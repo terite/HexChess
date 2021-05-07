@@ -31,6 +31,7 @@ public class SelectPiece : MonoBehaviour
 
     IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
     IEnumerable<IPiece> guardingPieces = Enumerable.Empty<IPiece>();
+    IEnumerable<IPiece> attackablePieces = Enumerable.Empty<IPiece>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
     public Color whiteColor;
@@ -220,6 +221,12 @@ public class SelectPiece : MonoBehaviour
                                     
                                     threateningPieces = board.GetThreateningPieces(hoveredHex);
                                     guardingPieces = board.GetGuardingingPieces(hoveredHex);
+                                    attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
+                                        .Where(move => move.Item2 == MoveType.Attack
+                                            && currentBoardState.allPiecePositions.ContainsKey(move.Item1.index)
+                                            && board.activePieces.ContainsKey(currentBoardState.allPiecePositions[move.Item1.index])
+                                        )
+                                        .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
 
                                     EnablePreview();
                                 }
@@ -260,6 +267,9 @@ public class SelectPiece : MonoBehaviour
 
                         threateningPieces = board.GetThreateningPieces(hoveredPieceHex);
                         guardingPieces = board.GetGuardingingPieces(hoveredPieceHex);
+                        attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
+                            .Where(move => move.Item2 == MoveType.Attack)
+                            .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
 
                         EnablePreview();
                     }
@@ -274,34 +284,18 @@ public class SelectPiece : MonoBehaviour
             DisablePreview();
     }
 
-    private void ColorizeThreat()
+    private void ColorizePieces(ref IEnumerable<IPiece> set, Color color)
     {
-        foreach(IPiece piece in threateningPieces)
+        foreach(IPiece piece in set)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", orangeColor);
+            renderer.material.SetColor("_BaseColor", color);
         }
     }
 
-    private void ClearThreatHighlight()
+    private void ClearPiecesColorization(ref IEnumerable<IPiece> set)
     {
-        foreach(IPiece piece in threateningPieces)
-        {
-            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
-        }
-    }
-    private void ColorizeGuard()
-    {
-        foreach(IPiece piece in guardingPieces)
-        {
-            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", greenColor);
-        }
-    }
-    private void ClearGuardHighlight()
-    {
-        foreach(IPiece piece in guardingPieces)
+        foreach(IPiece piece in set)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
@@ -317,8 +311,9 @@ public class SelectPiece : MonoBehaviour
             hex.ToggleSelect();
         }
 
-        ColorizeThreat();
-        ColorizeGuard();
+        ColorizePieces(ref threateningPieces, orangeColor);
+        ColorizePieces(ref guardingPieces, greenColor);
+        // ColorizePieces(ref attackablePieces, redColor);
     }
 
     private void DisablePreview()
@@ -327,8 +322,9 @@ public class SelectPiece : MonoBehaviour
             hex.ToggleSelect();
         previewMoves = Enumerable.Empty<(Hex, MoveType)>();
 
-        ClearThreatHighlight();
-        ClearGuardHighlight();
+        ClearPiecesColorization(ref threateningPieces);
+        ClearPiecesColorization(ref guardingPieces);
+        // ClearPiecesColorization(ref attackablePieces);
     }
 
     public void LeftClick(CallbackContext context)
