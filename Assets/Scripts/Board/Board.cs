@@ -297,17 +297,39 @@ public class Board : SerializedMonoBehaviour
         return possibleMoves;
     }
 
-    public IEnumerable<IPiece> GetThreateningPieces(Hex hoveredHex)
+    public IEnumerable<IPiece> GetThreateningPieces(Hex hex)
     {
         BoardState currentState = GetCurrentBoardState();
         List<IPiece> threateningPieces = new List<IPiece>();
         foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
         {
             List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, false);
-            if(possibleMoves.Where(move => move.Item1 == hoveredHex && move.Item2 == MoveType.Attack).Count() == 1)
+            if(possibleMoves.Where(move => move.Item1 == hex && move.Item2 == MoveType.Attack).Count() == 1)
                 threateningPieces.Add(piece.Value);
         }
         return threateningPieces;
+    }
+
+    public IEnumerable<IPiece> GetGuardingingPieces(Hex hex)
+    {
+        BoardState currentState = GetCurrentBoardState();
+        List<IPiece> guardingPieces = new List<IPiece>();
+        // Team friendlyTeam = currentState.allPiecePositions[hex.index].Item1;
+        IPiece occupyingPiece = activePieces[currentState.allPiecePositions[hex.index]];
+
+        // foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
+        // {
+        //     if(piece.Key.Item1 != occupyingPiece.team || piece.Value == occupyingPiece)
+        //         continue;
+            
+        //     List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, true);
+        //     var guardMoves = possibleMoves.Where(move => move.Item1 == hex);
+        //     guardingPieces.AddRange(
+        //         guardMoves.Select(move => activePieces[currentState.allPiecePositions[move.Item1.index]])
+        //     );
+        // }
+
+        return guardingPieces;
     }
 
     public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)

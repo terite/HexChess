@@ -191,7 +191,7 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 192
-  selectedPieceColor: {r: 0, g: 0.8734226, b: 1, a: 1}
+  selectedPieceColor: {r: 0.31181023, g: 0.7488344, b: 0.8584906, a: 1}
   audioSource: {fileID: 6983169283407362394}
   cancelNoise: {fileID: 8300000, guid: ba2a0d48902eea04ead3e58e073a88b7, type: 3}
   pickupNoise: {fileID: 8300000, guid: 9c7f611590e186b4a84a7d71a7e9260e, type: 3}
@@ -205,6 +205,7 @@ MonoBehaviour:
   greenColor: {r: 0.15472588, g: 0.5754717, b: 0.17287652, a: 1}
   redColor: {r: 0.6603774, g: 0.109024554, b: 0.109024554, a: 1}
   orangeColor: {r: 0.8773585, g: 0.42442012, b: 0.086908154, a: 1}
+  hoverColor: {r: 0.31181023, g: 0.7488344, b: 0.8584906, a: 1}
   whiteColor: {r: 1, g: 1, b: 1, a: 1}
   blackColor: {r: 0.11764706, g: 0.11764706, b: 0.11764706, a: 1}
 --- !u!114 &748795983797158534

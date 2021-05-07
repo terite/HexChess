@@ -27,8 +27,10 @@ public class SelectPiece : MonoBehaviour
     public Color greenColor;
     public Color redColor;
     public Color orangeColor;
+    public Color hoverColor;
 
     IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
+    IEnumerable<IPiece> guardingPieces = Enumerable.Empty<IPiece>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
     public Color whiteColor;
@@ -217,6 +219,7 @@ public class SelectPiece : MonoBehaviour
                                     previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
                                     
                                     threateningPieces = board.GetThreateningPieces(hoveredHex);
+                                    guardingPieces = board.GetGuardingingPieces(hoveredHex);
 
                                     EnablePreview();
                                 }
@@ -256,6 +259,7 @@ public class SelectPiece : MonoBehaviour
                             previewMoves = previewMoves.Append((hoveredPieceHex, MoveType.None));
 
                         threateningPieces = board.GetThreateningPieces(hoveredPieceHex);
+                        guardingPieces = board.GetGuardingingPieces(hoveredPieceHex);
 
                         EnablePreview();
                     }
@@ -287,16 +291,34 @@ public class SelectPiece : MonoBehaviour
             renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
         }
     }
+    private void ColorizeGuard()
+    {
+        foreach(IPiece piece in guardingPieces)
+        {
+            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+            renderer.material.SetColor("_BaseColor", greenColor);
+        }
+    }
+    private void ClearGuardHighlight()
+    {
+        foreach(IPiece piece in guardingPieces)
+        {
+            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+            renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
+        }
+    }
+    
 
     private void EnablePreview()
     {
         foreach((Hex hex, MoveType moveType) in previewMoves)
         {
-            hex.SetOutlineColor(orangeColor);
+            hex.SetOutlineColor(hoverColor);
             hex.ToggleSelect();
         }
 
         ColorizeThreat();
+        ColorizeGuard();
     }
 
     private void DisablePreview()
@@ -306,6 +328,7 @@ public class SelectPiece : MonoBehaviour
         previewMoves = Enumerable.Empty<(Hex, MoveType)>();
 
         ClearThreatHighlight();
+        ClearGuardHighlight();
     }
 
     public void LeftClick(CallbackContext context)
