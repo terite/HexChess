@@ -310,24 +310,28 @@ public class Board : SerializedMonoBehaviour
         return threateningPieces;
     }
 
-    public IEnumerable<IPiece> GetGuardingingPieces(Hex hex)
+    public IEnumerable<IPiece> GetGuardingingPieces(Hex guardedHex)
     {
         BoardState currentState = GetCurrentBoardState();
+        IPiece occupyingPiece = activePieces[currentState.allPiecePositions[guardedHex.index]];
+        
         List<IPiece> guardingPieces = new List<IPiece>();
         // Team friendlyTeam = currentState.allPiecePositions[hex.index].Item1;
-        IPiece occupyingPiece = activePieces[currentState.allPiecePositions[hex.index]];
 
-        // foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
-        // {
-        //     if(piece.Key.Item1 != occupyingPiece.team || piece.Value == occupyingPiece)
-        //         continue;
+        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
+        {
+            if(piece.Key.Item1 != occupyingPiece.team || piece.Value == occupyingPiece)
+                continue;
             
-        //     List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, true);
-        //     var guardMoves = possibleMoves.Where(move => move.Item1 == hex);
+            List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, true);
+            IEnumerable<(Hex, MoveType)> guardMoves = possibleMoves.Where(move => move.Item1 == guardedHex);
+            
+            if(guardMoves.Count() == 1)
+                guardingPieces.Add(piece.Value);
         //     guardingPieces.AddRange(
         //         guardMoves.Select(move => activePieces[currentState.allPiecePositions[move.Item1.index]])
         //     );
-        // }
+        }
 
         return guardingPieces;
     }
