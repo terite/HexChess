@@ -22,6 +22,10 @@ public class Pawn : MonoBehaviour, IPiece
 
     private Board board;
     bool isSingleplayer;
+
+    private Vector3? targetPos = null;
+    public float speed = 15f;
+
     public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
@@ -130,7 +134,7 @@ public class Pawn : MonoBehaviour, IPiece
             passantable = true;
         }
 
-        transform.position = hex.transform.position + Vector3.up;
+        targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
         
         // If the pawn reaches the other side of the board, it can Promote
@@ -152,5 +156,20 @@ public class Pawn : MonoBehaviour, IPiece
         }
         else
             turnsPassed++;
+    }
+
+    private void Update() => MoveOverTime();
+
+    private void MoveOverTime()
+    {
+        if(!targetPos.HasValue)
+            return;
+
+        transform.position = Vector3.Lerp(transform.position, targetPos.Value, Time.deltaTime * speed);
+        if((transform.position - targetPos.Value).magnitude < 0.03f)
+        {
+            transform.position = targetPos.Value;
+            targetPos = null;
+        }
     }
 }

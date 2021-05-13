@@ -16,6 +16,8 @@ public class Rook : MonoBehaviour, IPiece
     private bool _captured = false;
     public ushort value {get => 5; set{}}
     public List<Piece> defendableTypes = new List<Piece>();
+    private Vector3? targetPos = null;
+    public float speed = 15f;
 
     public void Init(Team team, Piece piece, Index startingLocation)
     {
@@ -82,7 +84,22 @@ public class Rook : MonoBehaviour, IPiece
 
     public void MoveTo(Hex hex)
     {
-        transform.position = hex.transform.position + Vector3.up;
+        targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
+    }
+
+    private void Update() => MoveOverTime();
+
+    private void MoveOverTime()
+    {
+        if(!targetPos.HasValue)
+            return;
+
+        transform.position = Vector3.Lerp(transform.position, targetPos.Value, Time.deltaTime * speed);
+        if((transform.position - targetPos.Value).magnitude < 0.03f)
+        {
+            transform.position = targetPos.Value;
+            targetPos = null;
+        }
     }
 }
