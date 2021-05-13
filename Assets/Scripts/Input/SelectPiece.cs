@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
 using System.Linq;
 using System;
+using TMPro;
 
 public class SelectPiece : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class SelectPiece : MonoBehaviour
     Camera cam;
     [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
+    [SerializeField] private LayerMask hexMask;
+    [SerializeField] private LayerMask keysMask;
     [SerializeField] private Color selectedPieceColor;
     [SerializeField] private AudioSource audioSource;
     public AudioClip cancelNoise;
@@ -28,16 +31,22 @@ public class SelectPiece : MonoBehaviour
     public Color redColor;
     public Color orangeColor;
     public Color hoverColor;
+    public Color whiteColor;
+    public Color blackColor;
 
     IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
     IEnumerable<IPiece> guardingPieces = Enumerable.Empty<IPiece>();
     IEnumerable<IPiece> attackablePieces = Enumerable.Empty<IPiece>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
-    public Color whiteColor;
-    public Color blackColor;
 
     private Hex lastHoveredHex = null;
+    private Hex lastHoveredHexForKeyHighlight = null;
+
+    private Keys keys;
+
+    private TextMeshPro lastHoveredKey = null;
+    IEnumerable<Hex> keyHighlightedHexes = Enumerable.Empty<Hex>();
 
     private void Awake() 
     {
@@ -45,19 +54,144 @@ public class SelectPiece : MonoBehaviour
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
             singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+        
+        keys = GameObject.FindObjectOfType<Keys>();
     }
 
     private void Update()
     {
         MovePreviewsOnHover();
         ColorizeBasedOnMove();
+        HighlightKeysOnHoverHex();
+        HighlightHexOnHoverKey();
+    }
+
+    private void HighlightHexOnHoverKey()
+    {
+        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
+        {
+            TextMeshPro hitKey = hit.collider.GetComponent<TextMeshPro>();
+            if(hitKey == null)
+            {
+                foreach(Hex hex in keyHighlightedHexes)
+                    hex.ToggleSelect();
+                
+                keyHighlightedHexes = Enumerable.Empty<Hex>();
+                lastHoveredKey = null;
+                return;
+            }
+            
+            if(lastHoveredKey == hitKey)
+                return;
+
+            foreach(Hex hex in keyHighlightedHexes)
+                hex.ToggleSelect();
+            
+            keyHighlightedHexes = Enumerable.Empty<Hex>();
+            
+            if(int.TryParse(hitKey.text, out int hitNum))
+            {
+                // Fetch all hexes in proper rows
+                (int desiredRow1, int desiredRow2) = hitNum switch {
+                    1 => (0, 1), 2 => (2, 3),
+                    3 => (4, 5), 4 => (6, 7),
+                    5 => (8, 9), 6 => (10, 11),
+                    7 => (12, 13), 8 => (14, 15),
+                    9 => (16, 17), 10 => (18, 19),
+                    _ => (-1, -1) 
+                };
+
+                if(desiredRow1 == -1)
+                    return;
+                
+                IEnumerable<Hex> hexesInRow1 = board.hexes.Count > desiredRow1 ? board.hexes[desiredRow1] : Enumerable.Empty<Hex>();
+                IEnumerable<Hex> hexesInRow2 = board.hexes.Count > desiredRow2 ? board.hexes[desiredRow2] : Enumerable.Empty<Hex>();
+                IEnumerable<Hex> hexesInRow = hexesInRow1.Concat(hexesInRow2);
+
+                foreach(Hex hex in hexesInRow)
+                {
+                    hex.SetOutlineColor(orangeColor);
+                    hex.ToggleSelect();
+                }
+                keyHighlightedHexes = hexesInRow;
+            }
+            else
+            {
+                // Fetch all hexes in proper col
+                (bool isEven, int c) = hitKey.text switch {
+                    "A" => (false, 0), "B" => (true, 0),
+                    "C" => (false, 1), "D" => (true, 1),
+                    "E" => (false, 2), "F" => (true, 2),
+                    "G" => (false, 3), "H" => (true, 3),
+                    "I" => (false, 4), _ => (false, -1)
+                };
+
+                if(c == -1)
+                    return;
+                
+                IEnumerable<Hex> hexesInCol = board.GetHexesInCol(c);
+                hexesInCol = hexesInCol.Where(hex => hex.index.row % 2 == 0 == isEven);
+                foreach(Hex hex in hexesInCol)
+                {
+                    hex.SetOutlineColor(orangeColor);
+                    hex.ToggleSelect();
+                }
+                keyHighlightedHexes = hexesInCol;
+            }
+
+            lastHoveredKey = hitKey;
+        }
+        else
+        {
+            foreach(Hex hex in keyHighlightedHexes)
+                hex.ToggleSelect();
+            
+            keyHighlightedHexes = Enumerable.Empty<Hex>();
+            lastHoveredKey = null;
+        }
+    }
+
+    private void HighlightKeysOnHoverHex()
+    {
+        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
+        {
+            if(hit.collider == null)
+            {   
+                if(lastHoveredHexForKeyHighlight != null)
+                {
+                    keys.Clear();
+                    lastHoveredHexForKeyHighlight = null;
+                }
+                return;
+            }
+            Hex hoveredHex = hit.collider.GetComponent<Hex>();
+            if(hoveredHex == null)
+            {
+                if(lastHoveredHexForKeyHighlight != null)
+                {
+                    keys.Clear();
+                    lastHoveredHexForKeyHighlight = null;
+                }
+                return;
+            }
+            if(hoveredHex == lastHoveredHexForKeyHighlight)
+                return;
+                
+            keys.HighlightKeys(hoveredHex.index);
+            lastHoveredHexForKeyHighlight = hoveredHex;
+        }
+        else if(lastHoveredHexForKeyHighlight != null)
+        {
+            keys.Clear();
+            lastHoveredHexForKeyHighlight = null;
+        }
     }
 
     private void ColorizeBasedOnMove()
     {
         if(selectedPiece != null && onMouse != null)
         {
-            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, layerMask))
             {
                 IPiece hitPiece = hit.collider.GetComponent<IPiece>();
                 if(hitPiece != null)
@@ -189,90 +323,56 @@ public class SelectPiece : MonoBehaviour
 
         if(selectedPiece == null)
         {
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
-                if(hoveredPiece == null)
+                Hex hoveredHex = hit.collider.GetComponent<Hex>();
+                if(hoveredHex != null)
                 {
-                    Hex hoveredHex = hit.collider.GetComponent<Hex>();
-                    if(hoveredHex != null)
+                    if(lastHoveredHex == hoveredHex)
+                        return;
+                    
+                    lastHoveredHex = hoveredHex;
+                    if(currentBoardState.allPiecePositions.ContainsKey(hoveredHex.index))
                     {
-                        if(lastHoveredHex == hoveredHex)
-                            return;
-                        
-                        lastHoveredHex = hoveredHex;
-                        if(currentBoardState.allPiecePositions.ContainsKey(hoveredHex.index))
+                        // Get the piece on that hex
+                        hoveredPiece = board.activePieces[currentBoardState.allPiecePositions[hoveredHex.index]];
+                        if(hoveredPiece != null && !hoveredPiece.captured)
                         {
-                            // Get the piece on that hex
-                            hoveredPiece = board.activePieces[currentBoardState.allPiecePositions[hoveredHex.index]];
-                            if(hoveredPiece != null && !hoveredPiece.captured)
+                            IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
+                                hoveredPiece,
+                                currentBoardState,
+                                true
+                            );
+                            if(incomingPreviewMoves != previewMoves)
                             {
-                                IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
-                                    hoveredPiece,
-                                    currentBoardState,
-                                    true
-                                );
-                                if(incomingPreviewMoves != previewMoves)
-                                {
-                                    DisablePreview();
-                                    previewMoves = incomingPreviewMoves;
-                                    previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
-                                    
-                                    threateningPieces = board.GetThreateningPieces(hoveredHex);
-                                    guardingPieces = board.GetGuardingingPieces(hoveredHex);
-                                    attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
-                                        .Where(move => move.Item2 == MoveType.Attack
-                                            && currentBoardState.allPiecePositions.ContainsKey(move.Item1.index)
-                                            && board.activePieces.ContainsKey(currentBoardState.allPiecePositions[move.Item1.index])
-                                        )
-                                        .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
-
-                                    EnablePreview();
-                                }
-                            }
-                            else if(previewMoves.Count() > 0)
                                 DisablePreview();
+                                previewMoves = incomingPreviewMoves;
+                                previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
+                                
+                                threateningPieces = board.GetThreateningPieces(hoveredHex);
+                                guardingPieces = board.GetGuardingingPieces(hoveredHex);
+                                attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
+                                    .Where(move => move.Item2 == MoveType.Attack
+                                        && currentBoardState.allPiecePositions.ContainsKey(move.Item1.index)
+                                        && board.activePieces.ContainsKey(currentBoardState.allPiecePositions[move.Item1.index])
+                                    )
+                                    .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
+
+                                EnablePreview();
+                            }
                         }
                         else if(previewMoves.Count() > 0)
                             DisablePreview();
                     }
                     else if(previewMoves.Count() > 0)
-                    {
-                        lastHoveredHex = null;
                         DisablePreview();
-                    }
                 }
-                else if(!hoveredPiece.captured)
+                else if(previewMoves.Count() > 0)
                 {
-                    Hex hoveredPieceHex = board.GetHexIfInBounds(hoveredPiece.location);
-                    if(lastHoveredHex == hoveredPieceHex)
-                        return;
-
-                    lastHoveredHex = hoveredPieceHex;
-                    
-                    IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
-                        hoveredPiece,
-                        currentBoardState,
-                        true
-                    );
-
-                    if(incomingPreviewMoves != previewMoves)
-                    {
-                        DisablePreview();
-                        previewMoves = incomingPreviewMoves;
-
-                        if(hoveredPieceHex != null)
-                            previewMoves = previewMoves.Append((hoveredPieceHex, MoveType.None));
-
-                        threateningPieces = board.GetThreateningPieces(hoveredPieceHex);
-                        guardingPieces = board.GetGuardingingPieces(hoveredPieceHex);
-                        attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
-                            .Where(move => move.Item2 == MoveType.Attack)
-                            .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
-
-                        EnablePreview();
-                    }
+                    lastHoveredHex = null;
+                    DisablePreview();
                 }
                 else if(previewMoves.Count() > 0)
                     DisablePreview();
@@ -329,27 +429,43 @@ public class SelectPiece : MonoBehaviour
 
     public void LeftClick(CallbackContext context)
     {
+        BoardState currentBoardState = board.GetCurrentBoardState();
         if(context.started)
         {
             // Later allow players to queue a move, but for now, just prevent even clicking a piece when not their turn
             if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
                 return;
 
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
             {
-                if(hit.collider == null)
+                if(pieceHit.collider == null)
                     return;
                 
-                BoardState currentBoardState = board.GetCurrentBoardState();
-                IPiece clickedPiece = hit.collider.GetComponent<IPiece>();
-                if(clickedPiece != null && clickedPiece.team == currentBoardState.currentMove)
-                {
-                    if(!clickedPiece.captured)
-                        Select(currentBoardState, clickedPiece);
-                    else if(!multiplayer && freePlaceMode.toggle.isOn)
-                        Select(currentBoardState, clickedPiece, true);
-
+                if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece)
+                    && clickedPiece.team == currentBoardState.currentMove 
+                    && clickedPiece.captured 
+                    && !multiplayer 
+                    && freePlaceMode.toggle.isOn
+                ){
+                    Select(currentBoardState, clickedPiece, true);
                     audioSource.PlayOneShot(pickupNoise);
+                    return;
+                }
+            }
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
+            {
+                if(hexHit.collider == null)
+                    return;
+
+                if(hexHit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
+                {
+                    IPiece pieceOnHex = board.activePieces[currentBoardState.allPiecePositions[clickedHex.index]];
+                    if(pieceOnHex.team == currentBoardState.currentMove)
+                    {
+                        Select(currentBoardState, pieceOnHex);
+                        audioSource.PlayOneShot(pickupNoise);
+                        return;
+                    }
                 }
             }
         }
@@ -358,9 +474,8 @@ public class SelectPiece : MonoBehaviour
             if(lastChangedRenderer != null)
                 ResetLastChangedRenderer();
 
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, layerMask))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
             {
-                BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
 
                 if(hoveredPiece != null && selectedPiece != null)
@@ -434,6 +549,9 @@ public class SelectPiece : MonoBehaviour
                     Jail jail = hit.collider.GetComponent<Jail>();
                     if(jail && !selectedPiece.captured)
                         board.Enprison(selectedPiece);
+                    
+                    Hex fromHex = board.GetHexIfInBounds(selectedPiece.location);
+                    fromHex.ToggleSelect();
                 }
             }
 
@@ -546,6 +664,7 @@ public class SelectPiece : MonoBehaviour
 
         onMouse.PutDown();
         hoverExitedInitialHex = false;
+        lastHoveredHex = null;
         
         selectedPiece = null;
     }

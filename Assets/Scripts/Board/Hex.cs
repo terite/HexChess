@@ -135,6 +135,23 @@ public struct Index
         this.col = col;
     }
 
+    public string GetKey() => $"{GetLetter()}{GetNumber()}";
+
+    public int GetNumber() => ((float)row/2f).Floor() + 1;
+
+    public string GetLetter()
+    {
+        bool isEven = row % 2 == 0;
+
+        return col switch {
+            0 when !isEven => "A", 0 when isEven => "B",
+            1 when !isEven => "C", 1 when isEven => "D",
+            2 when !isEven => "E", 2 when isEven => "F",
+            3 when !isEven => "G", 3 when isEven => "H",
+            4 => "I", _ => ""
+        };
+    }
+
     public override string ToString() => $"{row}, {col}";
 
     public override bool Equals(object obj) => 
@@ -152,4 +169,5 @@ public struct Index
 
     public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
     public static bool operator !=(Index a, Index b) => !(a==b);
+
 }

@@ -16,8 +16,8 @@ public class LastMoveTracker : MonoBehaviour
         if(!gameObject.activeSelf)
             gameObject.SetActive(true);
 
-        string from = $"{GetLetter(move.from)}{GetNumber(move.from)}";
-        string to = $"{GetLetter(move.to)}{GetNumber(move.to)}";
+        string from = move.from.GetKey();
+        string to = move.to.GetKey();
 
         text.text = move.capturedPiece.HasValue
             ? $"{GetPieceString(move.lastPiece)} {from} takes {GetPieceString(move.capturedPiece.Value)} {to}"
@@ -27,21 +27,7 @@ public class LastMoveTracker : MonoBehaviour
 
         text.color = move.lastTeam == Team.White ? Color.white : Color.black;
     }
-
-    public int GetNumber(Index i) => ((float)i.row/2f).Floor() + 1;
-
-    public string GetLetter(Index i)
-    {
-        bool isEven = i.row % 2 == 0;
-
-        return i.col switch {
-            0 when !isEven => "A", 0 when isEven => "B",
-            1 when !isEven => "C", 1 when isEven => "D",
-            2 when !isEven => "E", 2 when isEven => "F",
-            3 when !isEven => "G", 3 when isEven => "H",
-            4 => "I", _ => ""
-        };
-    }
+    
     public string GetPieceString(Piece piece) => piece switch {
         Piece.King => "King",
         Piece.Queen => "Queen",

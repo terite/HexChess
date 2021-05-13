@@ -685,14 +685,32 @@ public class Board : SerializedMonoBehaviour
         (int row, int col) offsets = GetOffsetInDirection(source.row % 2 == 0, direction);
         return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
     }
-
     public Hex GetHexIfInBounds(int row, int col)
+
     {
         if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
             return null;
         return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
     }
     public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
+    
+    public IEnumerable<Hex> GetHexesInCol(int col)
+    {
+        List<Hex> hexesInCol = new List<Hex>();
+        for(int i = 0; i < hexes.Count; i++)
+        {
+            for(int j = 0; j < hexes[i].Count; j++)
+            {
+                if(j == col)
+                {
+                    Hex hex = GetHexIfInBounds(i, j);
+                    if(hex != null)
+                        hexesInCol.Add(hex);
+                }
+            }
+        }
+        return hexesInCol;
+    }
 
     private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction) => direction switch {
         HexNeighborDirection.Up => (2, 0),
