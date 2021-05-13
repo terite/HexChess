@@ -9,6 +9,8 @@ public class OnMouse : MonoBehaviour
     Camera cam;
     public float distance;
     public Color? currentColor {get; private set;}
+
+    public bool isPickedUp {get; private set;} = false;
     
     private void Awake() => cam = Camera.main;
 
@@ -23,12 +25,22 @@ public class OnMouse : MonoBehaviour
         MeshFilter toPickupFilter = toPickup.GetComponentInChildren<MeshFilter>();
         filter.mesh = toPickupFilter.mesh;
         filter.transform.rotation = toPickupFilter.transform.rotation;
+        isPickedUp = true;
     } 
 
     public void PutDown()
     {
         currentColor = null;
         filter.mesh = null;
+        isPickedUp = false;
+    }
+    public void SetBaseColor(Color color)
+    {
+        if(filter.mesh == null)
+            return;
+
+        pickedUpRenderer.material.SetColor("_BaseColor", color);
+        SetColor(color);
     }
 
     public void SetColor(Color color)
@@ -40,6 +52,6 @@ public class OnMouse : MonoBehaviour
             return;
         
         currentColor = color;
-        pickedUpRenderer.material.SetColor("_BaseColor", color);
+        pickedUpRenderer.material.SetColor("_HighlightColor", color);
     }
 }

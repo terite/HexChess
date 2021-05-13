@@ -68,6 +68,9 @@ public class SelectPiece : MonoBehaviour
 
     private void HighlightHexOnHoverKey()
     {
+        if(onMouse.isPickedUp)
+            return;
+
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
         {
             TextMeshPro hitKey = hit.collider.GetComponent<TextMeshPro>();
@@ -216,7 +219,7 @@ public class SelectPiece : MonoBehaviour
                                 else if(pieceMoves.Contains((hex, MoveType.Defend)) || pieceMoves.Contains((hex, MoveType.Move)))
                                     toSet = greenColor;
 
-                                hitRenderer.material.SetColor("_BaseColor", toSet);
+                                hitRenderer.material.SetColor("_HighlightColor", toSet);
                                 lastChangedPiece = hitPiece;
                                 lastChangedRenderer = hitRenderer;
                             }
@@ -255,7 +258,7 @@ public class SelectPiece : MonoBehaviour
                                         else if(pieceMoves.Contains((hitHex, MoveType.Defend)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                                             toSet = greenColor;
 
-                                        hitPieceRenderer.material.SetColor("_BaseColor", toSet);
+                                        hitPieceRenderer.material.SetColor("_HighlightColor", toSet);
                                         lastChangedPiece = piece;
                                         lastChangedRenderer = hitPieceRenderer;
                                     }
@@ -309,7 +312,7 @@ public class SelectPiece : MonoBehaviour
 
     private void ResetLastChangedRenderer()
     {
-        lastChangedRenderer?.material.SetColor("_BaseColor", lastChangedPiece?.team == Team.White ? whiteColor : blackColor);
+        lastChangedRenderer?.material.SetColor("_HighlightColor", lastChangedPiece?.team == Team.White ? whiteColor : blackColor);
         lastChangedPiece = null;
         lastChangedRenderer = null;
     }
@@ -389,7 +392,7 @@ public class SelectPiece : MonoBehaviour
         foreach(IPiece piece in set)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", color);
+            renderer.material.SetColor("_HighlightColor", color);
         }
     }
 
@@ -398,7 +401,7 @@ public class SelectPiece : MonoBehaviour
         foreach(IPiece piece in set)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_BaseColor", piece.team == Team.White ? whiteColor : blackColor);
+            renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
         }
     }
     
@@ -571,7 +574,7 @@ public class SelectPiece : MonoBehaviour
         // Select new piece and highlight all of the places it can move to on the current board state
         selectedPiece = clickedPiece;
         onMouse.PickUp(selectedPiece.obj);
-        onMouse.SetColor(selectedPiece.team == Team.White ? whiteColor : blackColor);
+        onMouse.SetBaseColor(selectedPiece.team == Team.White ? whiteColor : blackColor);
         
         if(!fromJail)
         {
