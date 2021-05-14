@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -99,7 +100,7 @@ public class Bishop : MonoBehaviour, IPiece
         return false;
     }
 
-    public void MoveTo(Hex hex)
+    public void MoveTo(Hex hex, Action action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;

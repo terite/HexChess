@@ -23,7 +23,9 @@ public class LastMoveTracker : MonoBehaviour
         string to = move.to.GetKey();
 
         Team otherTeam = move.lastTeam == Team.White ? Team.Black : Team.White;
-        string lastPieceString = board.activePieces[(move.lastTeam, move.lastPiece)].GetPieceString();
+        string lastPieceString = board.activePieces.ContainsKey((move.lastTeam, move.lastPiece)) 
+            ? board.activePieces[(move.lastTeam, move.lastPiece)].GetPieceString() 
+            : "";
         
         IPiece capturedPiece = move.capturedPiece.HasValue 
             ? board.piecePrefabs[(otherTeam, move.capturedPiece.Value)].GetComponent<IPiece>()

@@ -18,6 +18,7 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private LayerMask keysMask;
     [SerializeField] private Color selectedPieceColor;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private PromotionDialogue promotionDialogue;
     public AudioClip cancelNoise;
     public AudioClip pickupNoise;
     public IPiece selectedPiece {get; private set;}
@@ -177,7 +178,7 @@ public class SelectPiece : MonoBehaviour
                 }
                 return;
             }
-            if(hoveredHex == lastHoveredHexForKeyHighlight)
+            else if(hoveredHex == lastHoveredHexForKeyHighlight)
                 return;
                 
             keys.HighlightKeys(hoveredHex.index);
@@ -340,7 +341,9 @@ public class SelectPiece : MonoBehaviour
                     if(currentBoardState.allPiecePositions.ContainsKey(hoveredHex.index))
                     {
                         // Get the piece on that hex
-                        hoveredPiece = board.activePieces[currentBoardState.allPiecePositions[hoveredHex.index]];
+                        (Team t, Piece p) = currentBoardState.allPiecePositions[hoveredHex.index];
+                        if(board.activePieces.ContainsKey((t, p)))
+                            hoveredPiece = board.activePieces[(t, p)];
                         if(hoveredPiece != null && !hoveredPiece.captured)
                         {
                             IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
@@ -396,6 +399,7 @@ public class SelectPiece : MonoBehaviour
         }
     }
 
+
     private void ClearPiecesColorization(ref IEnumerable<IPiece> set)
     {
         foreach(IPiece piece in set)
@@ -403,6 +407,7 @@ public class SelectPiece : MonoBehaviour
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
         }
+        set = Enumerable.Empty<IPiece>();
     }
     
 
@@ -432,6 +437,10 @@ public class SelectPiece : MonoBehaviour
 
     public void LeftClick(CallbackContext context)
     {
+        if(promotionDialogue.gameObject.activeSelf)
+            return;
+        
+
         BoardState currentBoardState = board.GetCurrentBoardState();
         if(context.started)
         {
@@ -439,22 +448,7 @@ public class SelectPiece : MonoBehaviour
             if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
                 return;
 
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
-            {
-                if(pieceHit.collider == null)
-                    return;
-                
-                if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece)
-                    && clickedPiece.team == currentBoardState.currentMove 
-                    && clickedPiece.captured 
-                    && !multiplayer 
-                    && freePlaceMode.toggle.isOn
-                ){
-                    Select(currentBoardState, clickedPiece, true);
-                    audioSource.PlayOneShot(pickupNoise);
-                    return;
-                }
-            }
+            // When moveing pieces on the board, we determine what piece is being moved by the hex the player is hovering
             if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
             {
                 if(hexHit.collider == null)
@@ -471,6 +465,24 @@ public class SelectPiece : MonoBehaviour
                     }
                 }
             }
+
+            // But pulling pieces ouf of jail in free place mode doesn't have a hex for us to check, so let's cast a ray and check that instead.
+            if(!multiplayer && freePlaceMode.toggle.isOn)
+            {
+                if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
+                {
+                    if(pieceHit.collider == null)
+                        return;
+                    
+                    if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece) && clickedPiece.team == currentBoardState.currentMove && clickedPiece.captured)
+                    {
+                        Select(currentBoardState, clickedPiece, true);
+                        audioSource.PlayOneShot(pickupNoise);
+                        return;
+                    }
+                }
+            }
+            
         }
         else if(context.canceled)
         {
@@ -596,7 +608,6 @@ public class SelectPiece : MonoBehaviour
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
-
         bool fromJail = false;
 
         if(!board.activePieces.ContainsKey((selectedPiece.team, selectedPiece.piece)))
@@ -605,17 +616,22 @@ public class SelectPiece : MonoBehaviour
             board.activePieces.Add((selectedPiece.team, selectedPiece.piece), selectedPiece);
         }
         
-        BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
         
-        if(multiplayer != null)
+        if((selectedPiece is Pawn pawn) && pawn.GetGoalInRow(hitHex.index.row) == hitHex.index.row)
         {
-            // We skip sending a board here when a promotion is happening. That will be sent with the promotion after it's chosen
-            if(!(selectedPiece is Pawn pawn) || pawn.goal != hitHex.index.row)
-                multiplayer.SendBoard(newState);
+            // We don't send a boardstate right now when multiplayer, as the promotion will finish that for us
+            board.MovePieceForPromotion(selectedPiece, hitHex, board.GetCurrentBoardState());
+            DeselectPiece(pieceStartLoc, fromJail);
+            return;
         }
-
-        board.AdvanceTurn(newState);
-        DeselectPiece(pieceStartLoc, fromJail);
+        else
+        {
+            BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
+            if(multiplayer != null)
+                multiplayer.SendBoard(newState);
+            board.AdvanceTurn(newState);
+            DeselectPiece(pieceStartLoc, fromJail);
+        }
     }
 
     private void Defend(IPiece pieceToDefend)

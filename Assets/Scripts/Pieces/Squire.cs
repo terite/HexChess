@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -55,7 +56,7 @@ public class Squire : MonoBehaviour, IPiece
         return possible;
     }
 
-    public void MoveTo(Hex hex)
+    public void MoveTo(Hex hex, Action action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
