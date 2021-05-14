@@ -119,4 +119,6 @@ public class Bishop : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "Bishop";
 }

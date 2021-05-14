@@ -102,4 +102,6 @@ public class Rook : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "Rook";
 }

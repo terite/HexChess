@@ -71,4 +71,6 @@ public class King : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "King";
 }

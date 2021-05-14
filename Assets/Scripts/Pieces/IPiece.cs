@@ -13,6 +13,7 @@ public interface IPiece
     List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false);
     void MoveTo(Hex hex);
     void Init(Team team, Piece piece, Index startingLocation);
+    string GetPieceString();
 }
 
 public enum Piece {

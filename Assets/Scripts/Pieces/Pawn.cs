@@ -172,4 +172,6 @@ public class Pawn : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "Pawn";
 }

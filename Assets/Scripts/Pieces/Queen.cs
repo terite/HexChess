@@ -136,4 +136,6 @@ public class Queen : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "Queen";
 }

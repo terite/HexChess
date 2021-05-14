@@ -84,4 +84,6 @@ public class Knight : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+
+    public string GetPieceString() => "Knight";
 }
