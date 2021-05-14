@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,7 +12,7 @@ public interface IPiece
     bool captured {get; set;}
     ushort value {get; set;}
     List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false);
-    void MoveTo(Hex hex);
+    void MoveTo(Hex hex, Action action = null);
     void Init(Team team, Piece piece, Index startingLocation);
     string GetPieceString();
 }

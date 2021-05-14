@@ -333,9 +333,7 @@ public class Board : SerializedMonoBehaviour
     {
         BoardState currentState = GetCurrentBoardState();
         IPiece occupyingPiece = activePieces[currentState.allPiecePositions[guardedHex.index]];
-        
         List<IPiece> guardingPieces = new List<IPiece>();
-        // Team friendlyTeam = currentState.allPiecePositions[hex.index].Item1;
 
         foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
         {
@@ -347,9 +345,6 @@ public class Board : SerializedMonoBehaviour
             
             if(guardMoves.Count() == 1)
                 guardingPieces.Add(piece.Value);
-        //     guardingPieces.AddRange(
-        //         guardMoves.Select(move => activePieces[currentState.allPiecePositions[move.Item1.index]])
-        //     );
         }
 
         return guardingPieces;
@@ -407,7 +402,53 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public void QueryPromote(Pawn pawn) 
+    public void MovePieceForPromotion(IPiece piece, Hex targetLocation, BoardState boardState)
+    {
+        // Copy the existing board state
+        BoardState currentState = boardState;
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.allPiecePositions);
+        
+        // If the hex being moved into contains an enemy piece, capture it
+        Piece? takenPieceAtLocation = null;
+        Piece? defendedPieceAtLocation = null;
+        if(currentState.allPiecePositions.Contains(targetLocation.index))
+        {
+            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
+            if(occupyingTeam != piece.team)
+            {
+                takenPieceAtLocation = occupyingType;
+                IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
+
+                // Capture the enemy piece
+                jails[(int)occupyingTeam].Enprison(occupyingPiece);
+                activePieces.Remove((occupyingTeam, occupyingType));
+                allPiecePositions.Remove((occupyingTeam, occupyingType));
+            }
+            else
+                defendedPieceAtLocation = occupyingType;
+        }
+
+        // Move piece
+        moveTracker.UpdateText(new Move(
+            piece.team, 
+            piece.piece, 
+            piece.location, 
+            targetLocation.index, 
+            takenPieceAtLocation, 
+            defendedPieceAtLocation
+        ));
+        piece.MoveTo(targetLocation, () => {
+            // Update boardstate
+            if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
+                allPiecePositions.Remove((piece.team, piece.piece));
+            allPiecePositions.Add((piece.team, piece.piece), targetLocation.index);
+            currentState.allPiecePositions = allPiecePositions;
+
+            AdvanceTurn(currentState);
+        });
+    }
+
+    public void QueryPromote(Pawn pawn, Action action) 
     {
         // We don't want to display the query promote screen if we're not the team making the promote
         // That information will arrive to us across the network
@@ -416,6 +457,8 @@ public class Board : SerializedMonoBehaviour
             return;
         promotionDialogue.Display(pieceType => {
             Promote(pawn, pieceType);
+            
+            action?.Invoke();
 
             Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
             multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType));
@@ -427,7 +470,10 @@ public class Board : SerializedMonoBehaviour
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn, 
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
-        IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], pawn.transform.position, Quaternion.identity).GetComponent<IPiece>();
+        Board board = GameObject.FindObjectOfType<Board>();
+        Hex hex = board.GetHexIfInBounds(pawn.location);
+        
+        IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
         Promotion newPromo = new Promotion(pawn.team, pawn.piece, type);
         promotions.Add(newPromo);

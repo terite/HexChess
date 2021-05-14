@@ -19,6 +19,7 @@ public class Pawn : MonoBehaviour, IPiece
     public bool passantable = false;
     public int turnsPassed = 0;
     public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;
+    public int GetGoalInRow(int r) => team == Team.White ? 18 - (r % 2) : r % 2;
 
     private Board board;
     bool isSingleplayer;
@@ -121,7 +122,7 @@ public class Pawn : MonoBehaviour, IPiece
         return false;
     }
 
-    public void MoveTo(Hex hex)
+    public void MoveTo(Hex hex, Action action = null)
     {
         Index startLoc = location;
         int pawnOffset = team == Team.White ? 2 : -2;
@@ -139,7 +140,7 @@ public class Pawn : MonoBehaviour, IPiece
         
         // If the pawn reaches the other side of the board, it can Promote
         if(location.row == goal)
-            hex.board.QueryPromote(this);
+            hex.board.QueryPromote(this, action);
     }
 
     private void TurnPassed(BoardState newState)

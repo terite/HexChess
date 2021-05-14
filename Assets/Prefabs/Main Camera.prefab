@@ -199,6 +199,7 @@ MonoBehaviour:
     m_Bits: 256
   selectedPieceColor: {r: 0.31181023, g: 0.7488344, b: 0.8584906, a: 1}
   audioSource: {fileID: 6983169283407362394}
+  promotionDialogue: {fileID: 0}
   cancelNoise: {fileID: 8300000, guid: ba2a0d48902eea04ead3e58e073a88b7, type: 3}
   pickupNoise: {fileID: 8300000, guid: 9c7f611590e186b4a84a7d71a7e9260e, type: 3}
   onMouse: {fileID: 0}

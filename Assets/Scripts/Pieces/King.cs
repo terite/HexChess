@@ -51,7 +51,7 @@ public class King : MonoBehaviour, IPiece
         return possibleMoves;
     }
 
-    public void MoveTo(Hex hex)
+    public void MoveTo(Hex hex, Action action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
