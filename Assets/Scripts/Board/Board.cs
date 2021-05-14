@@ -108,7 +108,16 @@ public class Board : SerializedMonoBehaviour
 
         newTurn?.Invoke(newState);
         if(newState.currentMove != Team.None && turnHistory.Count > 1)
-            HighlightMove(BoardState.GetLastMove(turnHistory));
+        {
+            Move newMove = BoardState.GetLastMove(turnHistory);
+            if(newMove.lastTeam != Team.None)
+                HighlightMove(newMove);
+            else
+                ClearMoveHighlight();
+        }
+        else
+            ClearMoveHighlight();
+            
     }
 
     public void LoadGame(Game game)
@@ -241,7 +250,12 @@ public class Board : SerializedMonoBehaviour
             newState.currentMove = otherTeam;
             turnHistory.Add(newState);
             newTurn.Invoke(newState);
-            HighlightMove(BoardState.GetLastMove(turnHistory));
+
+            Move move = BoardState.GetLastMove(turnHistory);
+            if(move.lastTeam != Team.None)
+                HighlightMove(move);
+            else
+                ClearMoveHighlight();
 
             EndGame(timestamp, GameEndType.Stalemate, Winner.None);
             return;
@@ -250,7 +264,12 @@ public class Board : SerializedMonoBehaviour
         newState.currentMove = otherTeam;
         turnHistory.Add(newState);
         newTurn.Invoke(newState);
-        HighlightMove(BoardState.GetLastMove(turnHistory));
+        
+        Move newMove = BoardState.GetLastMove(turnHistory);
+        if(newMove.lastTeam != Team.None)
+            HighlightMove(newMove);
+        else
+            ClearMoveHighlight();
         
         if(multiplayer == null)
         {
@@ -579,23 +598,28 @@ public class Board : SerializedMonoBehaviour
 
     public void HighlightMove(Move move)
     {
-        foreach(Hex hex in highlightedHexes)
-            hex.Unhighlight();
-        highlightedHexes.Clear();
-        
+        ClearMoveHighlight();
+
         Hex fromHex = GetHexIfInBounds(move.from);
         Hex toHex = GetHexIfInBounds(move.to);
 
         fromHex.Highlight(lastMoveHighlightColor);
-        toHex.Highlight(move.capturedPiece.HasValue 
-            ? Color.red 
-            : move.defendedPiece.HasValue 
-                ? Color.green 
+        toHex.Highlight(move.capturedPiece.HasValue
+            ? Color.red
+            : move.defendedPiece.HasValue
+                ? Color.green
                 : lastMoveHighlightColor
         );
 
         highlightedHexes.Add(fromHex);
         highlightedHexes.Add(toHex);
+    }
+
+    private void ClearMoveHighlight()
+    {
+        foreach (Hex hex in highlightedHexes)
+            hex.Unhighlight();
+        highlightedHexes.Clear();
     }
 
     public void Reset() 
