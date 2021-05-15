@@ -15,6 +15,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private TurnPanel turnPanel;
     [SerializeField] private Timers timers;
     [SerializeField] private SmoothHalfOrbitalCamera cam;
+    [SerializeField] private FreePlaceModeToggle freePlaceMode;
     [SerializeField] private AudioSource audioSource;
     public AudioClip moveClip;
     public AudioClip winFanfare;
@@ -35,6 +36,8 @@ public class Board : SerializedMonoBehaviour
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
     public Color lastMoveHighlightColor;
     public float timeOffset {get; private set;} = 0f;
+    public int turnsSincePawnMovedOrPieceTaken = 0;
+    [OdinSerialize] public List<List<Piece>> insufficientSets = new List<List<Piece>>();
 
     // Used to write the default boardstate out to file
     [Button]
@@ -147,6 +150,17 @@ public class Board : SerializedMonoBehaviour
         }
     
         SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
+
+        // When loading a game, we need to count how many turns have passed towards the 50 move rule
+        turnsSincePawnMovedOrPieceTaken = 0;
+        for(int i = 0; i < turnHistory.Count - 1; i++)
+        {
+            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList());
+            if(moveStep.capturedPiece.HasValue || moveStep.lastPiece >= Piece.Pawn1)
+                turnsSincePawnMovedOrPieceTaken = 0;
+            else
+                turnsSincePawnMovedOrPieceTaken++;
+        }
 
         // game.endType may not exist in older game saves, this bit of code supports both new and old save styles
         if(game.endType != GameEndType.Pending)
@@ -261,7 +275,63 @@ public class Board : SerializedMonoBehaviour
             return;
         }
 
+        // Check for insufficient material, stalemate if both teams have insufficient material
+        IEnumerable<Piece> whitePieces = GetRemainingPieces(Team.White, newState);
+        IEnumerable<Piece> blackPieces = GetRemainingPieces(Team.Black, newState);
+        bool whiteSufficient = true;
+        bool blackSufficient = true;
+        
+        foreach(List<Piece> insufficientSet in insufficientSets)
+        {
+            whiteSufficient = whiteSufficient ? whitePieces.Except(insufficientSet).Any() : false;
+            blackSufficient = blackSufficient ? blackPieces.Except(insufficientSet).Any() : false;
+        }
+
+        if(!whiteSufficient && !blackSufficient)
+        {
+            if(multiplayer)
+            {
+                if(multiplayer.gameParams.localTeam == otherTeam)
+                    multiplayer.SendGameEnd(timestamp, MessageType.Stalemate);
+                else
+                    return;
+            }
+            else if(!freePlaceMode.toggle.isOn)
+            {
+                newState.currentMove = otherTeam;
+                turnHistory.Add(newState);
+                newTurn.Invoke(newState);
+
+                Move move = BoardState.GetLastMove(turnHistory);
+                if(move.lastTeam != Team.None)
+                    HighlightMove(move);
+                else
+                    ClearMoveHighlight();
+
+                EndGame(timestamp, GameEndType.Stalemate, Winner.None);
+                return;
+            }
+        }
+
         newState.currentMove = otherTeam;
+
+        // Check for 5 fold repetition
+        IEnumerable<BoardState> repetition = turnHistory.Where(state => state == newState);
+        if(repetition.Count() >= 5)
+        {
+            turnHistory.Add(newState);
+            newTurn.Invoke(newState);
+
+            if(multiplayer != null)
+            {
+                multiplayer.ClaimDraw();
+                return;
+            }
+
+            EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+            return;
+        }
+
         turnHistory.Add(newState);
         newTurn.Invoke(newState);
         
@@ -270,6 +340,26 @@ public class Board : SerializedMonoBehaviour
             HighlightMove(newMove);
         else
             ClearMoveHighlight();
+
+        if(newMove.capturedPiece.HasValue || newMove.lastPiece >= Piece.Pawn1)
+            turnsSincePawnMovedOrPieceTaken = 0;
+        else
+            turnsSincePawnMovedOrPieceTaken++;
+        
+        // Draw may be claimed due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
+        if(turnsSincePawnMovedOrPieceTaken == 100f)
+        {
+            if(multiplayer != null)
+            {
+                multiplayer.ClaimDraw();
+                return;
+            }
+
+            EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+            return;
+        }
+
+        
         
         if(multiplayer == null)
         {
@@ -278,6 +368,14 @@ public class Board : SerializedMonoBehaviour
                 cam.SetToTeam(newState.currentMove);
         }
     }
+
+    IEnumerable<Piece> GetRemainingPieces(Team team, BoardState state) => 
+        state.allPiecePositions.Where(kvp => kvp.Key.Item1 == team).Select(kvp => {
+            IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == kvp.Key.Item2 && promo.team == team);
+            if(applicablePromos.Any())
+                return applicablePromos.First().to;
+            return kvp.Key.Item2;
+        });
 
     public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
@@ -288,7 +386,7 @@ public class Board : SerializedMonoBehaviour
         for(int i = possibleMoves.Count - 1; i >= 0; i--)
         {
             (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
-            if (possibleHex == null)
+            if(possibleHex == null)
             {
                 possibleMoves.RemoveAt(i);
                 continue;
@@ -472,7 +570,7 @@ public class Board : SerializedMonoBehaviour
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
         Board board = GameObject.FindObjectOfType<Board>();
         Hex hex = board.GetHexIfInBounds(pawn.location);
-        
+
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
         Promotion newPromo = new Promotion(pawn.team, pawn.piece, type);

@@ -78,6 +78,8 @@ public class Multiplayer : MonoBehaviour
 
     public void Draw(float timestamp) => 
         board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+    public void ClaimDraw() =>
+        networker.RespondToDrawOffer(MessageType.AcceptDraw);
 
     public void SendGameEnd(float timestamp, MessageType endType) => 
         networker.SendMessage(new Message(endType, BitConverter.GetBytes(timestamp)));

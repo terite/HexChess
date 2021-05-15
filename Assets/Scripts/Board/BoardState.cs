@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using UnityEngine.Serialization;
@@ -43,6 +44,16 @@ public struct BoardState
         }
         return new Move(Team.None, Piece.King, default(Index), default(Index));
     }
+
+    public static bool operator ==(BoardState a, BoardState b) => 
+        a.currentMove == b.currentMove 
+        && a.allPiecePositions.Count == b.allPiecePositions.Count 
+        && !a.allPiecePositions.Except(b.allPiecePositions).Any();
+    public static bool operator !=(BoardState a, BoardState b) => !(a == b);
+    
+    public override bool Equals(object obj) => base.Equals(obj);
+    public override int GetHashCode() => base.GetHashCode();
+    public override string ToString() => base.ToString();
 
     // Json (including newtonsoft) can not properly serialize a dictionary that uses a key that is any type other than than a string.
     // To get around this, we convert our Bidirectional dictionary into a list, then serialze that list.
