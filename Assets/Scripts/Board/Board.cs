@@ -241,7 +241,7 @@ public class Board : SerializedMonoBehaviour
             return;
         }
 
-        // Check for stalemate
+        // When another player has 0 valid moves, a stalemate has occured
         IEnumerable<KeyValuePair<(Team, Piece), IPiece>> otherTeamPieces = activePieces.Where(piece => piece.Key.Item1 == otherTeam);
         List<(Hex, MoveType)> validMovesForStalemateCheck = new List<(Hex, MoveType)>();
         foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
@@ -316,6 +316,7 @@ public class Board : SerializedMonoBehaviour
         newState.currentMove = otherTeam;
 
         // Check for 5 fold repetition
+        // When the same board state occurs 5 times in a game, the game ends in a draw
         IEnumerable<BoardState> repetition = turnHistory.Where(state => state == newState);
         if(repetition.Count() >= 5)
         {
@@ -341,12 +342,12 @@ public class Board : SerializedMonoBehaviour
         else
             ClearMoveHighlight();
 
+        // The game ends in a draw due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
         if(newMove.capturedPiece.HasValue || newMove.lastPiece >= Piece.Pawn1)
             turnsSincePawnMovedOrPieceTaken = 0;
         else
             turnsSincePawnMovedOrPieceTaken++;
         
-        // Draw may be claimed due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
         if(turnsSincePawnMovedOrPieceTaken == 100f)
         {
             if(multiplayer != null)
@@ -358,9 +359,8 @@ public class Board : SerializedMonoBehaviour
             EndGame(timestamp, GameEndType.Draw, Winner.Draw);
             return;
         }
-
         
-        
+        // In sandbox mode, flip the camera when the turn passes if the toggle is on
         if(multiplayer == null)
         {
             FlipCameraToggle flipCameraToggle = GameObject.FindObjectOfType<FlipCameraToggle>();
@@ -414,39 +414,37 @@ public class Board : SerializedMonoBehaviour
         return possibleMoves;
     }
 
-    public IEnumerable<IPiece> GetThreateningPieces(Hex hex)
-    {
-        BoardState currentState = GetCurrentBoardState();
-        List<IPiece> threateningPieces = new List<IPiece>();
-        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
-        {
-            List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, false);
-            if(possibleMoves.Where(move => move.Item1 == hex && move.Item2 == MoveType.Attack).Count() == 1)
-                threateningPieces.Add(piece.Value);
-        }
-        return threateningPieces;
-    }
+    public IEnumerable<IPiece> GetThreateningPieces(Hex hex) => activePieces
+        .Where(kvp => GetAllValidMovesForPiece(kvp.Value, GetCurrentBoardState(), false)
+            .Where(move => move.Item1 == hex && move.Item2 == MoveType.Attack)
+            .Any()
+        ).Select(kvp => kvp.Value);
 
     public IEnumerable<IPiece> GetGuardingingPieces(Hex guardedHex)
     {
         BoardState currentState = GetCurrentBoardState();
         IPiece occupyingPiece = activePieces[currentState.allPiecePositions[guardedHex.index]];
-        List<IPiece> guardingPieces = new List<IPiece>();
 
-        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
-        {
-            if(piece.Key.Item1 != occupyingPiece.team || piece.Value == occupyingPiece)
-                continue;
-            
-            List<(Hex, MoveType)> possibleMoves = GetAllValidMovesForPiece(piece.Value, currentState, true);
-            IEnumerable<(Hex, MoveType)> guardMoves = possibleMoves.Where(move => move.Item1 == guardedHex);
-            
-            if(guardMoves.Count() == 1)
-                guardingPieces.Add(piece.Value);
-        }
-
-        return guardingPieces;
+        return activePieces
+            .Where(kvp => kvp.Key.Item1 == occupyingPiece.team 
+                && kvp.Value != occupyingPiece 
+                && GetAllValidMovesForPiece(kvp.Value, currentState, true)
+                    .Where(move => move.Item1 == guardedHex)
+                    .Any()
+            ).Select(kvp => kvp.Value);
     }
+
+    public List<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam) => activePieces
+        .Where(kvp => kvp.Key.Item1 == checkForTeam 
+            && boardState.allPiecePositions.ContainsKey(kvp.Key) 
+            && kvp.Value.GetAllPossibleMoves(this, boardState)
+                .Where(move =>
+                    move.Item2 == MoveType.Attack
+                    && boardState.allPiecePositions.ContainsKey(move.Item1.index)
+                    && boardState.allPiecePositions[move.Item1.index] == (checkForTeam == Team.White ? Team.Black : Team.White, Piece.King)
+                ).Any()
+        ).Select(kvp => kvp.Value)
+        .ToList();
 
     public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
@@ -671,35 +669,6 @@ public class Board : SerializedMonoBehaviour
         activePieces.Remove((toPrison.team, toPrison.piece));
 
         AdvanceTurn(currentState);
-    }
-
-    public List<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
-    {
-        List<IPiece> checkingPieces = new List<IPiece>();
-
-        foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
-        {
-            (Team team, Piece piece) = kvp.Key;
-            // If the IPiece doesn't exist in the boardstate, it might be a simulated boardstate, skip that piece
-            if(team != checkForTeam || !boardState.allPiecePositions.ContainsKey((team, piece)))
-                continue;
-
-            List<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
-            foreach((Hex hex, MoveType moveType) in moves)
-            {
-                if(moveType != MoveType.Attack)
-                    continue;
-                
-                if(boardState.allPiecePositions.ContainsKey(hex.index))
-                {
-                    (Team occupyingTeam, Piece occupyingPiece) = boardState.allPiecePositions[hex.index];
-                    // Check
-                    if(occupyingTeam != checkForTeam && occupyingPiece == Piece.King)
-                        checkingPieces.Add(kvp.Value);
-                }
-            }
-        }
-        return checkingPieces;
     }
 
     public void EndGame(float timestamp, GameEndType endType = GameEndType.Pending, Winner winner = Winner.Pending)

@@ -45,7 +45,7 @@ public class TurnPanel : MonoBehaviour
         turnText.text = game.endType switch {
             // game.endType was added in v1.0.8 to support flagfalls and stalemates, any game saves from before then will default to Pending
             GameEndType.Pending => SupportOldSaves(game),
-            GameEndType.Draw => $"{durationString}, both teams have agreed to a draw.",
+            GameEndType.Draw => $"{durationString}, a draw has occured.",
             GameEndType.Checkmate => $"{durationString} {game.winner} has won by checkmate!",
             GameEndType.Surrender => $"{durationString} {game.winner} has won by surrender.",
             GameEndType.Flagfall => $"{durationString} {game.winner} has flagged {loser}.",
