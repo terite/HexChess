@@ -48,7 +48,7 @@ public class Rook : MonoBehaviour, IPiece
                 break;
             
         // Check defend
-        foreach(HexNeighborDirection dir in Enum.GetValues(typeof(HexNeighborDirection)))
+        foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
         {
             Hex hex = board.GetNeighborAt(location, dir);
             if(hex == null)

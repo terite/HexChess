@@ -78,9 +78,8 @@ public class TurnPanel : MonoBehaviour
             ? newState.currentMove == Team.White ? "White's Turn" : "Black's Turn"
             : newState.currentMove == multiplayer.localTeam ? "Your Turn" : "Opponent's Turn";
 
-        int turnCount = board.turnHistory.Count % 2 == 0 
-            ? Mathf.FloorToInt((float)board.turnHistory.Count / 2)
-            : Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + 1;
+        int turnCount = Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2;
+
         turnText.text = $"{turnCount}:{text}";
         turnText.color = newState.currentMove == Team.White ? Color.white : Color.black;
     }

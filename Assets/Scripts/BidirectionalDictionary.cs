@@ -7,20 +7,32 @@ using UnityEngine;
 
 public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IEnumerable<KeyValuePair<T, K>>, IEnumerable, IDictionary<T, K>, IReadOnlyCollection<KeyValuePair<T, K>>, IReadOnlyDictionary<T, K>, ICollection, IDictionary, IDeserializationCallback, ISerializable
 {
-    private Dictionary<T, K> forwardDict = new Dictionary<T, K>();
-    private Dictionary<K, T> backwardsDict = new Dictionary<K, T>();
+    private Dictionary<T, K> forwardDict;
+    private Dictionary<K, T> backwardsDict;
 
-    public BidirectionalDictionary(){}
-    public BidirectionalDictionary(BidirectionalDictionary<T, K> fromDict)
+    public BidirectionalDictionary()
     {
-        foreach(KeyValuePair<T, K> pair in fromDict)
-            Add(pair);
+        forwardDict = new Dictionary<T, K>();
+        backwardsDict = new Dictionary<K, T>();
+    }
+    private BidirectionalDictionary(Dictionary<T, K> forward, Dictionary<K, T> backward)
+    {
+        forwardDict = forward;
+        backwardsDict = backward;
     }
     protected BidirectionalDictionary(SerializationInfo info, StreamingContext context)
     {
         forwardDict = (Dictionary<T, K>)info.GetValue("forward", typeof(Dictionary<T, K>));
         backwardsDict = (Dictionary<K, T>)info.GetValue("backwards", typeof(Dictionary<K, T>));
     }
+
+    public BidirectionalDictionary<T, K> Clone()
+    {
+        Dictionary<T, K> newF = new Dictionary<T, K>(forwardDict);
+        Dictionary<K, T> newB = new Dictionary<K, T>(backwardsDict);        
+        return new BidirectionalDictionary<T, K>(newF, newB);
+    }
+
     public void Deserialize(SerializationInfo info, StreamingContext context)
     {
         forwardDict = (Dictionary<T, K>)info.GetValue("forward", typeof(Dictionary<T, K>));
