@@ -34,10 +34,8 @@ public class SelectPiece : MonoBehaviour
     public Color hoverColor;
     public Color whiteColor;
     public Color blackColor;
-
-    IEnumerable<IPiece> threateningPieces = Enumerable.Empty<IPiece>();
-    IEnumerable<IPiece> guardingPieces = Enumerable.Empty<IPiece>();
-    IEnumerable<IPiece> attackablePieces = Enumerable.Empty<IPiece>();
+    List<IPiece> attacksConcerningHex = new List<IPiece>();
+    Dictionary<IPiece, List<IPiece>> attacksConcerningHexDict = new Dictionary<IPiece, List<IPiece>>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
 
@@ -57,6 +55,13 @@ public class SelectPiece : MonoBehaviour
             singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
         
         keys = GameObject.FindObjectOfType<Keys>();
+
+        board.newTurn += NewTurn;
+    }
+
+    private void NewTurn(BoardState newState)
+    {
+        attacksConcerningHexDict.Clear();
     }
 
     private void Update()
@@ -330,7 +335,7 @@ public class SelectPiece : MonoBehaviour
             if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
-                IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
+                IPiece hoveredPiece = null;
                 Hex hoveredHex = hit.collider.GetComponent<Hex>();
                 if(hoveredHex != null)
                 {
@@ -357,14 +362,8 @@ public class SelectPiece : MonoBehaviour
                                 previewMoves = incomingPreviewMoves;
                                 previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
                                 
-                                threateningPieces = board.GetThreateningPieces(hoveredHex);
-                                guardingPieces = board.GetGuardingingPieces(hoveredHex);
-                                attackablePieces = hoveredPiece.GetAllPossibleMoves(board, currentBoardState)
-                                    .Where(move => move.Item2 == MoveType.Attack
-                                        && currentBoardState.allPiecePositions.ContainsKey(move.Item1.index)
-                                        && board.activePieces.ContainsKey(currentBoardState.allPiecePositions[move.Item1.index])
-                                    )
-                                    .Select(move => board.activePieces[currentBoardState.allPiecePositions[move.Item1.index]]);
+                                if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
+                                    attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
 
                                 EnablePreview();
                             }
@@ -390,24 +389,28 @@ public class SelectPiece : MonoBehaviour
             DisablePreview();
     }
 
-    private void ColorizePieces(ref IEnumerable<IPiece> set, Color color)
+    private void ColorizePieces()
     {
-        foreach(IPiece piece in set)
+        IPiece hoveredPiece = board.activePieces[board.GetCurrentBoardState().allPiecePositions[lastHoveredHex.index]];
+        if(!attacksConcerningHexDict.ContainsKey(hoveredPiece)) 
+            return;
+
+        attacksConcerningHex = attacksConcerningHexDict[hoveredPiece];
+        foreach(IPiece piece in attacksConcerningHex)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_HighlightColor", color);
+            renderer.material.SetColor("_HighlightColor", piece.team == hoveredPiece.team ? greenColor : orangeColor);
         }
     }
 
 
-    private void ClearPiecesColorization(ref IEnumerable<IPiece> set)
+    private void ClearPiecesColorization(List<IPiece> set)
     {
         foreach(IPiece piece in set)
         {
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
         }
-        set = Enumerable.Empty<IPiece>();
     }
     
 
@@ -418,10 +421,8 @@ public class SelectPiece : MonoBehaviour
             hex.SetOutlineColor(hoverColor);
             hex.ToggleSelect();
         }
-
-        ColorizePieces(ref threateningPieces, orangeColor);
-        ColorizePieces(ref guardingPieces, greenColor);
-        // ColorizePieces(ref attackablePieces, redColor);
+        
+        ColorizePieces();
     }
 
     private void DisablePreview()
@@ -430,9 +431,7 @@ public class SelectPiece : MonoBehaviour
             hex.ToggleSelect();
         previewMoves = Enumerable.Empty<(Hex, MoveType)>();
 
-        ClearPiecesColorization(ref threateningPieces);
-        ClearPiecesColorization(ref guardingPieces);
-        // ClearPiecesColorization(ref attackablePieces);
+        ClearPiecesColorization(attacksConcerningHex);
     }
 
     public void LeftClick(CallbackContext context)

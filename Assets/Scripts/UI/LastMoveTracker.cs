@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Linq;
 using System.Collections.Generic;
+using Extensions;
 
 public class LastMoveTracker : MonoBehaviour
 {
@@ -37,12 +38,12 @@ public class LastMoveTracker : MonoBehaviour
         {
             // If the piece captured was a pawn, it may have been promoted. To get the correct string, let's pull it from the promotion data instead of the Piece data
             IEnumerable<Promotion> applicablePromos = board.promotions.Where(promo => promo.team == otherTeam && promo.from == move.capturedPiece.Value);
-            if(applicablePromos.Count() > 0)
+            if(applicablePromos.Any())
             {
                 Promotion promo = applicablePromos.First();
                 // We have no way to get the IPiece for the captured piece. 
                 // It's no longer in the activePieces dictionary, and it's been promoted, so it's not the same IPiece as the prefab.
-                capturedPieceString = GetPieceString(promo.to);
+                capturedPieceString = promo.to.GetPieceLongString();
             }
         }
 
@@ -58,20 +59,4 @@ public class LastMoveTracker : MonoBehaviour
 
         text.color = move.lastTeam == Team.White ? Color.white : Color.black;
     }
-    
-    public string GetPieceString(Piece piece) => piece switch {
-        Piece.King => "King",
-        Piece.Queen => "Queen",
-        Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => "Knight",
-        Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => "Rook",
-        Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => "Bishop",
-        Piece p when (p == Piece.WhiteSquire || p == Piece.GraySquire || p == Piece.BlackSquire) => "Squire",
-        Piece p when (
-            p == Piece.Pawn1 || p == Piece.Pawn2 ||
-            p == Piece.Pawn3 || p == Piece.Pawn4 ||
-            p == Piece.Pawn5 || p == Piece.Pawn6 ||
-            p == Piece.Pawn7 || p == Piece.Pawn8
-        ) => "Pawn",
-        _ => ""
-    };
 }
