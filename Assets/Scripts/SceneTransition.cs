@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 
 public class SceneTransition : MonoBehaviour
 {
-    private enum TransitionMode {Out, In};
     [SerializeField] private CanvasGroup group;
     public float transitionTime = 0.2f;
     private float ellapsedTime = 0;
@@ -62,3 +61,5 @@ public class SceneTransition : MonoBehaviour
         group.blocksRaycasts = true;
     }
 }
+
+public enum TransitionMode {Out, In};

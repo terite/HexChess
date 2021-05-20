@@ -6,12 +6,14 @@ public struct Promotion
 {
     public Team team;
     public Piece from;
-    public Piece to; 
-    public Promotion(Team team, Piece from, Piece to)
+    public Piece to;
+    public int turnNumber;
+    public Promotion(Team team, Piece from, Piece to, int turnNumber)
     {
         this.team = team;
         this.from = from;
         this.to = to;
+        this.turnNumber = turnNumber;
     }
 
     public byte[] Serialize() => Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(this));

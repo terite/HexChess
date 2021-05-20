@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 public struct BoardState
@@ -32,6 +33,7 @@ public struct BoardState
 
                 if(kvp.Value != nowPos)
                     return new Move(
+                        turn: Mathf.FloorToInt((float)history.Count / 2f),
                         lastTeam: kvp.Key.Item1, 
                         lastPiece: kvp.Key.Item2, 
                         from: kvp.Value, 
@@ -42,7 +44,7 @@ public struct BoardState
                     );
             }
         }
-        return new Move(Team.None, Piece.King, default(Index), default(Index));
+        return new Move(0, Team.None, Piece.King, default(Index), default(Index));
     }
 
     public static bool operator ==(BoardState a, BoardState b) => 

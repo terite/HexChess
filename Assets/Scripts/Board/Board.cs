@@ -226,6 +226,10 @@ public class Board : SerializedMonoBehaviour
         // Handle potential checkmate
         if(newState.checkmate != Team.None)
         {
+            newState.currentMove = otherTeam;
+            turnHistory.Add(newState);
+            newTurn.Invoke(newState);
+
             if(multiplayer)
             {
                 if(multiplayer.gameParams.localTeam == newState.checkmate)
@@ -521,13 +525,14 @@ public class Board : SerializedMonoBehaviour
                 allPiecePositions.Remove((occupyingTeam, occupyingType));
             }
             else
-                defendedPieceAtLocation = occupyingType;
+                defendedPieceAtLocation = occupyingType;    
         }
 
         // Move piece
         if(!isQuery)
         {
             moveTracker.UpdateText(new Move(
+                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 piece.team, 
                 piece.piece, 
                 piece.location, 
@@ -575,6 +580,7 @@ public class Board : SerializedMonoBehaviour
 
         // Move piece
         moveTracker.UpdateText(new Move(
+            Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
             piece.team, 
             piece.piece, 
             piece.location, 
@@ -602,11 +608,11 @@ public class Board : SerializedMonoBehaviour
             return;
         promotionDialogue.Display(pieceType => {
             Promote(pawn, pieceType);
-            
+            int promoTurnCount = Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1;
             action?.Invoke();
 
             Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
-            multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType));
+            multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType, promoTurnCount));
         });
     } 
 
@@ -620,7 +626,7 @@ public class Board : SerializedMonoBehaviour
 
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
-        Promotion newPromo = new Promotion(pawn.team, pawn.piece, type);
+        Promotion newPromo = new Promotion(pawn.team, pawn.piece, type, Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1);
         promotions.Add(newPromo);
         activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
@@ -654,6 +660,7 @@ public class Board : SerializedMonoBehaviour
         if(!isQuery)
         {
             moveTracker.UpdateText(new Move(
+                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 p1.team, 
                 p1.piece, 
                 p1StartLoc, 
@@ -690,6 +697,7 @@ public class Board : SerializedMonoBehaviour
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
             moveTracker.UpdateText(new Move(
+                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 pawn.team, 
                 pawn.piece, 
                 pawn.location, 
