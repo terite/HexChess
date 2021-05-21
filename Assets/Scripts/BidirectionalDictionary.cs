@@ -42,6 +42,8 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
     public K this[T key] {
         get => forwardDict[key];
         set {
+            if (forwardDict.TryGetValue(key, out K oldValue))
+                backwardsDict.Remove(oldValue);
             forwardDict[key] = value;
             backwardsDict[value] = key;
         }
@@ -49,6 +51,8 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
     public T this[K key] {
         get => backwardsDict[key];
         set {
+            if (backwardsDict.TryGetValue(key, out T oldValue))
+                forwardDict.Remove(oldValue);
             forwardDict[value] = key;
             backwardsDict[key] = value;
         }
