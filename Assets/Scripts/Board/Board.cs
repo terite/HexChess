@@ -17,6 +17,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private SmoothHalfOrbitalCamera cam;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private TurnHistoryPanel turnHistoryPanel;
     public AudioClip moveClip;
     public AudioClip winFanfare;
     public List<Jail> jails = new List<Jail>();
@@ -109,7 +110,7 @@ public class Board : SerializedMonoBehaviour
             }
         }
 
-        newTurn?.Invoke(newState);
+        // newTurn?.Invoke(newState);
         if(newState.currentMove != Team.None && turnHistory.Count > 1)
         {
             Move newMove = BoardState.GetLastMove(turnHistory);
@@ -119,8 +120,7 @@ public class Board : SerializedMonoBehaviour
                 ClearMoveHighlight();
         }
         else
-            ClearMoveHighlight();
-            
+            ClearMoveHighlight();    
     }
 
     public void LoadGame(Game game)
@@ -150,6 +150,8 @@ public class Board : SerializedMonoBehaviour
         }
     
         SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
+
+        turnHistoryPanel.SetGame(game);
 
         // When loading a game, we need to count how many turns have passed towards the 50 move rule
         turnsSincePawnMovedOrPieceTaken = 0;

@@ -1423,6 +1423,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movePanelPrefab: {fileID: 779126142325932678, guid: 35bb226de53d97f4f9369bff3a5e52b1,
     type: 3}
+  startPanelPrefab: {fileID: 657702452399554814, guid: 8688e37c537447f42ba2a3a4ce8a6f3e,
+    type: 3}
   collectionContainer: {fileID: 6802989491032145490}
   board: {fileID: 0}
 --- !u!1 &7086745694815975355

@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System;
+using Extensions;
 
 public class TurnPanel : MonoBehaviour
 {
@@ -19,12 +20,6 @@ public class TurnPanel : MonoBehaviour
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
     }
 
-    string GetFormat(float seconds) => seconds < 60 
-        ? @"%s\.f" 
-        : seconds < 3600
-            ? @"%m\:%s\.f"
-            : @"%h\:%m\:%s\.f";
-
     private void GameOver(Game game)
     {
         turnText.color = game.winner switch {
@@ -35,7 +30,7 @@ public class TurnPanel : MonoBehaviour
 
         Team loser = game.winner == Winner.White ? Team.Black : Team.White;
         float gameLength = game.GetGameLength();
-        string formattedGameLength = TimeSpan.FromSeconds(gameLength).ToString(GetFormat(gameLength));
+        string formattedGameLength = TimeSpan.FromSeconds(gameLength).ToString(gameLength.GetStringFromSeconds());
         int turnCount = game.GetTurnCount();
         string turnPlurality = turnCount > 1 ? "turns" : "turn";
         string durationString = game.timerDuration == 0 && !game.hasClock 

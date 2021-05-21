@@ -4351,6 +4351,7 @@ MonoBehaviour:
   cam: {fileID: 581258194}
   freePlaceMode: {fileID: 0}
   audioSource: {fileID: 155833292}
+  turnHistoryPanel: {fileID: 608341858}
   moveClip: {fileID: 8300000, guid: fa64ceb60193cf345b5ce8cc0ce40834, type: 3}
   winFanfare: {fileID: 8300000, guid: 980b58a23340e49459ef8828a1c6a325, type: 3}
   jails:
@@ -10722,6 +10723,18 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 608341856}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &608341858 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
+    type: 3}
+  m_PrefabInstance: {fileID: 608341856}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afc5016c78bdb134e88ce48ac822a11f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!21 &612704128
 Material:
   serializedVersion: 6

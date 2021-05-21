@@ -57,14 +57,20 @@ namespace Extensions
         };
 
         public static string GetPieceLongString(this Piece piece) => piece switch {
-        Piece.King => "King",
-        Piece.Queen => "Queen",
-        Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => "Knight",
-        Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => "Rook",
-        Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => "Bishop",
-        Piece p when (p == Piece.WhiteSquire || p == Piece.GraySquire || p == Piece.BlackSquire) => "Squire",
-        Piece p when (p >= Piece.Pawn1) => "Pawn",
-        _ => ""
-    };
+            Piece.King => "King",
+            Piece.Queen => "Queen",
+            Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => "Knight",
+            Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => "Rook",
+            Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => "Bishop",
+            Piece p when (p == Piece.WhiteSquire || p == Piece.GraySquire || p == Piece.BlackSquire) => "Squire",
+            Piece p when (p >= Piece.Pawn1) => "Pawn",
+            _ => ""
+        };
+
+        public static string GetStringFromSeconds(this float seconds) => seconds < 60 
+        ? @"%s\.f" 
+        : seconds < 3600
+            ? @"%m\:%s\.f"
+            : @"%h\:%m\:%s\.f";
     }
 }

@@ -59,10 +59,7 @@ public class SelectPiece : MonoBehaviour
         board.newTurn += NewTurn;
     }
 
-    private void NewTurn(BoardState newState)
-    {
-        attacksConcerningHexDict.Clear();
-    }
+    private void NewTurn(BoardState newState) => attacksConcerningHexDict.Clear();
 
     private void Update()
     {
@@ -75,6 +72,10 @@ public class SelectPiece : MonoBehaviour
     private void HighlightHexOnHoverKey()
     {
         if(onMouse.isPickedUp)
+            return;
+        else if(multiplayer != null && !multiplayer.gameParams.showMovePreviews)
+            return;
+        else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
             return;
 
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
@@ -328,6 +329,8 @@ public class SelectPiece : MonoBehaviour
         if(multiplayer != null && !multiplayer.gameParams.showMovePreviews)
             return;
         else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
+            return;
+        else if(promotionDialogue.gameObject.activeSelf)
             return;
 
         if(selectedPiece == null)
