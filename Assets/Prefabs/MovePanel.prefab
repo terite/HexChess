@@ -417,7 +417,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -446,6 +446,9 @@ MonoBehaviour:
   blackTimestamp: {fileID: 1172656648638623036}
   whiteDeltaTime: {fileID: 1221469341004785624}
   blackDeltaTime: {fileID: 7431496343830320929}
+  background: {fileID: 2169615813744932817}
+  darkColor: {r: 0.23584908, g: 0.23584908, b: 0.23584908, a: 1}
+  lightColor: {r: 0.31132078, g: 0.31132078, b: 0.31132078, a: 1}
 --- !u!1 &2169615813829099518
 GameObject:
   m_ObjectHideFlags: 0

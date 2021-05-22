@@ -2,6 +2,7 @@ using System;
 using Extensions;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MovePanel : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class MovePanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI blackTimestamp;
     [SerializeField] private TextMeshProUGUI whiteDeltaTime;
     [SerializeField] private TextMeshProUGUI blackDeltaTime;
+    [SerializeField] private Image background;
+    public Color darkColor;
+    public Color lightColor;
     Board board;
     private void Awake() => board = GameObject.FindObjectOfType<Board>();
 
@@ -50,4 +54,7 @@ public class MovePanel : MonoBehaviour
     }
 
     public void SetTurnNumber(int val) => turnNumberText.text = $"{val}";
+    public void SetDark() => background.color = darkColor;
+    public void SetLight() => background.color = lightColor;
+    public void FlipColor() => background.color = background.color == darkColor ? lightColor : darkColor;
 }

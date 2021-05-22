@@ -19,6 +19,7 @@ public class TurnHistoryPanel : MonoBehaviour
     private void Start() 
     {
         startPanel = Instantiate(startPanelPrefab, collectionContainer);
+        startPanel.SetDark();
         foreach(Team team in EnumArray<Team>.Values)
         {
             if(team == Team.None)
@@ -54,6 +55,13 @@ public class TurnHistoryPanel : MonoBehaviour
         if(newState.currentMove == Team.Black)
         {
             lastMovePanel = Instantiate(movePanelPrefab, collectionContainer);
+            lastMovePanel.SetLight();
+            foreach(MovePanel panel in panels)
+                panel.FlipColor();
+            // if(panels.Count % 2 == 0)
+            //     lastMovePanel.SetDark();
+            // else
+            //     lastMovePanel.SetLight();
             
             panels.Add(lastMovePanel);
             
