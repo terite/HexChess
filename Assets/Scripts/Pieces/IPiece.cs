@@ -11,7 +11,7 @@ public interface IPiece
     Index location {get; set;}
     bool captured {get; set;}
     ushort value {get; set;}
-    List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false);
+    IEnumerable<(Hex target, MoveType moveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false);
     void MoveTo(Hex hex, Action action = null);
     void Init(Team team, Piece piece, Index startingLocation);
     string GetPieceString();

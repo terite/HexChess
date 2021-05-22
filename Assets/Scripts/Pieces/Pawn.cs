@@ -36,7 +36,7 @@ public class Pawn : MonoBehaviour, IPiece
         isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int pawnOffset = team == Team.White ? 2 : -2;

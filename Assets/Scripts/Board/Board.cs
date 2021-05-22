@@ -215,7 +215,7 @@ public class Board : SerializedMonoBehaviour
                 (Team team, Piece piece) = kvp.Key;
                 if(team == newState.currentMove)
                     continue;
-                List<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
+                IEnumerable<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
                 // Debug.Log($"{team}, {piece} has {vm.Count} valid moves.");
                 validMoves.AddRange(vm);
             }
@@ -253,7 +253,7 @@ public class Board : SerializedMonoBehaviour
         List<(Hex, MoveType)> validMovesForStalemateCheck = new List<(Hex, MoveType)>();
         foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
         {
-            List<(Hex, MoveType)> validMove = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
+            IEnumerable<(Hex, MoveType)> validMove = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
             validMovesForStalemateCheck.AddRange(validMove);
         }
 
@@ -384,22 +384,15 @@ public class Board : SerializedMonoBehaviour
             return kvp.Key.Item2;
         });
 
-    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Hex target, MoveType moveType)> ValidateMoves(IEnumerable<(Hex target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
-        // Eliminate invalid moves
-        // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
-        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
-        for(int i = possibleMoves.Count - 1; i >= 0; i--)
+        foreach(var possibleMove in possibleMoves)
         {
-            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
+            (Hex possibleHex, MoveType possibleMoveType) = possibleMove;
             if(possibleHex == null)
-            {
-                possibleMoves.RemoveAt(i);
                 continue;
-            }
 
-            BoardState newState = default;
+            BoardState newState;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
                 newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
             else if(possibleMoveType == MoveType.Defend)
@@ -410,53 +403,31 @@ public class Board : SerializedMonoBehaviour
                 Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
                 (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
                 newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
+            } else
+            {
+                Debug.LogWarning($"Unhandled move type {possibleMoveType}");
+                continue;
             }
 
             Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
             // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(IsChecking(newState, otherTeam))
-                possibleMoves.RemoveAt(i);
+            if (!IsChecking(newState, otherTeam))
+                yield return possibleMove;
         }
-        return possibleMoves;
+    }
+    public IEnumerable<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
+    {
+        IEnumerable<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
+        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
     }
 
-    public List<Hex> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
+    public IEnumerable<Hex> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
     {
-        // Eliminate invalid moves
-        // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
-        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
-        for(int i = possibleMoves.Count - 1; i >= 0; i--)
-        {
-            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
-            if(possibleHex == null || possibleHex.index != hexIndex)
-            {
-                possibleMoves.RemoveAt(i);
-                continue;
-            }
+        IEnumerable<(Hex target, MoveType moveType)> foo = piece.GetAllPossibleMoves(this, boardState, includeBlocking)
+            .Where(kvp => kvp.target != null && kvp.target.index == hexIndex)
+            .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
 
-            BoardState newState = default;
-            if(possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
-            else if(possibleMoveType == MoveType.EnPassant)
-            {
-                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
-                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
-                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
-            }
-            else
-            {
-                possibleMoves.RemoveAt(i);
-                continue;
-            }
-
-            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
-            // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(IsChecking(newState, otherTeam))
-                possibleMoves.RemoveAt(i);
-        }
-        return possibleMoves.Select(move => move.Item1).ToList();
+        return ValidateMoves(foo, piece, boardState, includeBlocking).Select(kvp => kvp.target);
     }
 
     public IEnumerable<IPiece> GetValidAttacksConcerningHex(Hex hex) => activePieces
@@ -490,7 +461,7 @@ public class Board : SerializedMonoBehaviour
 
         foreach(KeyValuePair<(Team, Piece), IPiece> kvp in pieces)
         {
-            List<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
+            IEnumerable<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
             foreach((Hex hex, MoveType moveType) in moves)
             {
                 if(moveType == MoveType.Attack && boardState.allPiecePositions.ContainsKey(hex.index) && boardState.allPiecePositions[hex.index] == (otherTeam, Piece.King))

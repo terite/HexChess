@@ -25,8 +25,8 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private OnMouse onMouse;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
     private bool hoverExitedInitialHex = false;
-    IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
-    IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+    List<(Hex, MoveType)> pieceMoves = new List<(Hex, MoveType)>();
+    List<(Hex, MoveType)> previewMoves = new List<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
     public Color greenColor;
     public Color redColor;
@@ -359,36 +359,40 @@ public class SelectPiece : MonoBehaviour
                                 currentBoardState,
                                 true
                             );
+                            // TODO: does this actaully do anything?
                             if(incomingPreviewMoves != previewMoves)
                             {
                                 DisablePreview();
-                                previewMoves = incomingPreviewMoves;
-                                previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
+                                previewMoves = incomingPreviewMoves.ToList();
+                                previewMoves.Add((hoveredHex, MoveType.None));
                                 
                                 if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
                                     attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
 
                                 EnablePreview();
+                            } else
+                            {
+                                Debug.LogError("incomingPreviewMoves somehow equaled previewMoves");
                             }
                         }
-                        else if(previewMoves.Count() > 0)
+                        else if(previewMoves.Count > 0)
                             DisablePreview();
                     }
-                    else if(previewMoves.Count() > 0)
+                    else if(previewMoves.Count > 0)
                         DisablePreview();
                 }
-                else if(previewMoves.Count() > 0)
+                else if(previewMoves.Count > 0)
                 {
                     lastHoveredHex = null;
                     DisablePreview();
                 }
-                else if(previewMoves.Count() > 0)
+                else if(previewMoves.Count > 0)
                     DisablePreview();
             }
-            else if(previewMoves.Count() > 0)
+            else if(previewMoves.Count > 0)
                 DisablePreview();
         }
-        else if(previewMoves.Count() > 0)
+        else if(previewMoves.Count > 0)
             DisablePreview();
     }
 
@@ -432,7 +436,7 @@ public class SelectPiece : MonoBehaviour
     {
         foreach ((Hex hex, MoveType moveType) in previewMoves)
             hex.ToggleSelect();
-        previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+        previewMoves.Clear();
 
         ClearPiecesColorization(attacksConcerningHex);
     }
@@ -592,7 +596,7 @@ public class SelectPiece : MonoBehaviour
         
         if(!fromJail)
         {
-            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
+            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState).ToList();
             
             // Highlight each possible move the correct color
             foreach((Hex hex, MoveType moveType) in pieceMoves)
@@ -678,7 +682,7 @@ public class SelectPiece : MonoBehaviour
 
         foreach((Hex hex, MoveType moveType) in pieceMoves)
             hex.ToggleSelect();
-        pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
+        pieceMoves.Clear();
 
         if(!fromJail)
             board.GetHexIfInBounds(fromIndex).ToggleSelect();

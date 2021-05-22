@@ -25,7 +25,7 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possibleMoves = new List<(Hex, MoveType)>();
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)

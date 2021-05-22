@@ -26,7 +26,7 @@ public class Rook : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
         List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
 
