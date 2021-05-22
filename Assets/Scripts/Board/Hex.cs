@@ -129,6 +129,35 @@ public struct Index
 {
     public int row;
     public int col;
+    public Index(int rank, char file)
+    {
+        if (rank < 1 || rank > 10)
+            throw new ArgumentOutOfRangeException(nameof(rank), "Rank must be between 1-10 inclusive");
+        if (file < 'A' || file > 'I')
+            throw new ArgumentOutOfRangeException(nameof(file), "File must be between A-I inclusive");
+
+        bool tallFile = file == 'B' || file == 'D' || file == 'F' || file == 'H';
+
+        if (rank == 10 && !tallFile)
+            throw new ArgumentOutOfRangeException(nameof(file), "Only valid rank 10 files are B, D, F, H");
+
+        this.col = file switch {
+            'A' => 0,
+            'B' => 0,
+            'C' => 1,
+            'D' => 1,
+            'E' => 2,
+            'F' => 2,
+            'G' => 3,
+            'H' => 3,
+            'I' => 4,
+            _ => '?'
+        };
+
+        var startingRow = tallFile ? 0 : 1;
+        this.row = startingRow + ((rank - 1) * 2);
+
+    }
     public Index(int row, int col)
     {
         this.row = row;
