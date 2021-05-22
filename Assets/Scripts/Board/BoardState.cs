@@ -47,6 +47,11 @@ public struct BoardState
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));
     }
 
+    public bool TryGetPiece(Index index, out (Team team, Piece piece) teamedPiece)
+    {
+        return allPiecePositions.TryGetValue(index, out teamedPiece);
+    }
+
     public static bool operator ==(BoardState a, BoardState b) => 
         a.currentMove == b.currentMove 
         && a.allPiecePositions.Count == b.allPiecePositions.Count 

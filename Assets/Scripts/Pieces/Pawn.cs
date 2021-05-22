@@ -36,15 +36,11 @@ public class Pawn : MonoBehaviour, IPiece
         isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
-    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
         List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
         int pawnOffset = team == Team.White ? 2 : -2;
         int attackOffset = location.row % 2 == 0 ? 1 : -1;
-
-
-
-
 
         // Check takes
         Hex take1 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);

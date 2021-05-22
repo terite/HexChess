@@ -25,28 +25,30 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
         List<(Index, MoveType)> possibleMoves = new List<(Index, MoveType)>();
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
         {
-            Hex hex = board.GetNeighborAt(location, dir);
-            if(hex == null)
+            Index? maybeIndex = HexGrid.GetNeighborAt(location, dir);
+            if(maybeIndex == null)
                 continue;
 
-            if(boardState.allPiecePositions.ContainsKey(hex.index))
+            Index index = maybeIndex.Value;
+
+            if(boardState.allPiecePositions.ContainsKey(index))
             {
-                (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
+                (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
                 
                 if(includeBlocking || occuypingTeam != team)
                 {
-                    possibleMoves.Add((hex.index, MoveType.Attack));
+                    possibleMoves.Add((index, MoveType.Attack));
                     continue;
                 }
                 else
                     continue;
             }
-            possibleMoves.Add((hex.index, MoveType.Move));
+            possibleMoves.Add((index, MoveType.Move));
         }
         return possibleMoves;
     }

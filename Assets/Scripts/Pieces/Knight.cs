@@ -25,7 +25,7 @@ public class Knight : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
         int offset = location.row % 2 == 0 ? 1 : -1;
         var possibleMoves = new (int row, int col)[] {
@@ -45,11 +45,9 @@ public class Knight : MonoBehaviour, IPiece
 
         foreach ((int row, int col) in possibleMoves)
         {
-            Index index = new Index(row, col);
-            Hex hex = board.GetHexIfInBounds(index);
-            if (hex == null)
+            if (!HexGrid.GetValidIndex(row, col, out Index index))
                 continue;
-
+            
             if(boardState.allPiecePositions.ContainsKey(index))
             {
                 (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];

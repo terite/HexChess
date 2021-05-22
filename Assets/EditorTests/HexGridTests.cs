@@ -5,19 +5,27 @@ public class HexGridTests
     [Test]
     public void InBoundsTest()
     {
-        var grid = new HexGrid() { rows = 19, cols = 5 };
-
-        Assert.True(grid.IsInBounds(new Index(0, 0)));
-        Assert.True(grid.IsInBounds(new Index(18, 3)));
-        Assert.True(grid.IsInBounds(new Index(17, 4)));
+        Assert.True(HexGrid.IsInBounds(new Index(0, 0)));
+        Assert.True(HexGrid.IsInBounds(new Index(18, 3)));
+        Assert.True(HexGrid.IsInBounds(new Index(17, 4)));
     }
     [Test]
     public void OutOfBoundsTest()
     {
-        var grid = new HexGrid() { rows = 19, cols = 5 };
+        Assert.False(HexGrid.IsInBounds(new Index(-1, 0)));
+        Assert.False(HexGrid.IsInBounds(new Index(0, -1)));
+        Assert.False(HexGrid.IsInBounds(new Index(18, 4)));
+    }
+    [Test]
+    public void GetNeighborTests()
+    {
+        Index middle = new Index(5, 'E');
 
-        Assert.False(grid.IsInBounds(new Index(-1, 0)));
-        Assert.False(grid.IsInBounds(new Index(0, -1)));
-        Assert.False(grid.IsInBounds(new Index(18, 4)));
+        Assert.AreEqual(new Index(6, 'E'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.Up));
+        Assert.AreEqual(new Index(6, 'F'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.UpRight));
+        Assert.AreEqual(new Index(5, 'F'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.DownRight));
+        Assert.AreEqual(new Index(4, 'E'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.Down));
+        Assert.AreEqual(new Index(5, 'D'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.DownLeft));
+        Assert.AreEqual(new Index(6, 'D'), HexGrid.GetNeighborAt(middle, HexNeighborDirection.UpLeft));
     }
 }

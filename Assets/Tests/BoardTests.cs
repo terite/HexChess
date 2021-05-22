@@ -29,7 +29,7 @@ public class BoardTests
 
         Assert.AreEqual(1, board.activePieces.Count);
         var kingMoves = board.activePieces[(Team.White, Piece.King)]
-            .GetAllPossibleMoves(board, board.GetCurrentBoardState()).Select(m => (m.Item1, m.Item2))
+            .GetAllPossibleMoves(board.GetCurrentBoardState()).Select(m => (m.Item1, m.Item2))
             .ToArray();
 
         Assert.AreEqual(6, kingMoves.Length);

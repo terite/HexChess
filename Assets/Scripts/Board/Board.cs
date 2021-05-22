@@ -415,13 +415,13 @@ public class Board : SerializedMonoBehaviour
     }
     public IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
-        IEnumerable<(Index, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
+        IEnumerable<(Index, MoveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking);
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
     }
 
     public IEnumerable<Index> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
     {
-        IEnumerable<(Index target, MoveType moveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking)
+        IEnumerable<(Index target, MoveType moveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking)
             .Where(kvp => kvp.target != null && kvp.target == hexIndex)
             .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
 
@@ -440,7 +440,7 @@ public class Board : SerializedMonoBehaviour
         return activePieces
         .Where(kvp => kvp.Key.Item1 == checkForTeam
             && boardState.allPiecePositions.ContainsKey(kvp.Key)
-            && kvp.Value.GetAllPossibleMoves(this, boardState)
+            && kvp.Value.GetAllPossibleMoves(boardState)
                 .Any(move =>
                     move.Item2 == MoveType.Attack
                     && boardState.allPiecePositions.ContainsKey(move.Item1)
@@ -459,7 +459,7 @@ public class Board : SerializedMonoBehaviour
 
         foreach(KeyValuePair<(Team, Piece), IPiece> kvp in pieces)
         {
-            IEnumerable<(Index, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
+            IEnumerable<(Index, MoveType)> moves = kvp.Value.GetAllPossibleMoves(boardState);
             foreach((Index hex, MoveType moveType) in moves)
             {
                 if(moveType == MoveType.Attack && boardState.allPiecePositions.ContainsKey(hex) && boardState.allPiecePositions[hex] == (otherTeam, Piece.King))
@@ -787,12 +787,12 @@ public class Board : SerializedMonoBehaviour
         if(hexes.Count > 0)
             ClearHexes();
         
-        for(int row = 0; row < hexGrid.rows; row++)
+        for(int row = 0; row < HexGrid.rows; row++)
         {
             hexes.Add(new List<Hex>());
-            for(int col = 0; col < hexGrid.cols; col++)
+            for(int col = 0; col < HexGrid.cols; col++)
             {
-                if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+                if(HexGrid.cols % 2 != 0 && col == HexGrid.cols - 1 && row % 2 == 0)
                     continue;
 
                 GameObject newGo = Instantiate(
@@ -847,15 +847,14 @@ public class Board : SerializedMonoBehaviour
 
     public Hex GetNeighborAt(Index source, HexNeighborDirection direction)
     {
-        (int row, int col) offsets = GetOffsetInDirection(source.row % 2 == 0, direction);
-        return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
+        Index? neighbor = HexGrid.GetNeighborAt(source, direction);
+        if (neighbor.HasValue)
+            return GetHexIfInBounds(neighbor.Value);
+        return null;
     }
     public Hex GetHexIfInBounds(int row, int col)
-
     {
-        if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
-            return null;
-        return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+        return HexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
     }
     public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
     
@@ -876,16 +875,6 @@ public class Board : SerializedMonoBehaviour
         }
         return hexesInCol;
     }
-
-    private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction) => direction switch {
-        HexNeighborDirection.Up => (2, 0),
-        HexNeighborDirection.UpRight => isEven ? (1, 1) : (1, 0),
-        HexNeighborDirection.DownRight => isEven ? (-1, 1) : (-1, 0),
-        HexNeighborDirection.Down => (-2, 0),
-        HexNeighborDirection.DownLeft => isEven ? (-1, 0) : (-1, -1),
-        HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
-        _ => (0, 0)
-    };
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};
