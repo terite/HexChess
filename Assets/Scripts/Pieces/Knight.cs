@@ -25,44 +25,44 @@ public class Knight : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int offset = location.row % 2 == 0 ? 1 : -1;
+        var possibleMoves = new (int row, int col)[] {
+            (location.row + 5, location.col),
+            (location.row + 5, location.col + offset),
+            (location.row + 4, location.col + offset),
+            (location.row + 4, location.col - offset),
+            (location.row + 1, location.col + (2 * offset)),
+            (location.row + 1, location.col - offset),
+            (location.row - 1, location.col - offset),
+            (location.row - 1, location.col + (2 * offset)),
+            (location.row - 4, location.col - offset),
+            (location.row - 4, location.col + offset),
+            (location.row - 5, location.col + offset),
+            (location.row - 5, location.col),
+        };
 
-        possible.Add((board.GetHexIfInBounds(location.row + 5, location.col), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 5, location.col + offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 4, location.col + offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 4, location.col - offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 1, location.col + (2 * offset)), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 1, location.col - offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 1, location.col - offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 1, location.col + (2 * offset)), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 4, location.col - offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 4, location.col + offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 5, location.col + offset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 5, location.col), MoveType.Move));
-
-        for(int i = possible.Count - 1; i >= 0; i--)
+        foreach ((int row, int col) in possibleMoves)
         {
-            (Hex possibleHex, MoveType moveType) = possible[i];
-            if(possibleHex == null)
-            {
-                possible.RemoveAt(i);
+            Index index = new Index(row, col);
+            Hex hex = board.GetHexIfInBounds(index);
+            if (hex == null)
                 continue;
-            }
-            
-            if(boardState.allPiecePositions.ContainsKey(possibleHex.index))
+
+            if(boardState.allPiecePositions.ContainsKey(index))
             {
-                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[possibleHex.index];
+                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
                 if(occupyingTeam == team && !includeBlocking)
-                    possible.RemoveAt(i);
-                else
-                    possible[i] = (possibleHex, MoveType.Attack);
+                    continue;
+
+                yield return(index, MoveType.Attack);
+            }
+            else
+            {
+                yield return(index, MoveType.Move);
             }
         }
-
-        return possible;
     }
 
     public void MoveTo(Hex hex, Action action = null)

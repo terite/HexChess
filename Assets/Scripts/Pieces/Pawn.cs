@@ -36,46 +36,50 @@ public class Pawn : MonoBehaviour, IPiece
         isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
-    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
+        List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
         int pawnOffset = team == Team.White ? 2 : -2;
         int attackOffset = location.row % 2 == 0 ? 1 : -1;
+
+
+
+
 
         // Check takes
         Hex take1 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);
         if(CanTake(take1, boardState, includeBlocking))
-            possible.Add((take1, MoveType.Attack));
+            possible.Add((take1.index, MoveType.Attack));
         
         Hex take2 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col);
         if(CanTake(take2, boardState, includeBlocking))
-            possible.Add((take2, MoveType.Attack));
+            possible.Add((take2.index, MoveType.Attack));
         
         // Check en passant
         Hex passant1 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col + attackOffset);
         if(CanPassant(passant1, boardState))
-            possible.Add((take1, MoveType.EnPassant));
+            possible.Add((take1.index, MoveType.EnPassant));
         
         Hex passant2 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col);
         if(CanPassant(passant2, boardState))
-            possible.Add((take2, MoveType.EnPassant));
+            possible.Add((take2.index, MoveType.EnPassant));
 
         // One forward
         Hex normHex = board.GetHexIfInBounds(location.row + pawnOffset, location.col);
-        if(CanMove(normHex, boardState, ref possible))
+        if(CanMove(normHex, boardState, possible))
             return possible; 
         
         // Two forward on 1st move
         if(location == startLoc)
         {
             Hex boostedHex = board.GetHexIfInBounds(location.row + (pawnOffset * 2), location.col);
-            if(CanMove(boostedHex, boardState, ref possible))
+            if(CanMove(boostedHex, boardState, possible))
                 return possible; 
         }
         return possible;
     }
 
-    private bool CanMove(Hex hex, BoardState boardState, ref List<(Hex, MoveType)> possible)
+    private bool CanMove(Hex hex, BoardState boardState, List<(Index, MoveType)> possible)
     {
         if(hex == null)
             return false;
@@ -83,7 +87,7 @@ public class Pawn : MonoBehaviour, IPiece
         if(boardState.allPiecePositions.ContainsKey(hex.index))
             return true;
         
-        possible.Add((hex, MoveType.Move));
+        possible.Add((hex.index, MoveType.Move));
         return false;
     }
 

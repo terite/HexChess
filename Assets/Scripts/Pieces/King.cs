@@ -25,9 +25,9 @@ public class King : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possibleMoves = new List<(Hex, MoveType)>();
+        List<(Index, MoveType)> possibleMoves = new List<(Index, MoveType)>();
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
         {
             Hex hex = board.GetNeighborAt(location, dir);
@@ -40,13 +40,13 @@ public class King : MonoBehaviour, IPiece
                 
                 if(includeBlocking || occuypingTeam != team)
                 {
-                    possibleMoves.Add((hex, MoveType.Attack));
+                    possibleMoves.Add((hex.index, MoveType.Attack));
                     continue;
                 }
                 else
                     continue;
             }
-            possibleMoves.Add((hex, MoveType.Move));
+            possibleMoves.Add((hex.index, MoveType.Move));
         }
         return possibleMoves;
     }

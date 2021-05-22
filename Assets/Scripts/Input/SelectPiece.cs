@@ -354,26 +354,20 @@ public class SelectPiece : MonoBehaviour
                             hoveredPiece = board.activePieces[(t, p)];
                         if(hoveredPiece != null && !hoveredPiece.captured)
                         {
-                            IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
+                            IEnumerable<(Hex targetIndex, MoveType moveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
                                 hoveredPiece,
                                 currentBoardState,
                                 true
-                            );
-                            // TODO: does this actaully do anything?
-                            if(incomingPreviewMoves != previewMoves)
-                            {
-                                DisablePreview();
-                                previewMoves = incomingPreviewMoves.ToList();
-                                previewMoves.Add((hoveredHex, MoveType.None));
-                                
-                                if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
-                                    attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
+                            ).Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType));
 
-                                EnablePreview();
-                            } else
-                            {
-                                Debug.LogError("incomingPreviewMoves somehow equaled previewMoves");
-                            }
+                            DisablePreview();
+                            previewMoves = incomingPreviewMoves.ToList();
+                            previewMoves.Add((hoveredHex, MoveType.None));
+
+                            if (!attacksConcerningHexDict.ContainsKey(hoveredPiece))
+                                attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
+
+                            EnablePreview();
                         }
                         else if(previewMoves.Count > 0)
                             DisablePreview();
@@ -596,7 +590,9 @@ public class SelectPiece : MonoBehaviour
         
         if(!fromJail)
         {
-            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState).ToList();
+            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState)
+                .Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType))
+                .ToList();
             
             // Highlight each possible move the correct color
             foreach((Hex hex, MoveType moveType) in pieceMoves)
@@ -632,7 +628,7 @@ public class SelectPiece : MonoBehaviour
         }
         else
         {
-            BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
+            BoardState newState = board.MovePiece(selectedPiece, hitHex.index, board.GetCurrentBoardState());
             if(multiplayer != null)
                 multiplayer.SendBoard(newState);
             board.AdvanceTurn(newState);
@@ -664,7 +660,7 @@ public class SelectPiece : MonoBehaviour
         int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
         Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
         (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
-        BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
+        BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex.index, currentBoardState);
 
         if(multiplayer != null)
             multiplayer.SendBoard(newState);

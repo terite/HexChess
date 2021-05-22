@@ -16,9 +16,14 @@ public struct HexGrid
     [ShowInInspector, ReadOnly] public float maxHeight => hexHeightVariance.y;
 
     public List<Color> colors;
-    
+
     public float Apothem =>
        (radius.Sqr() - (radius * 0.5f).Sqr()).Sqrt();
 
-    public bool IsInBounds(int row, int col) => row * (row - maxRow) <= 0 && col * (col - maxCol) <= 0;
+    public bool IsInBounds(int row, int col) {
+        bool cond1 = row * (row - maxRow) <= 0 && col* (col - maxCol) <= 0;
+        bool cond2 = !(cols % 2 != 0 && col == cols - 1 && row % 2 == 0);
+        return cond1 && cond2;
+    }
+    public bool IsInBounds(Index index) => IsInBounds(index.row, index.col);
 }

@@ -25,26 +25,26 @@ public class Queen : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
+        List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
         int offset = location.row % 2;
 
         // Up
         for(int row = location.row + 2; row <= board.hexGrid.rows; row += 2)
-            if(!CanMove(board, boardState, row, location.col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, location.col, possible, includeBlocking))
                 break;
         // Down
         for(int row = location.row - 2; row >= 0; row -= 2)
-            if(!CanMove(board, boardState, row, location.col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, location.col, possible, includeBlocking))
                 break;
         // Left
         for(int col = location.col - 1; col >= 0; col--)
-            if(!CanMove(board, boardState, location.row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, location.row, col, possible, includeBlocking))
                 break;
         // Right
         for(int col = location.col + 1; col <= board.hexGrid.cols - 2 + location.row % 2; col++)
-            if(!CanMove(board, boardState, location.row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, location.row, col, possible, includeBlocking))
                 break;
 
         // Top Left
@@ -53,7 +53,7 @@ public class Queen : MonoBehaviour, IPiece
             row <= board.hexGrid.rows && col >= 0; 
             row++, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -65,7 +65,7 @@ public class Queen : MonoBehaviour, IPiece
             row <= board.hexGrid.rows && col <= board.hexGrid.cols;
             row++, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -77,7 +77,7 @@ public class Queen : MonoBehaviour, IPiece
             row >= 0 && col >= 0;
             row--, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -89,7 +89,7 @@ public class Queen : MonoBehaviour, IPiece
             row >= 0 && col <= board.hexGrid.cols;
             row--, i++
         ){
-            if(!CanMove(board, boardState, row, col, ref possible, includeBlocking))
+            if(!CanMove(board, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -99,22 +99,21 @@ public class Queen : MonoBehaviour, IPiece
         return possible;
     }
 
-    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible, bool includeBlocking = false)
+    private bool CanMove(Board board, BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
     {
         Hex hex = board.GetHexIfInBounds(row, col);
-        if(hex != null)
+        if (hex == null)
+            return false;
+
+        if (boardState.allPiecePositions.ContainsKey(hex.index))
         {
-            if(boardState.allPiecePositions.ContainsKey(hex.index))
-            {
-                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
-                if(occupyingTeam != team || includeBlocking)
-                    possible.Add((hex, MoveType.Attack));
-                return false;
-            }
-            possible.Add((hex, MoveType.Move));
-            return true;
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
+            if (occupyingTeam != team || includeBlocking)
+                possible.Add((hex.index, MoveType.Attack));
+            return false;
         }
-        return false;
+        possible.Add((hex.index, MoveType.Move));
+        return true;
     }
 
     public void MoveTo(Hex hex, Action action = null)
