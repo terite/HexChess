@@ -247,16 +247,20 @@ public class Board : SerializedMonoBehaviour
         }
 
         // When another player has 0 valid moves, a stalemate has occured
+        bool isStalemate = true;
         IEnumerable<KeyValuePair<(Team, Piece), IPiece>> otherTeamPieces = activePieces.Where(piece => piece.Key.Item1 == otherTeam);
-        List<(Index, MoveType)> validMovesForStalemateCheck = new List<(Index, MoveType)>();
         foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
         {
-            IEnumerable<(Index, MoveType)> validMove = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
-            validMovesForStalemateCheck.AddRange(validMove);
+            IEnumerable<(Index, MoveType)> validMoves = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
+            if (validMoves.Any())
+            {
+                isStalemate = false;
+                break;
+            }
         }
 
         // Handle potential stalemate
-        if(validMovesForStalemateCheck.Count() == 0)
+        if(isStalemate)
         {
             if(multiplayer)
             {
