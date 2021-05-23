@@ -391,8 +391,6 @@ public class Board : SerializedMonoBehaviour
         foreach(var possibleMove in possibleMoves)
         {
             (Index possibleHex, MoveType possibleMoveType) = possibleMove;
-            if(possibleHex == null)
-                continue;
 
             BoardState newState;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
@@ -401,11 +399,24 @@ public class Board : SerializedMonoBehaviour
                 newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex]], boardState, true);
             else if(possibleMoveType == MoveType.EnPassant)
             {
-                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
-                Index enemyLoc = new Index(possibleHex.row + teamOffset, possibleHex.col);
-                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
-            } else
+                Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
+                Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+                if (!enemyLoc.HasValue || !enemyStartLoc.HasValue)
+                {
+                    Debug.LogError($"Invalid square for EnPassant on {possibleHex}");
+                    continue;
+                }
+                if (!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
+                {
+                    Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
+                    continue;
+                }
+                BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
+                if (!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                    continue;
+                newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
+            }
+            else
             {
                 Debug.LogWarning($"Unhandled move type {possibleMoveType}");
                 continue;

@@ -41,6 +41,7 @@ public class BoardTests
         Assert.AreEqual((new Index(5, 'D'), MoveType.Move), kingMoves[4]);
         Assert.AreEqual((new Index(6, 'D'), MoveType.Move), kingMoves[5]);
     }
+
     [UnityTest]
     public IEnumerator KingCheckDetectionTest()
     {
@@ -67,6 +68,32 @@ public class BoardTests
 
         Assert.True(board.IsChecking(board.GetCurrentBoardState(), Team.White));
         Assert.False(board.IsChecking(board.GetCurrentBoardState(), Team.Black));
+    }
 
+    [Test]
+    public void EnPassantTest()
+    {
+        // White pawn moves to A4
+        var piecePositions2 = new BidirectionalDictionary<(Team, Piece), Index>();
+        piecePositions2[(Team.White, Piece.King)] = new Index(1, 'G');
+        piecePositions2[(Team.Black, Piece.King)] = new Index(9, 'G');
+        piecePositions2[(Team.White, Piece.Pawn1)] = new Index(4, 'A');
+        piecePositions2[(Team.Black, Piece.Pawn1)] = new Index(4, 'B');
+        var state2 = new BoardState()
+        {
+            allPiecePositions = piecePositions2,
+            check = Team.None,
+            checkmate = Team.None,
+            currentMove = Team.Black,
+            executedAtTime = 1,
+        };
+
+        // Black pawn should be able to capture white pawn by going to A3
+        var pawn = new GameObject().AddComponent<Pawn>();
+        pawn.Init(Team.Black, Piece.Pawn1, new Index(4, 'B'));
+        var moves = pawn.GetAllPossibleMoves(state2).ToList();
+
+        Assert.AreEqual((new Index(3, 'A'), MoveType.EnPassant), moves[0]);
+        Assert.AreEqual((new Index(3, 'B'), MoveType.Move), moves[1]);
     }
 }
