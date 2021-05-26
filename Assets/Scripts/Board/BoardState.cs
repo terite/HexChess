@@ -22,27 +22,38 @@ public struct BoardState
         {
             BoardState lastState = history[history.Count - 2];
             BoardState nowState = history[history.Count - 1];
-            foreach(KeyValuePair<(Team, Piece), Index> kvp in lastState.allPiecePositions)
+            foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions)
             {
                 if(!nowState.allPiecePositions.Contains(kvp.Key))
                     continue;
                 Index nowPos = nowState.allPiecePositions[kvp.Key];
 
+                if (kvp.Value == nowPos)
+                    continue;
+
                 (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
                     ? lastState.allPiecePositions[nowPos] 
                     : (Team.None, (Piece?)null);
 
-                if(kvp.Value != nowPos)
-                    return new Move(
-                        turn: Mathf.FloorToInt((float)history.Count / 2f),
-                        lastTeam: kvp.Key.Item1, 
-                        lastPiece: kvp.Key.Item2, 
-                        from: kvp.Value, 
-                        to: nowPos, 
-                        capturedPiece: previousTeamAtLocation == kvp.Key.Item1 ? null : previousPieceAtLocation, 
-                        defendedPiece: previousTeamAtLocation != kvp.Key.Item1 ? null : previousPieceAtLocation,
-                        duration: nowState.executedAtTime - lastState.executedAtTime
-                    );
+                Piece? capturedPiece = previousTeamAtLocation == kvp.Key.team ? null : previousPieceAtLocation;
+                if (kvp.Key.piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
+                {
+                    // Pawns that move sideways are always attacks. If the new location was unoccupied, then did En Passant
+                    Index? enemyLocation = HexGrid.GetNeighborAt(nowPos, kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
+                    if (enemyLocation != null && lastState.TryGetPiece(enemyLocation.Value, out var captured))
+                        capturedPiece = captured.piece;
+                }
+
+                return new Move(
+                    turn: Mathf.FloorToInt((float)history.Count / 2f),
+                    lastTeam: kvp.Key.team,
+                    lastPiece: kvp.Key.piece,
+                    from: kvp.Value,
+                    to: nowPos,
+                    capturedPiece: capturedPiece,
+                    defendedPiece: previousTeamAtLocation != kvp.Key.team ? null : previousPieceAtLocation,
+                    duration: nowState.executedAtTime - lastState.executedAtTime
+                );
             }
         }
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));
