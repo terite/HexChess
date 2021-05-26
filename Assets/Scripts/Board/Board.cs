@@ -671,14 +671,10 @@ public class Board : SerializedMonoBehaviour
 
     public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Index targetHex, BoardState boardState, bool isQuery = false)
     {
-        BoardState currentState = boardState;
-        IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        
-        allPiecePositions.Remove((enemyTeam, enemyPiece));
-        
         if(!isQuery)
         {
+            IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
+            activePieces.Remove((enemyTeam, enemyPiece));
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
@@ -695,6 +691,9 @@ public class Board : SerializedMonoBehaviour
         }
         
         // Update board state
+        BoardState currentState = boardState;
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
+        allPiecePositions.Remove((enemyTeam, enemyPiece));
         allPiecePositions.Remove((pawn.team, pawn.piece));
         allPiecePositions.Add((pawn.team, pawn.piece), targetHex);
         
