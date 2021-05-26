@@ -1,3 +1,4 @@
+using Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,13 +17,8 @@ public class Pawn : MonoBehaviour, IPiece
     public bool captured {get => _captured; set{_captured = value;}}
     private bool _captured = false;
     public ushort value {get => 1; set{}}
-    public bool passantable = false;
-    public int turnsPassed = 0;
     public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;
     public int GetGoalInRow(int r) => team == Team.White ? 18 - (r % 2) : r % 2;
-
-    private Board board;
-    bool isSingleplayer;
 
     private Vector3? targetPos = null;
     public float speed = 15f;
@@ -33,130 +29,83 @@ public class Pawn : MonoBehaviour, IPiece
         this.piece = piece;
         this.location = startingLocation;
         startLoc = startingLocation;
-        isSingleplayer = GameObject.FindObjectOfType<Multiplayer>() == null;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
-        int pawnOffset = team == Team.White ? 2 : -2;
-        int attackOffset = location.row % 2 == 0 ? 1 : -1;
+        bool isWhite = team == Team.White;
+        Index? leftAttack = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.UpLeft : HexNeighborDirection.DownLeft);
+        Index? rightAttack = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.UpRight : HexNeighborDirection.DownRight);
 
         // Check takes
-        Hex take1 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col + attackOffset);
-        if(CanTake(take1, boardState, includeBlocking))
-            possible.Add((take1, MoveType.Attack));
-        
-        Hex take2 = board.GetHexIfInBounds(location.row + (pawnOffset / 2), location.col);
-        if(CanTake(take2, boardState, includeBlocking))
-            possible.Add((take2, MoveType.Attack));
+        if (CanTake(leftAttack, boardState, includeBlocking))
+            yield return (leftAttack.Value, MoveType.Attack);
+
+        if (CanTake(rightAttack, boardState, includeBlocking))
+            yield return (rightAttack.Value, MoveType.Attack);
+
+        Index? leftPassant = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.DownLeft : HexNeighborDirection.UpLeft);
+        Index? rightPassant = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.DownRight : HexNeighborDirection.UpRight);
         
         // Check en passant
-        Hex passant1 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col + attackOffset);
-        if(CanPassant(passant1, boardState))
-            possible.Add((take1, MoveType.EnPassant));
-        
-        Hex passant2 = board.GetHexIfInBounds(location.row - (pawnOffset / 2), location.col);
-        if(CanPassant(passant2, boardState))
-            possible.Add((take2, MoveType.EnPassant));
+        if(CanPassant(leftPassant, boardState))
+            yield return (leftAttack.Value, MoveType.EnPassant);
+
+        if (CanPassant(rightPassant, boardState))
+            yield return (rightAttack.Value, MoveType.EnPassant);
+
+        bool isFirstMove = location == startLoc;
 
         // One forward
-        Hex normHex = board.GetHexIfInBounds(location.row + pawnOffset, location.col);
-        if(CanMove(normHex, boardState, ref possible))
-            return possible; 
-        
-        // Two forward on 1st move
-        if(location == startLoc)
+        Index? forward = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+        if (forward.HasValue && !boardState.IsOccupied(forward.Value))
         {
-            Hex boostedHex = board.GetHexIfInBounds(location.row + (pawnOffset * 2), location.col);
-            if(CanMove(boostedHex, boardState, ref possible))
-                return possible; 
+            yield return (forward.Value, MoveType.Move);
+
+            // Two forward on 1st move
+            Index? twoForward = HexGrid.GetNeighborAt(forward.Value, isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+            if (isFirstMove && twoForward.HasValue && !boardState.IsOccupied(twoForward.Value))
+                yield return (twoForward.Value, MoveType.Move);
         }
-        return possible;
     }
 
-    private bool CanMove(Hex hex, BoardState boardState, ref List<(Hex, MoveType)> possible)
+    private bool CanTake(Index? target, BoardState boardState, bool includeBlocking = false)
     {
-        if(hex == null)
-            return false;
-        
-        if(boardState.allPiecePositions.ContainsKey(hex.index))
-            return true;
-        
-        possible.Add((hex, MoveType.Move));
-        return false;
-    }
-
-    private bool CanTake(Hex hex, BoardState boardState, bool includeBlocking = false)
-    {
-        if(hex == null)
+        if(target == null)
             return false;
 
-        if(boardState.allPiecePositions.ContainsKey(hex.index))
+        if(boardState.allPiecePositions.ContainsKey(target.Value))
         {
-            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[target.Value];
             if(occupyingTeam != team || includeBlocking)
                 return true;
         }
         return false;
     }
 
-    private bool CanPassant(Hex passantToHex, BoardState boardState)
+    private bool CanPassant(Index? victimIndex, BoardState boardState)
     {
-        if(passantToHex == null)
+        if(victimIndex == null)
             return false;
-        
-        if(boardState.allPiecePositions.ContainsKey(passantToHex.index))
-        {
-            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[passantToHex.index];
-            if(occupyingTeam == team)
-                return false;
 
-            if(passantToHex.board.activePieces.ContainsKey((occupyingTeam, occupyingType)))
-            {
-                IPiece piece = passantToHex.board.activePieces[(occupyingTeam, occupyingType)];
-                if(piece is Pawn otherPawn && otherPawn.passantable)
-                    return true;
-            }
+        Index index = victimIndex.Value;
+        
+        if(boardState.allPiecePositions.ContainsKey(index))
+        {
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
+            return occupyingTeam != team && occupyingType.IsPawn();
         }
         return false;
     }
 
     public void MoveTo(Hex hex, Action action = null)
     {
-        Index startLoc = location;
-        int pawnOffset = team == Team.White ? 2 : -2;
-        // If the pawn is moved to it's boosed location, it becomes open to an enpassant
-        Index boostedLoc = new Index(location.row + (pawnOffset * 2), location.col);
-        if(hex.index == boostedLoc)
-        {
-            board = hex.board;
-            board.newTurn += TurnPassed;
-            passantable = true;
-        }
-
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
         
         // If the pawn reaches the other side of the board, it can Promote
         if(location.row == goal)
             hex.board.QueryPromote(this, action);
-    }
-
-    private void TurnPassed(BoardState newState)
-    {
-        // A pawn may only be EnPassanted on the enemies turn immediately after it used it's boosted move
-        // So we track when the turn passes, on the 2nd pass (enemy returning control to us), clear the passant flag
-        int count = isSingleplayer ? 1 : 2;
-        if(turnsPassed >= count)
-        {
-            passantable = false;
-            turnsPassed = 0;
-            board.newTurn -= TurnPassed;
-            board = null;
-        }
-        else
-            turnsPassed++;
     }
 
     private void Update() => MoveOverTime();

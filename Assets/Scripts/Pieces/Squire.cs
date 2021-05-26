@@ -25,35 +25,34 @@ public class Squire : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
         int squireOffset = location.row % 2 == 0 ? 1 : -1;
-        possible.Add((board.GetHexIfInBounds(location.row + 3, location.col + squireOffset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 3, location.col + squireOffset), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row + 3, location.col), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row - 3, location.col), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row, location.col + 1), MoveType.Move));
-        possible.Add((board.GetHexIfInBounds(location.row, location.col - 1), MoveType.Move));
+        var possible = new (int row, int col)[] {
+            (location.row + 3, location.col + squireOffset),
+            (location.row - 3, location.col + squireOffset),
+            (location.row + 3, location.col),
+            (location.row - 3, location.col),
+            (location.row, location.col + 1),
+            (location.row, location.col - 1)
+        };
 
-        for(int i = possible.Count - 1; i >= 0; i--)
+        foreach ((int row, int col) in possible)
         {
-            (Hex possibleHex, MoveType moveType) = possible[i];
-            if(possibleHex == null)
-            {
-                possible.RemoveAt(i);
+            if (!HexGrid.GetValidIndex(row, col, out Index index))
                 continue;
-            }
-            if(boardState.allPiecePositions.ContainsKey(possibleHex.index))
+
+            if (boardState.allPiecePositions.ContainsKey(index))
             {
-                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[possibleHex.index];
-                if(occupyingTeam == team && !includeBlocking)
-                    possible.RemoveAt(i);
-                else
-                    possible[i] = (possibleHex, MoveType.Attack);
+                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
+                if (occupyingTeam == team && !includeBlocking)
+                    continue;
+
+                yield return (index, MoveType.Attack);
             }
+            else
+                yield return (index, MoveType.Move);
         }
-        return possible;
     }
 
     public void MoveTo(Hex hex, Action action = null)

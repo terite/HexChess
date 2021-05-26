@@ -67,6 +67,25 @@ namespace Extensions
             _ => ""
         };
 
+        public static bool IsPawn(this Piece piece)
+        {
+            switch (piece)
+            {
+                case Piece.Pawn1:
+                case Piece.Pawn2:
+                case Piece.Pawn3:
+                case Piece.Pawn4:
+                case Piece.Pawn5:
+                case Piece.Pawn6:
+                case Piece.Pawn7:
+                case Piece.Pawn8:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+
         public static string GetStringFromSeconds(this float seconds) => seconds < 60 
         ? @"%s\.f" 
         : seconds < 3600

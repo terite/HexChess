@@ -25,8 +25,8 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private OnMouse onMouse;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
     private bool hoverExitedInitialHex = false;
-    IEnumerable<(Hex, MoveType)> pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
-    IEnumerable<(Hex, MoveType)> previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+    List<(Hex, MoveType)> pieceMoves = new List<(Hex, MoveType)>();
+    List<(Hex, MoveType)> previewMoves = new List<(Hex, MoveType)>();
     public List<Color> moveTypeHighlightColors = new List<Color>();
     public Color greenColor;
     public Color redColor;
@@ -354,41 +354,39 @@ public class SelectPiece : MonoBehaviour
                             hoveredPiece = board.activePieces[(t, p)];
                         if(hoveredPiece != null && !hoveredPiece.captured)
                         {
-                            IEnumerable<(Hex, MoveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
+                            IEnumerable<(Hex targetIndex, MoveType moveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
                                 hoveredPiece,
                                 currentBoardState,
                                 true
-                            );
-                            if(incomingPreviewMoves != previewMoves)
-                            {
-                                DisablePreview();
-                                previewMoves = incomingPreviewMoves;
-                                previewMoves = previewMoves.Append((hoveredHex, MoveType.None));
-                                
-                                if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
-                                    attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
+                            ).Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType));
 
-                                EnablePreview();
-                            }
+                            DisablePreview();
+                            previewMoves = incomingPreviewMoves.ToList();
+                            previewMoves.Add((hoveredHex, MoveType.None));
+
+                            if (!attacksConcerningHexDict.ContainsKey(hoveredPiece))
+                                attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
+
+                            EnablePreview();
                         }
-                        else if(previewMoves.Count() > 0)
+                        else if(previewMoves.Count > 0)
                             DisablePreview();
                     }
-                    else if(previewMoves.Count() > 0)
+                    else if(previewMoves.Count > 0)
                         DisablePreview();
                 }
-                else if(previewMoves.Count() > 0)
+                else if(previewMoves.Count > 0)
                 {
                     lastHoveredHex = null;
                     DisablePreview();
                 }
-                else if(previewMoves.Count() > 0)
+                else if(previewMoves.Count > 0)
                     DisablePreview();
             }
-            else if(previewMoves.Count() > 0)
+            else if(previewMoves.Count > 0)
                 DisablePreview();
         }
-        else if(previewMoves.Count() > 0)
+        else if(previewMoves.Count > 0)
             DisablePreview();
     }
 
@@ -432,7 +430,7 @@ public class SelectPiece : MonoBehaviour
     {
         foreach ((Hex hex, MoveType moveType) in previewMoves)
             hex.ToggleSelect();
-        previewMoves = Enumerable.Empty<(Hex, MoveType)>();
+        previewMoves.Clear();
 
         ClearPiecesColorization(attacksConcerningHex);
     }
@@ -592,7 +590,9 @@ public class SelectPiece : MonoBehaviour
         
         if(!fromJail)
         {
-            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState);
+            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState)
+                .Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType))
+                .ToList();
             
             // Highlight each possible move the correct color
             foreach((Hex hex, MoveType moveType) in pieceMoves)
@@ -628,7 +628,7 @@ public class SelectPiece : MonoBehaviour
         }
         else
         {
-            BoardState newState = board.MovePiece(selectedPiece, hitHex, board.GetCurrentBoardState());
+            BoardState newState = board.MovePiece(selectedPiece, hitHex.index, board.GetCurrentBoardState());
             if(multiplayer != null)
                 multiplayer.SendBoard(newState);
             board.AdvanceTurn(newState);
@@ -657,10 +657,9 @@ public class SelectPiece : MonoBehaviour
 
     private void EnPassant(BoardState currentBoardState, Hex hitHex)
     {
-        int teamOffset = currentBoardState.currentMove == Team.White ? -2 : 2;
-        Index enemyLoc = new Index(hitHex.index.row + teamOffset, hitHex.index.col);
+        Index enemyLoc = HexGrid.GetNeighborAt(hitHex.index, currentBoardState.currentMove == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up).Value;
         (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
-        BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex, currentBoardState);
+        BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex.index, currentBoardState);
 
         if(multiplayer != null)
             multiplayer.SendBoard(newState);
@@ -678,7 +677,7 @@ public class SelectPiece : MonoBehaviour
 
         foreach((Hex hex, MoveType moveType) in pieceMoves)
             hex.ToggleSelect();
-        pieceMoves = Enumerable.Empty<(Hex, MoveType)>();
+        pieceMoves.Clear();
 
         if(!fromJail)
             board.GetHexIfInBounds(fromIndex).ToggleSelect();

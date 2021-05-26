@@ -18,13 +18,8 @@ public class Hex : SerializedMonoBehaviour
     {
         foreach(HexNeighborDirection direction in EnumArray<HexNeighborDirection>.Values)
         {
-#if UNITY_EDITOR
             Hex neighbor = board?.GetNeighborAt(index, direction);
             yield return (neighbor, direction);
-#elif !UNITY_EDITOR
-            Hex neighbor = board?.GetNeighborAt(index, direction);
-            yield return (neighbor, direction);
-#endif 
         }
     }
 
@@ -181,7 +176,7 @@ public struct Index
         };
     }
 
-    public override string ToString() => $"{row}, {col}";
+    public override string ToString() => $"{row}, {col} ({GetKey()})";
 
     public override bool Equals(object obj) => 
         obj is Index index &&

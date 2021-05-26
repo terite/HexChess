@@ -91,14 +91,14 @@ public class Board : SerializedMonoBehaviour
                 activePieces.Add(prefabs.Key, piece);
             }
 
-            // It might need to be promoted. 
+            // It might need to be promoted.
             // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
             piece = GetPromotedPieceIfNeeded(piece);
             
             // If the piece is on the board, place it at the correct location
             if(newState.allPiecePositions.ContainsKey(prefabs.Key))
             {
-                Index loc = newState.allPiecePositions[prefabs.Key];                
+                Index loc = newState.allPiecePositions[prefabs.Key];
                 piece.MoveTo(hexes[loc.row][loc.col]);
                 continue;
             }
@@ -176,7 +176,7 @@ public class Board : SerializedMonoBehaviour
         }
     }
 
-    public Game GetDefaultGame(string loc) => 
+    public Game GetDefaultGame(string loc) =>
         Game.Deserialize(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);
 
     public Team GetCurrentTurn()
@@ -205,18 +205,16 @@ public class Board : SerializedMonoBehaviour
 
         Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
         
-        // if(checkingPieces.Any())
         if(IsChecking(newState, newState.currentMove))
         {
-            List<(Hex, MoveType)> validMoves = new List<(Hex, MoveType)>();
+            List<(Index, MoveType)> validMoves = new List<(Index, MoveType)>();
             // Check for mate
             foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
             {
                 (Team team, Piece piece) = kvp.Key;
                 if(team == newState.currentMove)
                     continue;
-                List<(Hex, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
-                // Debug.Log($"{team}, {piece} has {vm.Count} valid moves.");
+                IEnumerable<(Index, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
                 validMoves.AddRange(vm);
             }
             if(validMoves.Count == 0)
@@ -241,24 +239,28 @@ public class Board : SerializedMonoBehaviour
             }
             
             EndGame(
-                timestamp, 
-                endType: GameEndType.Checkmate, 
+                timestamp,
+                endType: GameEndType.Checkmate,
                 winner: newState.checkmate == Team.White ? Winner.Black : Winner.White
             );
             return;
         }
 
         // When another player has 0 valid moves, a stalemate has occured
+        bool isStalemate = true;
         IEnumerable<KeyValuePair<(Team, Piece), IPiece>> otherTeamPieces = activePieces.Where(piece => piece.Key.Item1 == otherTeam);
-        List<(Hex, MoveType)> validMovesForStalemateCheck = new List<(Hex, MoveType)>();
         foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
         {
-            List<(Hex, MoveType)> validMove = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
-            validMovesForStalemateCheck.AddRange(validMove);
+            IEnumerable<(Index, MoveType)> validMoves = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
+            if (validMoves.Any())
+            {
+                isStalemate = false;
+                break;
+            }
         }
 
         // Handle potential stalemate
-        if(validMovesForStalemateCheck.Count() == 0)
+        if(isStalemate)
         {
             if(multiplayer)
             {
@@ -376,7 +378,7 @@ public class Board : SerializedMonoBehaviour
         }
     }
 
-    IEnumerable<Piece> GetRemainingPieces(Team team, BoardState state) => 
+    IEnumerable<Piece> GetRemainingPieces(Team team, BoardState state) =>
         state.allPiecePositions.Where(kvp => kvp.Key.Item1 == team).Select(kvp => {
             IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == kvp.Key.Item2 && promo.team == team);
             if(applicablePromos.Any())
@@ -384,84 +386,66 @@ public class Board : SerializedMonoBehaviour
             return kvp.Key.Item2;
         });
 
-    public List<(Hex, MoveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index target, MoveType moveType)> ValidateMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
-        // Eliminate invalid moves
-        // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
-        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
-        for(int i = possibleMoves.Count - 1; i >= 0; i--)
+        foreach(var possibleMove in possibleMoves)
         {
-            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
-            if(possibleHex == null)
-            {
-                possibleMoves.RemoveAt(i);
-                continue;
-            }
+            (Index possibleHex, MoveType possibleMoveType) = possibleMove;
 
-            BoardState newState = default;
+            BoardState newState;
             if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
                 newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
             else if(possibleMoveType == MoveType.Defend)
-                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex.index]], boardState, true);
+                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex]], boardState, true);
             else if(possibleMoveType == MoveType.EnPassant)
             {
-                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
-                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
-                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
-            }
-
-            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
-            // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(IsChecking(newState, otherTeam))
-                possibleMoves.RemoveAt(i);
-        }
-        return possibleMoves;
-    }
-
-    public List<Hex> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
-    {
-        // Eliminate invalid moves
-        // Simulate moves, eliminating any that leave the current player in check
-        List<(Hex, MoveType)> possibleMoves = piece.GetAllPossibleMoves(this, boardState, includeBlocking);
-        // Debug.Log($"{piece.team} {piece.type} has {possibleMoves.Count} possible moves.");
-        for(int i = possibleMoves.Count - 1; i >= 0; i--)
-        {
-            (Hex possibleHex, MoveType possibleMoveType) = possibleMoves[i];
-            if(possibleHex == null || possibleHex.index != hexIndex)
-            {
-                possibleMoves.RemoveAt(i);
-                continue;
-            }
-
-            BoardState newState = default;
-            if(possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
-            else if(possibleMoveType == MoveType.EnPassant)
-            {
-                int teamOffset = boardState.currentMove == Team.White ? -2 : 2;
-                Index enemyLoc = new Index(possibleHex.index.row + teamOffset, possibleHex.index.col);
-                (Team enemyTeam, Piece enemyPiece) = boardState.allPiecePositions[enemyLoc];
-                newState = EnPassant((Pawn)piece, enemyTeam, enemyPiece, possibleHex, boardState, true);
+                Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
+                Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+                if (!enemyLoc.HasValue || !enemyStartLoc.HasValue)
+                {
+                    Debug.LogError($"Invalid square for EnPassant on {possibleHex}");
+                    continue;
+                }
+                if (!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
+                {
+                    Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
+                    continue;
+                }
+                BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
+                if (!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                    continue;
+                newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
             }
             else
             {
-                possibleMoves.RemoveAt(i);
+                Debug.LogWarning($"Unhandled move type {possibleMoveType}");
                 continue;
             }
 
             Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
             // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(IsChecking(newState, otherTeam))
-                possibleMoves.RemoveAt(i);
+            if (!IsChecking(newState, otherTeam))
+                yield return (possibleMove.target, possibleMove.moveType);
         }
-        return possibleMoves.Select(move => move.Item1).ToList();
+    }
+    public IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
+    {
+        IEnumerable<(Index, MoveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking);
+        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
+    }
+
+    public IEnumerable<Index> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
+    {
+        IEnumerable<(Index target, MoveType moveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking)
+            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
+            .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
+
+        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
     }
 
     public IEnumerable<IPiece> GetValidAttacksConcerningHex(Hex hex) => activePieces
         .Where(kvp => GetAllValidAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
-            .Any(moveToHex => moveToHex == hex)
+            .Any(targetIndex => targetIndex == hex.index)
         ).Select(kvp => kvp.Value);
 
     public IEnumerable<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
@@ -469,16 +453,16 @@ public class Board : SerializedMonoBehaviour
         Team otherTeam = checkForTeam == Team.White ? Team.Black : Team.White;
 
         return activePieces
-        .Where(kvp => kvp.Key.Item1 == checkForTeam 
-            && boardState.allPiecePositions.ContainsKey(kvp.Key) 
-            && kvp.Value.GetAllPossibleMoves(this, boardState)
+        .Where(kvp => kvp.Key.Item1 == checkForTeam
+            && boardState.allPiecePositions.ContainsKey(kvp.Key)
+            && kvp.Value.GetAllPossibleMoves(boardState)
                 .Any(move =>
                     move.Item2 == MoveType.Attack
-                    && boardState.allPiecePositions.ContainsKey(move.Item1.index)
-                    && boardState.allPiecePositions[move.Item1.index] == (otherTeam, Piece.King)
+                    && boardState.allPiecePositions.ContainsKey(move.Item1)
+                    && boardState.allPiecePositions[move.Item1] == (otherTeam, Piece.King)
                 )
         ).Select(kvp => kvp.Value);
-    } 
+    }
     
     public bool IsChecking(BoardState boardState, Team checkForTeam)
     {
@@ -490,17 +474,17 @@ public class Board : SerializedMonoBehaviour
 
         foreach(KeyValuePair<(Team, Piece), IPiece> kvp in pieces)
         {
-            List<(Hex, MoveType)> moves = kvp.Value.GetAllPossibleMoves(this, boardState);
-            foreach((Hex hex, MoveType moveType) in moves)
+            IEnumerable<(Index, MoveType)> moves = kvp.Value.GetAllPossibleMoves(boardState);
+            foreach((Index hex, MoveType moveType) in moves)
             {
-                if(moveType == MoveType.Attack && boardState.allPiecePositions.ContainsKey(hex.index) && boardState.allPiecePositions[hex.index] == (otherTeam, Piece.King))
+                if(moveType == MoveType.Attack && boardState.allPiecePositions.ContainsKey(hex) && boardState.allPiecePositions[hex] == (otherTeam, Piece.King))
                     return true;
             }
         }
         return false;
     }
 
-    public BoardState MovePiece(IPiece piece, Hex targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
+    public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
         // Copy the existing board state
         BoardState currentState = boardState;
@@ -510,9 +494,9 @@ public class Board : SerializedMonoBehaviour
         // If the hex being moved into contains an enemy piece, capture it
         Piece? takenPieceAtLocation = null;
         Piece? defendedPieceAtLocation = null;
-        if(currentState.allPiecePositions.Contains(targetLocation.index))
+        if(currentState.allPiecePositions.Contains(targetLocation))
         {
-            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
+            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation];
             if(occupyingTeam != piece.team || includeBlocking)
             {
                 takenPieceAtLocation = occupyingType;
@@ -535,20 +519,20 @@ public class Board : SerializedMonoBehaviour
         {
             moveTracker.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                piece.team, 
-                piece.piece, 
-                piece.location, 
-                targetLocation.index, 
-                takenPieceAtLocation, 
+                piece.team,
+                piece.piece,
+                piece.location,
+                targetLocation,
+                takenPieceAtLocation,
                 defendedPieceAtLocation
             ));
-            piece.MoveTo(targetLocation);
+            piece.MoveTo(GetHexIfInBounds(targetLocation));
         }
 
         // Update boardstate
         if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
             allPiecePositions.Remove((piece.team, piece.piece));
-        allPiecePositions.Add((piece.team, piece.piece), targetLocation.index);
+        allPiecePositions.Add((piece.team, piece.piece), targetLocation);
         currentState.allPiecePositions = allPiecePositions;
         
         return currentState;
@@ -583,11 +567,11 @@ public class Board : SerializedMonoBehaviour
         // Move piece
         moveTracker.UpdateText(new Move(
             Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-            piece.team, 
-            piece.piece, 
-            piece.location, 
-            targetLocation.index, 
-            takenPieceAtLocation, 
+            piece.team,
+            piece.piece,
+            piece.location,
+            targetLocation.index,
+            takenPieceAtLocation,
             defendedPieceAtLocation
         ));
         piece.MoveTo(targetLocation, () => {
@@ -601,7 +585,7 @@ public class Board : SerializedMonoBehaviour
         });
     }
 
-    public void QueryPromote(Pawn pawn, Action action) 
+    public void QueryPromote(Pawn pawn, Action action)
     {
         // We don't want to display the query promote screen if we're not the team making the promote
         // That information will arrive to us across the network
@@ -616,12 +600,12 @@ public class Board : SerializedMonoBehaviour
             Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
             multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType, promoTurnCount));
         });
-    } 
+    }
 
     public IPiece Promote(Pawn pawn, Piece type)
     {
         // Replace the pawn with the chosen piece type
-        // Worth noting: Even though the new IPiece is of a different type than Pawn, 
+        // Worth noting: Even though the new IPiece is of a different type than Pawn,
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
         Board board = GameObject.FindObjectOfType<Board>();
         Hex hex = board.GetHexIfInBounds(pawn.location);
@@ -663,11 +647,11 @@ public class Board : SerializedMonoBehaviour
         {
             moveTracker.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                p1.team, 
-                p1.piece, 
-                p1StartLoc, 
-                p2StartLoc, 
-                null, 
+                p1.team,
+                p1.piece,
+                p1StartLoc,
+                p2StartLoc,
+                null,
                 p2.piece
             ));
             p1.MoveTo(GetHexIfInBounds(p2.location));
@@ -685,34 +669,33 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Hex targetHex, BoardState boardState, bool isQuery = false)
+    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Index targetHex, BoardState boardState, bool isQuery = false)
     {
-        BoardState currentState = boardState;
-        IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        
-        allPiecePositions.Remove((enemyTeam, enemyPiece));
-        
         if(!isQuery)
         {
+            IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
+            activePieces.Remove((enemyTeam, enemyPiece));
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
             moveTracker.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                pawn.team, 
-                pawn.piece, 
-                pawn.location, 
-                targetHex.index, 
+                pawn.team,
+                pawn.piece,
+                pawn.location,
+                targetHex,
                 enemyPiece,
                 null
             ));
-            pawn.MoveTo(targetHex);
+            pawn.MoveTo(GetHexIfInBounds(targetHex));
         }
         
         // Update board state
+        BoardState currentState = boardState;
+        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
+        allPiecePositions.Remove((enemyTeam, enemyPiece));
         allPiecePositions.Remove((pawn.team, pawn.piece));
-        allPiecePositions.Add((pawn.team, pawn.piece), targetHex.index);
+        allPiecePositions.Add((pawn.team, pawn.piece), targetHex);
         
         currentState.allPiecePositions = allPiecePositions;
         return currentState;
@@ -757,11 +740,11 @@ public class Board : SerializedMonoBehaviour
         newTurn.Invoke(currentState);
 
         game = new Game(
-            turnHistory, 
-            promotions, 
-            winner, 
-            endType, 
-            timers.timerDruation, 
+            turnHistory,
+            promotions,
+            winner,
+            endType,
+            timers.timerDruation,
             timers.isClock
         );
 
@@ -794,7 +777,7 @@ public class Board : SerializedMonoBehaviour
         highlightedHexes.Clear();
     }
 
-    public void Reset() 
+    public void Reset()
     {
         string sceneName = SceneManager.GetActiveScene().name;
         SceneTransition sceneTransition = GameObject.FindObjectOfType<SceneTransition>();
@@ -818,12 +801,12 @@ public class Board : SerializedMonoBehaviour
         if(hexes.Count > 0)
             ClearHexes();
         
-        for(int row = 0; row < hexGrid.rows; row++) 
+        for(int row = 0; row < HexGrid.rows; row++)
         {
             hexes.Add(new List<Hex>());
-            for(int col = 0; col < hexGrid.cols; col++)
+            for(int col = 0; col < HexGrid.cols; col++)
             {
-                if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
+                if(HexGrid.cols % 2 != 0 && col == HexGrid.cols - 1 && row % 2 == 0)
                     continue;
 
                 GameObject newGo = Instantiate(
@@ -878,15 +861,14 @@ public class Board : SerializedMonoBehaviour
 
     public Hex GetNeighborAt(Index source, HexNeighborDirection direction)
     {
-        (int row, int col) offsets = GetOffsetInDirection(source.row % 2 == 0, direction);
-        return GetHexIfInBounds(source.row + offsets.row, source.col + offsets.col);
+        Index? neighbor = HexGrid.GetNeighborAt(source, direction);
+        if (neighbor.HasValue)
+            return GetHexIfInBounds(neighbor.Value);
+        return null;
     }
     public Hex GetHexIfInBounds(int row, int col)
-
     {
-        if(hexGrid.cols % 2 != 0 && col == hexGrid.cols - 1 && row % 2 == 0)
-            return null;
-        return hexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+        return HexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
     }
     public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
     
@@ -907,16 +889,6 @@ public class Board : SerializedMonoBehaviour
         }
         return hexesInCol;
     }
-
-    private (int row, int col) GetOffsetInDirection(bool isEven, HexNeighborDirection direction) => direction switch {
-        HexNeighborDirection.Up => (2, 0),
-        HexNeighborDirection.UpRight => isEven ? (1, 1) : (1, 0),
-        HexNeighborDirection.DownRight => isEven ? (-1, 1) : (-1, 0),
-        HexNeighborDirection.Down => (-2, 0),
-        HexNeighborDirection.DownLeft => isEven ? (-1, 0) : (-1, -1),
-        HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
-        _ => (0, 0)
-    };
 }
 
 public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};

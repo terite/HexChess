@@ -26,59 +26,59 @@ public class Rook : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public List<(Hex, MoveType)> GetAllPossibleMoves(Board board, BoardState boardState, bool includeBlocking = false)
+    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        List<(Hex, MoveType)> possible = new List<(Hex, MoveType)>();
+        List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
 
         // Up
-        for(int row = location.row + 2; row <= board.hexGrid.rows; row += 2)
-            if(!CanMove(board, boardState, row, location.col, ref possible, includeBlocking))
+        for(int row = location.row + 2; row <= HexGrid.rows; row += 2)
+            if(!CanMove(boardState, row, location.col, possible, includeBlocking))
                 break;
         // Down
         for(int row = location.row - 2; row >= 0; row -= 2)
-            if(!CanMove(board, boardState, row, location.col, ref possible, includeBlocking))
+            if(!CanMove(boardState, row, location.col, possible, includeBlocking))
                 break;
         // Left
         for(int col = location.col - 1; col >= 0; col--)
-            if(!CanMove(board, boardState, location.row, col, ref possible, includeBlocking))
+            if(!CanMove(boardState, location.row, col, possible, includeBlocking))
                 break;
         // Right
-        for(int col = location.col + 1; col <= board.hexGrid.cols - 2 + location.row % 2; col++)
-            if(!CanMove(board, boardState, location.row, col, ref possible, includeBlocking))
+        for(int col = location.col + 1; col <= HexGrid.cols - 2 + location.row % 2; col++)
+            if(!CanMove(boardState, location.row, col, possible, includeBlocking))
                 break;
             
         // Check defend
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
         {
-            Hex hex = board.GetNeighborAt(location, dir);
-            if(hex == null)
+            Index? maybeIndex = HexGrid.GetNeighborAt(location, dir);
+            if (maybeIndex == null)
                 continue;
+            Index index = maybeIndex.Value;
             
-            if(boardState.allPiecePositions.ContainsKey(hex.index))
+            if(boardState.allPiecePositions.ContainsKey(index))
             {
-                (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
+                (Team occuypingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
                 if(occuypingTeam == team && defendableTypes.Contains(occupyingType))
-                    possible.Add((hex, MoveType.Defend));
+                    possible.Add((index, MoveType.Defend));
             }
         }
 
         return possible;
     }
 
-    private bool CanMove(Board board, BoardState boardState, int row, int col, ref List<(Hex, MoveType)> possible, bool includeBlocking = false)
+    private bool CanMove(BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
     {
-        Hex hex = board.GetHexIfInBounds(row, col);
-        if(hex == null)
+        if (!HexGrid.GetValidIndex(row, col, out Index index))
             return false;
             
-        if(boardState.allPiecePositions.ContainsKey(hex.index))
+        if(boardState.allPiecePositions.ContainsKey(index))
         {
-            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[hex.index];
+            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
             if(occupyingTeam != team || includeBlocking)
-                possible.Add((hex, MoveType.Attack));
+                possible.Add((index, MoveType.Attack));
             return false;
         }
-        possible.Add((hex, MoveType.Move));
+        possible.Add((index, MoveType.Move));
         return true;
     }
 
