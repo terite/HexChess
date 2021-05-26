@@ -5,6 +5,7 @@ using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Extensions;
 
 public struct BoardState
 {
