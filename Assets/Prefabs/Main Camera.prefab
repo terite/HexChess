@@ -215,6 +215,7 @@ MonoBehaviour:
   hoverColor: {r: 0.31181023, g: 0.7488344, b: 0.8584906, a: 1}
   whiteColor: {r: 1, g: 1, b: 1, a: 1}
   blackColor: {r: 0.11764706, g: 0.11764706, b: 0.11764706, a: 1}
+  yellowColor: {r: 0.9528302, g: 0.8132051, b: 0, a: 1}
 --- !u!114 &748795983797158534
 MonoBehaviour:
   m_ObjectHideFlags: 0

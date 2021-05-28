@@ -60,10 +60,10 @@ public struct BoardState
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));
     }
 
-    public readonly bool TryGetPiece(Index index, out (Team team, Piece piece) teamedPiece)
-    {
-        return allPiecePositions.TryGetValue(index, out teamedPiece);
-    }
+    public readonly bool TryGetPiece(Index index, out (Team team, Piece piece) teamedPiece) => 
+        allPiecePositions.TryGetValue(index, out teamedPiece);
+    public readonly bool TryGetIndex((Team team, Piece piece) teamedPiece, out Index index) => 
+        allPiecePositions.TryGetValue(teamedPiece, out index);
 
     public static bool operator ==(BoardState a, BoardState b) => 
         a.currentMove == b.currentMove 

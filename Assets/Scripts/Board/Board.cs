@@ -242,6 +242,9 @@ public class Board : SerializedMonoBehaviour
                 else
                     return;
             }
+
+            Move move = BoardState.GetLastMove(turnHistory);
+            HighlightMove(move);
             
             EndGame(
                 timestamp,
@@ -277,13 +280,14 @@ public class Board : SerializedMonoBehaviour
 
             newState.currentMove = otherTeam;
             turnHistory.Add(newState);
-            newTurn.Invoke(newState);
 
             Move move = BoardState.GetLastMove(turnHistory);
             if(move.lastTeam != Team.None)
                 HighlightMove(move);
             else
                 ClearMoveHighlight();
+
+            newTurn.Invoke(newState);
 
             EndGame(timestamp, GameEndType.Stalemate, Winner.None);
             return;
@@ -314,13 +318,14 @@ public class Board : SerializedMonoBehaviour
             {
                 newState.currentMove = otherTeam;
                 turnHistory.Add(newState);
-                newTurn.Invoke(newState);
 
                 Move move = BoardState.GetLastMove(turnHistory);
                 if(move.lastTeam != Team.None)
                     HighlightMove(move);
                 else
                     ClearMoveHighlight();
+
+                newTurn.Invoke(newState);
 
                 EndGame(timestamp, GameEndType.Stalemate, Winner.None);
                 return;
@@ -335,7 +340,6 @@ public class Board : SerializedMonoBehaviour
         if(repetition.Count() >= 5)
         {
             turnHistory.Add(newState);
-            newTurn.Invoke(newState);
 
             if(multiplayer != null)
             {
@@ -343,12 +347,12 @@ public class Board : SerializedMonoBehaviour
                 return;
             }
 
+            newTurn.Invoke(newState);
             EndGame(timestamp, GameEndType.Draw, Winner.Draw);
             return;
         }
 
         turnHistory.Add(newState);
-        newTurn.Invoke(newState);
         
         Move newMove = BoardState.GetLastMove(turnHistory);
         if(newMove.lastTeam != Team.None)
@@ -356,6 +360,8 @@ public class Board : SerializedMonoBehaviour
         else
             ClearMoveHighlight();
 
+        newTurn.Invoke(newState);
+        
         // The game ends in a draw due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
         if(newMove.capturedPiece.HasValue || newMove.lastPiece >= Piece.Pawn1)
             turnsSincePawnMovedOrPieceTaken = 0;

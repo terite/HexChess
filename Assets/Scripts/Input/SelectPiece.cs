@@ -34,6 +34,7 @@ public class SelectPiece : MonoBehaviour
     public Color hoverColor;
     public Color whiteColor;
     public Color blackColor;
+    public Color yellowColor;
     List<IPiece> attacksConcerningHex = new List<IPiece>();
     Dictionary<IPiece, List<IPiece>> attacksConcerningHexDict = new Dictionary<IPiece, List<IPiece>>();
     MeshRenderer lastChangedRenderer;
@@ -47,6 +48,8 @@ public class SelectPiece : MonoBehaviour
     private TextMeshPro lastHoveredKey = null;
     IEnumerable<Hex> keyHighlightedHexes = Enumerable.Empty<Hex>();
 
+    Hex checkedKingHex = null;
+
     private void Awake() 
     {
         cam = Camera.main;
@@ -59,7 +62,29 @@ public class SelectPiece : MonoBehaviour
         board.newTurn += NewTurn;
     }
 
-    private void NewTurn(BoardState newState) => attacksConcerningHexDict.Clear();
+    private void NewTurn(BoardState newState) 
+    {
+        attacksConcerningHexDict.Clear();
+        
+        if(checkedKingHex != null)
+        {
+            Move lastMove = BoardState.GetLastMove(board.turnHistory);
+            if(lastMove.from != checkedKingHex.index && lastMove.to != checkedKingHex.index)
+                checkedKingHex.Unhighlight();
+            checkedKingHex = null;
+        }
+        
+        if(newState.TryGetIndex((newState.checkmate, Piece.King), out Index matedIndex))
+        {
+            checkedKingHex = board.GetHexIfInBounds(matedIndex);
+            checkedKingHex.Highlight(redColor);
+        }
+        else if(newState.TryGetIndex((newState.check, Piece.King), out Index checkedIndex))
+        {
+            checkedKingHex = board.GetHexIfInBounds(checkedIndex);
+            checkedKingHex.Highlight(yellowColor);
+        }
+    }
 
     private void Update()
     {
@@ -364,7 +389,7 @@ public class SelectPiece : MonoBehaviour
                             previewMoves = incomingPreviewMoves.ToList();
                             previewMoves.Add((hoveredHex, MoveType.None));
 
-                            if (!attacksConcerningHexDict.ContainsKey(hoveredPiece))
+                            if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
                                 attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
 
                             EnablePreview();
