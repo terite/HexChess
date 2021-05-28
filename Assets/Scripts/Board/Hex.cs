@@ -62,6 +62,8 @@ public class Hex : SerializedMonoBehaviour
 
     private void Select()
     {
+        // Debug.Log($"Selecting hex: {index.GetKey()}");
+
         selected = true;
 
         // Update edges of this hex based on the direction to each neighbor
@@ -74,6 +76,7 @@ public class Hex : SerializedMonoBehaviour
 
     private void Deselect()
     {
+        // Debug.Log($"Deselecting hex: {index.GetKey()}");
         selected = false;
         
         // Clear self

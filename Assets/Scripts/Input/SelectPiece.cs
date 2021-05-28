@@ -689,13 +689,14 @@ public class SelectPiece : MonoBehaviour
     {
         Index enemyLoc = HexGrid.GetNeighborAt(hitHex.index, currentBoardState.currentMove == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up).Value;
         (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
+        Index fromIndex = selectedPiece.location;
         BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex.index, currentBoardState);
 
         if(multiplayer != null)
             multiplayer.SendBoard(newState);
 
         board.AdvanceTurn(newState);
-        DeselectPiece(selectedPiece.location);
+        DeselectPiece(fromIndex);
     }
 
     private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
@@ -704,6 +705,8 @@ public class SelectPiece : MonoBehaviour
     {
         if(selectedPiece == null)
             return;
+        
+        // Debug.Log($"Desllecting: {selectedPiece.obj.name}");
 
         foreach((Hex hex, MoveType moveType) in pieceMoves)
             hex.ToggleSelect();
