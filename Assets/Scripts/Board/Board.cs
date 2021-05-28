@@ -93,7 +93,7 @@ public class Board : SerializedMonoBehaviour
 
             // It might need to be promoted.
             // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
-            piece = GetPromotedPieceIfNeeded(piece);
+            piece = GetPromotedPieceIfNeeded(piece, promos != null);
             
             // If the piece is on the board, place it at the correct location
             if(newState.allPiecePositions.ContainsKey(prefabs.Key))
@@ -126,11 +126,7 @@ public class Board : SerializedMonoBehaviour
     public void LoadGame(Game game)
     {
         turnHistory = game.turnHistory;
-        this.game = game;
-        
-        Move move = BoardState.GetLastMove(turnHistory);
-        if(move.lastTeam != Team.None)
-            moveTracker.UpdateText(move);
+        this.game = game;        
 
         foreach(Jail jail in jails)
             jail?.Clear();
@@ -152,9 +148,11 @@ public class Board : SerializedMonoBehaviour
         }
     
         SetBoardState(state, game.promotions);
-
-
         turnHistoryPanel.SetGame(game);
+        
+        Move move = BoardState.GetLastMove(turnHistory);
+        if(move.lastTeam != Team.None)
+            moveTracker.UpdateText(move);
 
         // When loading a game, we need to count how many turns have passed towards the 50 move rule
         turnsSincePawnMovedOrPieceTaken = 0;
@@ -611,7 +609,7 @@ public class Board : SerializedMonoBehaviour
         });
     }
 
-    public IPiece Promote(Pawn pawn, Piece type)
+    public IPiece Promote(Pawn pawn, Piece type, bool surpressNewPromotion = false)
     {
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn,
@@ -621,14 +619,17 @@ public class Board : SerializedMonoBehaviour
 
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
-        Promotion newPromo = new Promotion(pawn.team, pawn.piece, type, Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1);
-        promotions.Add(newPromo);
+        if(!surpressNewPromotion)
+        {
+            Promotion newPromo = new Promotion(pawn.team, pawn.piece, type, Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1);
+            promotions.Add(newPromo);
+        }
         activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
         return newPiece;
     }
 
-    private IPiece GetPromotedPieceIfNeeded(IPiece piece)
+    private IPiece GetPromotedPieceIfNeeded(IPiece piece, bool surpressNewPromotion = false)
     {
         if(piece is Pawn pawn)
         {
@@ -637,7 +638,7 @@ public class Board : SerializedMonoBehaviour
                 if(promo.team == pawn.team && promo.from == p)
                     p = promo.to;
             if(p != pawn.piece)
-                piece = Promote(pawn, p);
+                piece = Promote(pawn, p, surpressNewPromotion);
         }
 
         return piece;
