@@ -440,141 +440,171 @@ public class SelectPiece : MonoBehaviour
         if(promotionDialogue.gameObject.activeSelf)
             return;
         
-
         BoardState currentBoardState = board.GetCurrentBoardState();
         if(context.started)
+            MouseDown(currentBoardState);
+        else if(context.canceled)
+            ReleaseMouse(currentBoardState);
+    }
+
+    private void MouseDown(BoardState currentBoardState)
+    {
+        // Later allow players to queue a move, but for now, just prevent even clicking a piece when not their turn
+        if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+            return;
+
+        // When moveing pieces on the board, we determine what piece is being moved by the hex the player is hovering
+        if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
         {
-            // Later allow players to queue a move, but for now, just prevent even clicking a piece when not their turn
-            if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+            if(hexHit.collider == null)
                 return;
 
-            // When moveing pieces on the board, we determine what piece is being moved by the hex the player is hovering
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
+            if(hexHit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
             {
-                if(hexHit.collider == null)
+                IPiece pieceOnHex = board.activePieces[currentBoardState.allPiecePositions[clickedHex.index]];
+                if(pieceOnHex.team == currentBoardState.currentMove)
+                {
+                    Select(currentBoardState, pieceOnHex);
+                    audioSource.PlayOneShot(pickupNoise);
                     return;
-
-                if(hexHit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
-                {
-                    IPiece pieceOnHex = board.activePieces[currentBoardState.allPiecePositions[clickedHex.index]];
-                    if(pieceOnHex.team == currentBoardState.currentMove)
-                    {
-                        Select(currentBoardState, pieceOnHex);
-                        audioSource.PlayOneShot(pickupNoise);
-                        return;
-                    }
                 }
             }
-
-            // But pulling pieces ouf of jail in free place mode doesn't have a hex for us to check, so let's cast a ray and check that instead.
-            if(!multiplayer && freePlaceMode.toggle.isOn)
-            {
-                if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
-                {
-                    if(pieceHit.collider == null)
-                        return;
-                    
-                    if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece) && clickedPiece.team == currentBoardState.currentMove && clickedPiece.captured)
-                    {
-                        Select(currentBoardState, clickedPiece, true);
-                        audioSource.PlayOneShot(pickupNoise);
-                        return;
-                    }
-                }
-            }
-            
         }
-        else if(context.canceled)
+
+        // But pulling pieces ouf of jail in free place mode doesn't have a hex for us to check, so let's cast a ray and check that instead.
+        if(!multiplayer && freePlaceMode.toggle.isOn)
         {
-            if(lastChangedRenderer != null)
-                ResetLastChangedRenderer();
-
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
+            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
             {
-                IPiece hoveredPiece = hit.collider.GetComponent<IPiece>();
-
-                if(hoveredPiece != null && selectedPiece != null)
+                if(pieceHit.collider == null)
+                    return;
+                
+                if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece) && clickedPiece.team == currentBoardState.currentMove && clickedPiece.captured)
                 {
-                    if(!hoveredPiece.captured)
-                    {
-                        if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece.captured)
-                            GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
+                    Select(currentBoardState, clickedPiece, true);
+                    audioSource.PlayOneShot(pickupNoise);
+                    return;
+                }
+            }
+        }
+    }
 
-                        // Rooks can defend (swap positions with a near by ally)
-                        if(hoveredPiece.team == selectedPiece.team && pieceMoves.Contains((board.GetHexIfInBounds(hoveredPiece.location), MoveType.Defend)))
+    private void ReleaseMouse(BoardState currentBoardState)
+    {
+        if(lastChangedRenderer != null)
+            ResetLastChangedRenderer();
+
+        if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
+        {
+            if(hit.collider.TryGetComponent<IPiece>(out IPiece hoveredPiece) && selectedPiece != null)
+            {
+                if(!hoveredPiece.captured)
+                {
+                    Hex otherPieceOccupiedHex = board.GetHexIfInBounds(hoveredPiece.location);
+                    if(!multiplayer && freePlaceMode.toggle.isOn)
+                    {
+                        // Free place mode override
+                        // If the hex is not empty, swap with ally, or take enemy, regardless of if the move is a potenial move
+                        // Else the hex is empty, so just put the piece at the proper location
+                        Jail jail = selectedPiece.captured 
+                            ? GameObject.FindObjectsOfType<Jail>()
+                                .Where(jail => jail.teamToPrison == selectedPiece.team)
+                                .First()
+                            : null;
+                        
+                        if(jail != null)
+                            jail.RemoveFromPrison(selectedPiece);
+                        
+                        if(hoveredPiece.team == selectedPiece.team)
                         {
-                            Defend(hoveredPiece);
-                            return;
+                            // If jail is no null, that means our selected piece was removed from jail.
+                            // To swap with something in jail, we just need to send the piece there to jail first, then move to it
+                            // If it's not in jail, just swap the 2 pieces
+                            if(jail != null)
+                            {
+                                jail.Enprison(hoveredPiece);
+                                MoveOrAttack(otherPieceOccupiedHex);
+                            }
+                            else
+                                Defend(hoveredPiece);
                         }
                         else
-                        {
-                            Hex enemyHex = board.GetHexIfInBounds(hoveredPiece.location);
-                            // Check if this attack is within our possible moves
-                            if(pieceMoves.Contains((enemyHex, MoveType.Attack)))
-                                MoveOrAttack(enemyHex);
-                            else if(!multiplayer && freePlaceMode.toggle.isOn)
-                            {
-                                // Swap with ally, or take enemy, regardless of if the move is a potenial move
-                                if(hoveredPiece.team == selectedPiece.team)
-                                    Defend(hoveredPiece);
-                                else
-                                    MoveOrAttack(enemyHex);
-                            }
-                        }
-
+                            MoveOrAttack(otherPieceOccupiedHex);
                     }
-                    // The piece was dropped on top of a piece in jail
-                    else if(!multiplayer && freePlaceMode.toggle.isOn)
-                    {
-                        if(!selectedPiece.captured)
-                            board.Enprison(selectedPiece);
-                    }
+                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Attack)))
+                        MoveOrAttack(otherPieceOccupiedHex);
+                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Defend)))
+                        Defend(hoveredPiece);
+                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.EnPassant)))
+                        EnPassant(currentBoardState, otherPieceOccupiedHex);
                 }
-
-                // Clicked on a hex
-                Hex hitHex = hit.collider.GetComponent<Hex>();
-                if(hitHex != null && selectedPiece != null)
+                // The piece was dropped on top of a piece in jail
+                else if(!multiplayer && freePlaceMode.toggle.isOn)
                 {
-                    IPiece otherPiece = currentBoardState.allPiecePositions.ContainsKey(hitHex.index) 
-                        ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
+                    if(!selectedPiece.captured)
+                        board.Enprison(selectedPiece);
+                }
+            }
+
+            // Hovering on a hex
+            if(hit.collider.TryGetComponent<Hex>(out Hex hitHex) && selectedPiece != null)
+            {
+                IPiece otherPiece = currentBoardState.allPiecePositions.ContainsKey(hitHex.index) 
+                    ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
+                    : null;
+
+                if(!multiplayer && freePlaceMode.toggle.isOn)
+                {
+                    // Free place mode override
+                    // If the hex is not empty, swap with ally, or take enemy, regardless of if the move is a potenial move
+                    // Else the hex is empty, so just put the piece at the proper location
+                    Jail jail = selectedPiece.captured 
+                        ? GameObject.FindObjectsOfType<Jail>()
+                            .Where(jail => jail.teamToPrison == selectedPiece.team)
+                            .First() 
                         : null;
 
-                    if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece.captured)
-                        GameObject.FindObjectsOfType<Jail>().Where(jail => jail.teamToPrison == selectedPiece.team).First().RemoveFromPrison(selectedPiece);
-
-                    if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
-                        MoveOrAttack(hitHex);
-                    else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                        Defend(otherPiece);
-                    else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
-                        EnPassant(currentBoardState, hitHex);
-                    else if(!multiplayer && freePlaceMode.toggle.isOn)
+                    if(jail != null)
+                        jail.RemoveFromPrison(selectedPiece);
+                        
+                    if(otherPiece != null && otherPiece.team == selectedPiece.team)
                     {
-                        // Swap with ally, or take enemy, regardless of if the move is a potenial move
-                        if(otherPiece != null && otherPiece.team == selectedPiece.team)
-                            Defend(otherPiece);
-                        else
+                        // If jail is no null, that means our selected piece was removed from jail.
+                        // To swap with something in jail, we just need to send the piece there to jail first, then move to it
+                        // If it's not in jail, just swap the 2 pieces
+                        if(jail != null)
+                        {
+                            jail.Enprison(otherPiece);
                             MoveOrAttack(hitHex);
+                        }
+                        else
+                            Defend(otherPiece);
                     }
+                    else
+                        MoveOrAttack(hitHex);
                 }
-
-                if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece != null)
-                {
-                    // Piece dropped on top of jail
-                    Jail jail = hit.collider.GetComponent<Jail>();
-                    if(jail && !selectedPiece.captured)
-                        board.Enprison(selectedPiece);
-                    
-                    Hex fromHex = board.GetHexIfInBounds(selectedPiece.location);
-                    fromHex.ToggleSelect();
-                }
+                else if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
+                    MoveOrAttack(hitHex);
+                else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
+                    Defend(otherPiece);
+                else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
+                    EnPassant(currentBoardState, hitHex);
             }
 
-            if(selectedPiece != null)
+            if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece != null)
             {
-                audioSource.PlayOneShot(cancelNoise);
-                DeselectPiece(selectedPiece.location, selectedPiece.captured);
+                // Piece dropped on top of jail
+                if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured)
+                    board.Enprison(selectedPiece);
+                
+                Hex fromHex = board.GetHexIfInBounds(selectedPiece.location);
+                fromHex.ToggleSelect();
             }
+        }
+        if(selectedPiece != null)
+        {
+            audioSource.PlayOneShot(cancelNoise);
+            DeselectPiece(selectedPiece.location, selectedPiece.captured);
         }
     }
 
