@@ -687,16 +687,16 @@ public class SelectPiece : MonoBehaviour
 
     private void EnPassant(BoardState currentBoardState, Hex hitHex)
     {
+        Index startLoc = selectedPiece.location;
         Index enemyLoc = HexGrid.GetNeighborAt(hitHex.index, currentBoardState.currentMove == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up).Value;
         (Team enemyTeam, Piece enemyType) = currentBoardState.allPiecePositions[enemyLoc];
-        Index fromIndex = selectedPiece.location;
         BoardState newState = board.EnPassant((Pawn)selectedPiece, enemyTeam, enemyType, hitHex.index, currentBoardState);
 
         if(multiplayer != null)
             multiplayer.SendBoard(newState);
 
         board.AdvanceTurn(newState);
-        DeselectPiece(fromIndex);
+        DeselectPiece(startLoc);
     }
 
     private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
