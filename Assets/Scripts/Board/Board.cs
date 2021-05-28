@@ -135,8 +135,10 @@ public class Board : SerializedMonoBehaviour
         foreach(Jail jail in jails)
             jail?.Clear();
 
+        BoardState state = turnHistory[turnHistory.Count - 1];
+
         if(turnHistory.Count > 1)
-            timeOffset = turnHistory[turnHistory.Count - 1].executedAtTime - Time.timeSinceLevelLoad;
+            timeOffset = state.executedAtTime - Time.timeSinceLevelLoad;
         
         if(game.timerDuration <= 0)
         {
@@ -149,7 +151,8 @@ public class Board : SerializedMonoBehaviour
             timers.SetTimers(game.timerDuration);
         }
     
-        SetBoardState(turnHistory[turnHistory.Count - 1], game.promotions);
+        SetBoardState(state, game.promotions);
+
 
         turnHistoryPanel.SetGame(game);
 
@@ -170,7 +173,11 @@ public class Board : SerializedMonoBehaviour
         else
         {
             if(game.winner == Winner.Pending)
+            {
                 turnPanel.Reset();
+                newTurn?.Invoke(state);
+                cam.SetToTeam(state.currentMove);
+            }
             else
                 gameOver?.Invoke(game);
         }
