@@ -5,6 +5,7 @@ using static UnityEngine.InputSystem.InputAction;
 using System.Linq;
 using System;
 using TMPro;
+using Extensions;
 
 public class SelectPiece : MonoBehaviour
 {
@@ -62,7 +63,7 @@ public class SelectPiece : MonoBehaviour
         board.newTurn += NewTurn;
     }
 
-    private void NewTurn(BoardState newState) 
+    private void NewTurn(BoardState newState)
     {
         attacksConcerningHexDict.Clear();
         
@@ -105,8 +106,7 @@ public class SelectPiece : MonoBehaviour
 
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
         {
-            TextMeshPro hitKey = hit.collider.GetComponent<TextMeshPro>();
-            if(hitKey == null)
+            if(hit.collider.TryGetComponent<TextMeshPro>(out TextMeshPro hitKey))
             {
                 foreach(Hex hex in keyHighlightedHexes)
                     hex.ToggleSelect();
@@ -228,17 +228,13 @@ public class SelectPiece : MonoBehaviour
         {
             if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, layerMask))
             {
-                IPiece hitPiece = hit.collider.GetComponent<IPiece>();
-                if(hitPiece != null)
+                if(hit.collider.TryGetComponent<IPiece>(out IPiece hitPiece))
                 {
-                    Hex hex = board.GetHexIfInBounds(hitPiece.location);
-                    if(hex != null)
+                    if(board.TryGetHexIfInBounds(hitPiece.location, out Hex hex))
                     {
                         SetOnMouseColor(hex);
 
-                        #region Change color of other piece under mouse
-                        MeshRenderer hitRenderer = hitPiece.obj.GetComponentInChildren<MeshRenderer>();
-                        if(hitPiece != selectedPiece && hitRenderer != null)
+                        if(hitPiece.obj.TryGetComponentInChildren<MeshRenderer>(out MeshRenderer hitRenderer) && hitPiece != selectedPiece)
                         {
                             if(hitRenderer != lastChangedRenderer)
                             {
@@ -258,7 +254,6 @@ public class SelectPiece : MonoBehaviour
                         }
                         else if(lastChangedRenderer != null)
                             ResetLastChangedRenderer();
-                        #endregion
                     }
                 }
                 else
@@ -267,19 +262,15 @@ public class SelectPiece : MonoBehaviour
                     if(hitHex != null)
                     {
                         SetOnMouseColor(hitHex);
-
-                        #region Change color of other piece under mouse
                         BoardState currentBoardState = board.GetCurrentBoardState();
-                        if(currentBoardState.allPiecePositions.ContainsKey(hitHex.index))
+                        if(currentBoardState.TryGetPiece(hitHex.index, out (Team occupyingTeam, Piece occupyingPiece) teamedPiece))
                         {
-                            (Team occupyingTeam, Piece occupyingPiece) = currentBoardState.allPiecePositions[hitHex.index];
-                            if(board.activePieces.ContainsKey((occupyingTeam, occupyingPiece)))
+                            if(board.activePieces.ContainsKey((teamedPiece.occupyingTeam, teamedPiece.occupyingPiece)))
                             {
-                                IPiece piece = board.activePieces[(occupyingTeam, occupyingPiece)];
+                                IPiece piece = board.activePieces[teamedPiece];
                                 if(piece != selectedPiece)
                                 {
-                                    MeshRenderer hitPieceRenderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-                                    if(hitPieceRenderer != lastChangedRenderer)
+                                    if(piece.obj.TryGetComponentInChildren<MeshRenderer>(out MeshRenderer hitPieceRenderer) && hitPieceRenderer != lastChangedRenderer)
                                     {
                                         if(lastChangedRenderer != null)
                                             ResetLastChangedRenderer();
@@ -303,7 +294,6 @@ public class SelectPiece : MonoBehaviour
                         }
                         else if(lastChangedRenderer != null)
                             ResetLastChangedRenderer();
-                        #endregion
                     }
                     else
                         SetOnMouseColor();

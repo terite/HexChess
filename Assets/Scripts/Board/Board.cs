@@ -361,7 +361,7 @@ public class Board : SerializedMonoBehaviour
             ClearMoveHighlight();
 
         newTurn.Invoke(newState);
-        
+
         // The game ends in a draw due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
         if(newMove.capturedPiece.HasValue || newMove.lastPiece >= Piece.Pawn1)
             turnsSincePawnMovedOrPieceTaken = 0;
@@ -882,11 +882,21 @@ public class Board : SerializedMonoBehaviour
             return GetHexIfInBounds(neighbor.Value);
         return null;
     }
-    public Hex GetHexIfInBounds(int row, int col)
+    public Hex GetHexIfInBounds(int row, int col) => 
+        HexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+    public Hex GetHexIfInBounds(Index index) => 
+        GetHexIfInBounds(index.row, index.col);
+
+    public bool TryGetHexIfInBounds(int row, int col, out Hex hex)
     {
-        return HexGrid.IsInBounds(row, col) ? hexes[row][col] : null;
+        hex = GetHexIfInBounds(row, col);
+        return hex != null;
     }
-    public Hex GetHexIfInBounds(Index index) => GetHexIfInBounds(index.row, index.col);
+    public bool TryGetHexIfInBounds(Index index, out Hex hex)
+    {
+        hex = GetHexIfInBounds(index);
+        return hex != null;
+    }
     
     public IEnumerable<Hex> GetHexesInCol(int col)
     {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEngine.InputSystem.InputAction;
 
 public class TurnHistoryPanel : MonoBehaviour
 {
@@ -58,10 +59,6 @@ public class TurnHistoryPanel : MonoBehaviour
             lastMovePanel.SetLight();
             foreach(MovePanel panel in panels)
                 panel.FlipColor();
-            // if(panels.Count % 2 == 0)
-            //     lastMovePanel.SetDark();
-            // else
-            //     lastMovePanel.SetLight();
             
             panels.Add(lastMovePanel);
             
@@ -73,7 +70,7 @@ public class TurnHistoryPanel : MonoBehaviour
             }
 
             lastMovePanel.SetTurnNumber(turnNumber);
-            lastMovePanel.SetMove(lastMove);
+            lastMovePanel.SetMove(newState, lastMove);
             lastMovePanel.SetTimestamp(newState.executedAtTime, Team.White);
             lastMovePanel.ClearTimestamp(Team.Black);
             lastMovePanel.ClearDeltaTime(Team.Black);
@@ -83,7 +80,7 @@ public class TurnHistoryPanel : MonoBehaviour
         }
         else
         {
-            lastMovePanel?.SetMove(lastMove);
+            lastMovePanel?.SetMove(newState, lastMove);
             lastMovePanel?.SetTimestamp(newState.executedAtTime, Team.Black);
 
             blackTotal += lastMove.duration;
@@ -97,5 +94,21 @@ public class TurnHistoryPanel : MonoBehaviour
             Destroy(panels[i].gameObject);
         
         panels.Clear();
+    }
+
+    public void HistoryStep(CallbackContext context)
+    {
+        if(!context.performed)
+            return;
+
+        // Will be 1, 0, or -1
+        float val = context.ReadValue<float>();
+    }
+
+    public void HistoryJump(CallbackContext context)
+    {
+        if(!context.performed)
+            return;
+        
     }
 }

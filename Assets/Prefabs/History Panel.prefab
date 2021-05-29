@@ -1313,6 +1313,7 @@ GameObject:
   - component: {fileID: 6802989491041061034}
   - component: {fileID: 6802989491041061032}
   - component: {fileID: 6802989491041061033}
+  - component: {fileID: 4639235608228260671}
   m_Layer: 5
   m_Name: History
   m_TagString: Untagged
@@ -1427,6 +1428,81 @@ MonoBehaviour:
     type: 3}
   collectionContainer: {fileID: 6802989491032145490}
   board: {fileID: 0}
+--- !u!114 &4639235608228260671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6802989491041061028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: a808ce1b12625234195a30af7d8b619f,
+    type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 16b4c892-9932-4c19-bbf3-77dda1dd68bb
+    m_ActionName: Keyboard/Mouse/MouseClick[/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: eaa2624b-b875-4938-b7e2-87ef5604de32
+    m_ActionName: Keyboard/Mouse/RightClick[/Mouse/rightButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 8a08cc5c-fa67-41a4-83cd-80f1eeda22b1
+    m_ActionName: Keyboard/Mouse/ResetCamera[/Keyboard/space]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 6802989491041061033}
+        m_TargetAssemblyTypeName: TurnHistoryPanel, GameAssembly
+        m_MethodName: HistoryStep
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: d924e05b-da14-412d-a044-0f6ead1f2836
+    m_ActionName: Keyboard/Mouse/HistoryStep[/Keyboard/leftArrow,/Keyboard/rightArrow]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 6802989491041061033}
+        m_TargetAssemblyTypeName: TurnHistoryPanel, GameAssembly
+        m_MethodName: HistoryJump
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 5f688f4d-9a7d-4b7b-90e5-c787d6227ddd
+    m_ActionName: Keyboard/Mouse/HistoryJump[/Keyboard/downArrow,/Keyboard/upArrow]
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Keyboard/Mouse
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &7086745694815975355
 GameObject:
   m_ObjectHideFlags: 0

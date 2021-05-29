@@ -37,12 +37,12 @@ public class Squire : MonoBehaviour, IPiece
             (location.row, location.col - 1)
         };
 
-        foreach ((int row, int col) in possible)
+        foreach((int row, int col) in possible)
         {
-            if (!HexGrid.GetValidIndex(row, col, out Index index))
+            if(!HexGrid.GetValidIndex(row, col, out Index index))
                 continue;
 
-            if (boardState.allPiecePositions.ContainsKey(index))
+            if(boardState.allPiecePositions.ContainsKey(index))
             {
                 (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
                 if (occupyingTeam == team && !includeBlocking)

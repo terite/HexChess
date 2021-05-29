@@ -17,13 +17,14 @@ public class MovePanel : MonoBehaviour
     public Color darkColor;
     public Color lightColor;
     Board board;
+    BoardState state;
     private void Awake() => board = GameObject.FindObjectOfType<Board>();
 
-    public void SetMove(Move move)
+    public void SetMove(BoardState state, Move move)
     {
+        this.state = state;
         TextMeshProUGUI toChange = move.lastTeam == Team.White ? whiteText : blackText;
-        BoardState boardState = board.GetCurrentBoardState();
-        string shortForm = move.GetNotation(board.promotions, boardState, NotationType.LongForm);
+        string shortForm = move.GetNotation(board.promotions, state, NotationType.LongForm);
         
         toChange.text = shortForm;
 

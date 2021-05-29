@@ -25,19 +25,18 @@ public struct BoardState
             BoardState nowState = history[history.Count - 1];
             foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions)
             {
-                if(!nowState.allPiecePositions.Contains(kvp.Key))
+                if(!nowState.TryGetIndex(kvp.Key, out Index nowPos))
                     continue;
-                Index nowPos = nowState.allPiecePositions[kvp.Key];
 
-                if (kvp.Value == nowPos)
+                if(kvp.Value == nowPos)
                     continue;
 
                 (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
-                    ? lastState.allPiecePositions[nowPos] 
+                    ? lastState.allPiecePositions[nowPos]
                     : (Team.None, (Piece?)null);
 
                 Piece? capturedPiece = previousTeamAtLocation == kvp.Key.team ? null : previousPieceAtLocation;
-                if (kvp.Key.piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
+                if(kvp.Key.piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
                 {
                     // Pawns that move sideways are always attacks. If the new location was unoccupied, then did En Passant
                     Index? enemyLocation = HexGrid.GetNeighborAt(nowPos, kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
@@ -55,6 +54,7 @@ public struct BoardState
                     defendedPiece: previousTeamAtLocation != kvp.Key.team ? null : previousPieceAtLocation,
                     duration: nowState.executedAtTime - lastState.executedAtTime
                 );
+                
             }
         }
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));
