@@ -103,5 +103,10 @@ public class Rook : MonoBehaviour, IPiece
         }
     }
 
+    public void CancelMove()
+    {
+        targetPos = null;
+    }
+
     public string GetPieceString() => "Rook";
 }

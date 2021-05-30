@@ -73,6 +73,10 @@ public class King : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+    public void CancelMove()
+    {
+        targetPos = null;
+    }
 
     public string GetPieceString() => "King";
 }

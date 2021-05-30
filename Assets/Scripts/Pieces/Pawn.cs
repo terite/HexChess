@@ -20,7 +20,7 @@ public class Pawn : MonoBehaviour, IPiece
     public int goal => team == Team.White ? 18 - (location.row % 2) : location.row % 2;
     public int GetGoalInRow(int r) => team == Team.White ? 18 - (r % 2) : r % 2;
 
-    private Vector3? targetPos = null;
+    public Vector3? targetPos {get; private set;} = null;
     public float speed = 15f;
 
     public void Init(Team team, Piece piece, Index startingLocation)
@@ -121,6 +121,11 @@ public class Pawn : MonoBehaviour, IPiece
             transform.position = targetPos.Value;
             targetPos = null;
         }
+    }
+
+    public void CancelMove()
+    {
+        targetPos = null;
     }
 
     public string GetPieceString() => "Pawn";

@@ -40,6 +40,8 @@ public class Board : SerializedMonoBehaviour
     public int turnsSincePawnMovedOrPieceTaken = 0;
     [OdinSerialize] public List<List<Piece>> insufficientSets = new List<List<Piece>>();
 
+    private BoardState? lastSetState = null;
+
     // Used to write the default boardstate out to file
     [Button]
     public void WriteTurnHistoryToFile()
@@ -61,56 +63,66 @@ public class Board : SerializedMonoBehaviour
         foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefabs in piecePrefabs)
         {
             IPiece piece;
-            IPiece jailedPiece = jails[(int)prefabs.Key.team].GetPieceIfInJail(prefabs.Key.piece);
+            Jail applicableJail = jails[(int)prefabs.Key.team];
+            IPiece jailedPiece = applicableJail.GetPieceIfInJail(prefabs.Key.piece);
 
+            defaultBoard.TryGetIndex(prefabs.Key, out Index startLoc);
+            Vector3 loc = GetHexIfInBounds(startLoc.row, startLoc.col).transform.position + Vector3.up;
             if(activePieces.ContainsKey(prefabs.Key))
             {
                 piece = activePieces[prefabs.Key];
+                // Reset promoted pawn if needed
                 if(prefabs.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
                 {
                     IPiece old = activePieces[prefabs.Key];
                     activePieces.Remove(prefabs.Key);
                     Destroy(old.obj);
-
-                    Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
-                    Vector3 loc = hexes[startLoc.row][startLoc.col].transform.position + Vector3.up;
                     piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                    piece.Init(prefabs.Key.team, prefabs.Key.piece, defaultBoard.allPiecePositions[prefabs.Key]);
-                    
+                    piece.Init(prefabs.Key.team, prefabs.Key.piece, startLoc);
                     activePieces.Add(prefabs.Key, piece);
                 }
             }
             else if(jailedPiece != null)
-                piece = jailedPiece;
-            else
             {
-                Index startLoc = defaultBoard.allPiecePositions[prefabs.Key];
-                Vector3 loc = hexes[startLoc.row][startLoc.col].transform.position + Vector3.up;
-                piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                piece.Init(prefabs.Key.team, prefabs.Key.piece, defaultBoard.allPiecePositions[prefabs.Key]);
+                piece = jailedPiece;
+                applicableJail.RemoveFromPrison(piece);
+                // a piece coming out of jail needs to be added back into the Active Pieces dictionary
                 activePieces.Add(prefabs.Key, piece);
             }
-
+            else
+            {
+                piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                piece.Init(prefabs.Key.team, prefabs.Key.piece, startLoc);
+                activePieces.Add(prefabs.Key, piece);
+            }
+            
             // It might need to be promoted.
             // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
             piece = GetPromotedPieceIfNeeded(piece, promos != null);
             
             // If the piece is on the board, place it at the correct location
-            if(newState.allPiecePositions.ContainsKey(prefabs.Key))
+            if(newState.TryGetIndex(prefabs.Key, out Index newLoc))
             {
-                Index loc = newState.allPiecePositions[prefabs.Key];
-                piece.MoveTo(hexes[loc.row][loc.col]);
+                if(lastSetState.HasValue 
+                    && lastSetState.Value.TryGetPiece(newLoc, out (Team team, Piece piece) teamedPiece) 
+                    && teamedPiece != prefabs.Key 
+                    && activePieces.ContainsKey(teamedPiece)
+                ){
+                    IPiece occupyingPiece = activePieces[teamedPiece];
+                    if(newState.TryGetIndex((occupyingPiece.team, occupyingPiece.piece), out Index belongsAtLoc) && belongsAtLoc == newLoc)
+                        EnprisonLite(occupyingPiece);
+                }
+                piece.MoveTo(GetHexIfInBounds(newLoc.row, newLoc.col));
                 continue;
             }
             // Put the piece in the correct jail
             else
             {
-                jails[(int)prefabs.Key.Item1].Enprison(piece);
+                applicableJail.Enprison(piece);
                 activePieces.Remove(prefabs.Key);
             }
         }
 
-        // newTurn?.Invoke(newState);
         if(newState.currentMove != Team.None && turnHistory.Count > 1)
         {
             Move newMove = BoardState.GetLastMove(turnHistory);
@@ -120,7 +132,9 @@ public class Board : SerializedMonoBehaviour
                 ClearMoveHighlight();
         }
         else
-            ClearMoveHighlight();    
+            ClearMoveHighlight();
+
+        lastSetState = newState; 
     }
 
     public void LoadGame(Game game)
@@ -412,18 +426,18 @@ public class Board : SerializedMonoBehaviour
             {
                 Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
                 Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
-                if (!enemyLoc.HasValue || !enemyStartLoc.HasValue)
+                if(!enemyLoc.HasValue || !enemyStartLoc.HasValue)
                 {
-                    Debug.LogError($"Invalid square for EnPassant on {possibleHex}");
+                    // Debug.LogError($"Invalid hex for EnPassant on {possibleHex}");
                     continue;
                 }
-                if (!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
+                if(!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
                 {
                     Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
                     continue;
                 }
                 BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
-                if (!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
                     continue;
                 newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
             }
@@ -505,24 +519,24 @@ public class Board : SerializedMonoBehaviour
         // If the hex being moved into contains an enemy piece, capture it
         Piece? takenPieceAtLocation = null;
         Piece? defendedPieceAtLocation = null;
-        if(currentState.allPiecePositions.Contains(targetLocation))
+        
+        if(currentState.TryGetPiece(targetLocation, out (Team occupyingTeam, Piece occupyingType) teamedPiece))
         {
-            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation];
-            if(occupyingTeam != piece.team || includeBlocking)
+            if(teamedPiece.occupyingTeam != piece.team || includeBlocking)
             {
-                takenPieceAtLocation = occupyingType;
-                IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
+                takenPieceAtLocation = teamedPiece.occupyingType;
+                IPiece occupyingPiece = activePieces[teamedPiece];
 
                 // Capture the enemy piece
                 if(!isQuery)
                 {
-                    jails[(int)occupyingTeam].Enprison(occupyingPiece);
-                    activePieces.Remove((occupyingTeam, occupyingType));
+                    jails[(int)teamedPiece.occupyingTeam].Enprison(occupyingPiece);
+                    activePieces.Remove(teamedPiece);
                 }
-                allPiecePositions.Remove((occupyingTeam, occupyingType));
+                allPiecePositions.Remove(teamedPiece);
             }
             else
-                defendedPieceAtLocation = occupyingType;    
+                defendedPieceAtLocation = teamedPiece.occupyingType;    
         }
 
         // Move piece
@@ -717,6 +731,13 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
+    public void EnprisonLite(IPiece toPrison)
+    {
+        Debug.Log($"Sending {toPrison.team} {toPrison.piece} to jail.");
+        jails[(int)toPrison.team].Enprison(toPrison);
+        activePieces.Remove((toPrison.team, toPrison.piece));
+    }
+
     public void Enprison(IPiece toPrison)
     {
         jails[(int)toPrison.team].Enprison(toPrison);
@@ -788,7 +809,7 @@ public class Board : SerializedMonoBehaviour
 
     private void ClearMoveHighlight()
     {
-        foreach (Hex hex in highlightedHexes)
+        foreach(Hex hex in highlightedHexes)
             hex.Unhighlight();
         highlightedHexes.Clear();
     }

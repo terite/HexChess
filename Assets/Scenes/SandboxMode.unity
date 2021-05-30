@@ -30294,6 +30294,11 @@ PrefabInstance:
       objectReference: {fileID: 1100316983}
     - target: {fileID: 748795983797158538, guid: 8fd76f948b50e39459a9eff1ef0d957b,
         type: 3}
+      propertyPath: historyPanel
+      value: 
+      objectReference: {fileID: 1937464022}
+    - target: {fileID: 748795983797158538, guid: 8fd76f948b50e39459a9eff1ef0d957b,
+        type: 3}
       propertyPath: freePlaceMode
       value: 
       objectReference: {fileID: 1094600928}

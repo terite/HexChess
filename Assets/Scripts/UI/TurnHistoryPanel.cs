@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using static UnityEngine.InputSystem.InputAction;
 
 public class TurnHistoryPanel : MonoBehaviour
 {
+    [SerializeField] private Scrollbar scrollBar;
     [SerializeField] private MovePanel movePanelPrefab;
     [SerializeField] private MovePanel startPanelPrefab;
     [SerializeField] private RectTransform collectionContainer;
@@ -16,11 +18,16 @@ public class TurnHistoryPanel : MonoBehaviour
     private float whiteTotal = 0;
     private float blackTotal = 0;
 
+    public (int index, Team team) panelPointer {get; private set;} = (0, Team.None);
+    public (int index, Team team) currentTurnPointer {get; private set;} = (0, Team.None);
+
+
     private void Awake() => board.newTurn += NewTurn;
     private void Start() 
     {
         startPanel = Instantiate(startPanelPrefab, collectionContainer);
         startPanel.SetDark();
+        startPanel.ClearHighlight();
         foreach(Team team in EnumArray<Team>.Values)
         {
             if(team == Team.None)
@@ -55,6 +62,8 @@ public class TurnHistoryPanel : MonoBehaviour
     {
         if(newState.currentMove == Team.Black)
         {
+            lastMovePanel?.ClearHighlight();
+
             lastMovePanel = Instantiate(movePanelPrefab, collectionContainer);
             lastMovePanel.SetLight();
             foreach(MovePanel panel in panels)
@@ -77,6 +86,10 @@ public class TurnHistoryPanel : MonoBehaviour
 
             whiteTotal += lastMove.duration;
             startPanel.SetTimestamp(whiteTotal, Team.White);
+
+            lastMovePanel.HighlightTeam(Team.White);
+            panelPointer = (panels.Count - 1, Team.White);
+            currentTurnPointer = panelPointer;
         }
         else
         {
@@ -85,6 +98,10 @@ public class TurnHistoryPanel : MonoBehaviour
 
             blackTotal += lastMove.duration;
             startPanel?.SetTimestamp(blackTotal, Team.Black);
+
+            lastMovePanel?.HighlightTeam(Team.Black);
+            panelPointer = (panels.Count - 1, Team.Black);
+            currentTurnPointer = panelPointer;
         }
     }
 
@@ -100,9 +117,37 @@ public class TurnHistoryPanel : MonoBehaviour
     {
         if(!context.performed)
             return;
+        
+        if(panels.Count == 0)
+            return;
 
         // Will be 1, 0, or -1
-        float val = context.ReadValue<float>();
+        int val = (int)context.ReadValue<float>();
+        
+        // Prevent trying to move past the final move
+        if(panelPointer.index == panels.Count - 1 && val > 0 && panelPointer.team == Team.Black)
+            return;
+        // Prevent trying to move past the first move
+        else if(panelPointer.index == 0 && val < 0 && panelPointer.team == Team.White)
+            return;
+        // Prevent moving to the current pending move
+        else if(val > 0 && panelPointer.team == Team.White && panelPointer.index == currentTurnPointer.index && currentTurnPointer.team == Team.White)
+            return;
+
+        (int index, Team team) previousPointer = panelPointer;
+        // Calculate the new index based on the button pressed and the previous index
+        int newIndex = (previousPointer.team == Team.White && val == -1) || (previousPointer.team == Team.Black && val == 1)
+                ? Mathf.Clamp(previousPointer.index + val, 0, panels.Count - 1)
+                : previousPointer.index;
+
+        Team newTeam = previousPointer.team == Team.White ? Team.Black : Team.White;
+        panelPointer = (newIndex, newTeam);
+        
+        panels[previousPointer.index].ClearHighlight();
+        MovePanel panel = panels[panelPointer.index];
+        panel.HighlightTeam(panelPointer.team);
+        board.SetBoardState(panel.GetState(panelPointer.team));
+        board.HighlightMove(panel.GetMove(panelPointer.team));
     }
 
     public void HistoryJump(CallbackContext context)
@@ -110,5 +155,35 @@ public class TurnHistoryPanel : MonoBehaviour
         if(!context.performed)
             return;
         
+        if(panels.Count == 0)
+            return;
+
+        int val = (int)context.ReadValue<float>();
+
+        (int index, Team team) previousPointer = panelPointer;
+        
+        panelPointer = val == -1 ? (0, Team.White) : val == 1 ? currentTurnPointer : panelPointer;
+        scrollBar.value = val < 0 ? 0 : val > 0 ? 1 : scrollBar.value;
+
+        panels[previousPointer.index].ClearHighlight();
+        MovePanel panel = panels[panelPointer.index];
+        panel.HighlightTeam(panelPointer.team);
+        board.SetBoardState(panel.GetState(panelPointer.team));
+        board.HighlightMove(panel.GetMove(panelPointer.team));
+    }
+
+    public void JumpToPresent()
+    {
+        if(panels.Count == 0)
+            return;
+
+        (int index, Team team) previousPointer = panelPointer;
+        panelPointer = currentTurnPointer;
+        scrollBar.value = 1;
+        panels[previousPointer.index].ClearHighlight();
+        MovePanel panel = panels[panelPointer.index];
+        panel.HighlightTeam(panelPointer.team);
+        board.SetBoardState(panel.GetState(panelPointer.team));
+        board.HighlightMove(panel.GetMove(panelPointer.team));
     }
 }

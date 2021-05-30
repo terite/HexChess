@@ -20,6 +20,7 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private Color selectedPieceColor;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private PromotionDialogue promotionDialogue;
+    [SerializeField] private TurnHistoryPanel historyPanel;
     public AudioClip cancelNoise;
     public AudioClip pickupNoise;
     public IPiece selectedPiece {get; private set;}
@@ -455,11 +456,20 @@ public class SelectPiece : MonoBehaviour
         if(promotionDialogue.gameObject.activeSelf)
             return;
         
-        BoardState currentBoardState = board.GetCurrentBoardState();
         if(context.started)
-            MouseDown(currentBoardState);
+        {
+            BoardState currentBoardState = board.GetCurrentBoardState();
+            if(historyPanel.panelPointer == historyPanel.currentTurnPointer)
+                MouseDown(currentBoardState);
+        }
         else if(context.canceled)
+        {
+            if(historyPanel.panelPointer != historyPanel.currentTurnPointer && selectedPiece != null)
+                historyPanel.JumpToPresent();
+
+            BoardState currentBoardState = board.GetCurrentBoardState();
             ReleaseMouse(currentBoardState);
+        }
     }
 
     private void MouseDown(BoardState currentBoardState)

@@ -16,6 +16,7 @@ public class Jail : MonoBehaviour
         if(prisonedPieces.Contains(piece))
             return;
 
+        piece.CancelMove();
         piece.captured = true;
 
         Vector3 initialRot = piece.obj.transform.rotation.eulerAngles;

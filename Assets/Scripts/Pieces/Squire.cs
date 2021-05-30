@@ -75,6 +75,11 @@ public class Squire : MonoBehaviour, IPiece
             targetPos = null;
         }
     }
+    
+    public void CancelMove()
+    {
+        targetPos = null;
+    }
 
     public string GetPieceString() => "Squire";
 }
