@@ -27,40 +27,7 @@ public class Knight : MonoBehaviour, IPiece
 
     public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        int offset = location.row % 2 == 0 ? 1 : -1;
-        var possibleMoves = new (int row, int col)[] {
-            (location.row + 5, location.col),
-            (location.row + 5, location.col + offset),
-            (location.row + 4, location.col + offset),
-            (location.row + 4, location.col - offset),
-            (location.row + 1, location.col + (2 * offset)),
-            (location.row + 1, location.col - offset),
-            (location.row - 1, location.col - offset),
-            (location.row - 1, location.col + (2 * offset)),
-            (location.row - 4, location.col - offset),
-            (location.row - 4, location.col + offset),
-            (location.row - 5, location.col + offset),
-            (location.row - 5, location.col),
-        };
-
-        foreach ((int row, int col) in possibleMoves)
-        {
-            if (!HexGrid.GetValidIndex(row, col, out Index index))
-                continue;
-            
-            if(boardState.allPiecePositions.ContainsKey(index))
-            {
-                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
-                if(occupyingTeam == team && !includeBlocking)
-                    continue;
-
-                yield return(index, MoveType.Attack);
-            }
-            else
-            {
-                yield return(index, MoveType.Move);
-            }
-        }
+        return MoveGenerator.GetAllPossibleKnightMoves(location, team, boardState, includeBlocking);
     }
 
     public void MoveTo(Hex hex, Action action = null)

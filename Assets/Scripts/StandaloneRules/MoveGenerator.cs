@@ -57,4 +57,40 @@ public static class MoveGenerator
                 yield return (index, MoveType.Move);
         }
     }
+
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleKnightMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        int offset = location.row % 2 == 0 ? 1 : -1;
+        var possibleMoves = new (int row, int col)[] {
+            (location.row + 5, location.col),
+            (location.row + 5, location.col + offset),
+            (location.row + 4, location.col + offset),
+            (location.row + 4, location.col - offset),
+            (location.row + 1, location.col + (2 * offset)),
+            (location.row + 1, location.col - offset),
+            (location.row - 1, location.col - offset),
+            (location.row - 1, location.col + (2 * offset)),
+            (location.row - 4, location.col - offset),
+            (location.row - 4, location.col + offset),
+            (location.row - 5, location.col + offset),
+            (location.row - 5, location.col),
+        };
+
+        foreach ((int row, int col) in possibleMoves)
+        {
+            Index index = new Index(row, col);
+            if (!index.IsInBounds)
+                continue;
+
+            if(boardState.TryGetPiece(index, out (Team team, Piece piece) occupier))
+            {
+                if(includeBlocking || occupier.team != team)
+                    yield return (index, MoveType.Attack);
+            }
+            else
+            {
+                yield return(index, MoveType.Move);
+            }
+        }
+    }
 }
