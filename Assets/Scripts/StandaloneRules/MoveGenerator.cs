@@ -27,4 +27,34 @@ public static class MoveGenerator
             yield return (index, MoveType.Move);
         }
     }
+
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleSquireMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        int squireOffset = location.row % 2 == 0 ? 1 : -1;
+        var possible = new (int row, int col)[] {
+            (location.row + 3, location.col + squireOffset),
+            (location.row - 3, location.col + squireOffset),
+            (location.row + 3, location.col),
+            (location.row - 3, location.col),
+            (location.row, location.col + 1),
+            (location.row, location.col - 1)
+        };
+
+        foreach((int row, int col) in possible)
+        {
+            Index index = new Index(row, col);
+            if(!index.IsInBounds)
+                continue;
+
+            if(boardState.TryGetPiece(index, out (Team team, Piece piece) occupier))
+            {
+                if (occupier.team == team && !includeBlocking)
+                    continue;
+
+                yield return (index, MoveType.Attack);
+            }
+            else
+                yield return (index, MoveType.Move);
+        }
+    }
 }

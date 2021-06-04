@@ -27,32 +27,7 @@ public class Squire : MonoBehaviour, IPiece
 
     public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        int squireOffset = location.row % 2 == 0 ? 1 : -1;
-        var possible = new (int row, int col)[] {
-            (location.row + 3, location.col + squireOffset),
-            (location.row - 3, location.col + squireOffset),
-            (location.row + 3, location.col),
-            (location.row - 3, location.col),
-            (location.row, location.col + 1),
-            (location.row, location.col - 1)
-        };
-
-        foreach((int row, int col) in possible)
-        {
-            if(!HexGrid.GetValidIndex(row, col, out Index index))
-                continue;
-
-            if(boardState.allPiecePositions.ContainsKey(index))
-            {
-                (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
-                if (occupyingTeam == team && !includeBlocking)
-                    continue;
-
-                yield return (index, MoveType.Attack);
-            }
-            else
-                yield return (index, MoveType.Move);
-        }
+        return MoveGenerator.GetAllPossibleSquireMoves(location, team, boardState, includeBlocking);
     }
 
     public void MoveTo(Hex hex, Action action = null)
