@@ -21,7 +21,10 @@ namespace Extensions
             foreach(T item in source)
                 action(item);
         }
-    
+
+        public static int BoolToInt(this bool val) => val ? 1 : 0;
+        public static bool IntToBool(this int val) => val == 0 ? false : true;
+
         public static string IP(this TcpClient client) => $"{((IPEndPoint)client?.Client.RemoteEndPoint).Address}";
 
         public static string GetStringFromSeconds(this float seconds) => seconds < 60 
