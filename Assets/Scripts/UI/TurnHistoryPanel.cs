@@ -11,6 +11,7 @@ public class TurnHistoryPanel : MonoBehaviour
     [SerializeField] private MovePanel startPanelPrefab;
     [SerializeField] private RectTransform collectionContainer;
     [SerializeField] private Board board;
+    [SerializeField] private SelectPiece selectPiece;
     MovePanel startPanel;
     MovePanel lastMovePanel;
     private List<MovePanel> panels = new List<MovePanel>();
@@ -20,7 +21,9 @@ public class TurnHistoryPanel : MonoBehaviour
 
     public (int index, Team team) panelPointer {get; private set;} = (0, Team.None);
     public (int index, Team team) currentTurnPointer {get; private set;} = (0, Team.None);
-
+    int? traverseDir = null;
+    public float traverseDelay = 0.25f;
+    private float traverseAtTime;
 
     private void Awake() => board.newTurn += NewTurn;
     private void Start() 
@@ -37,7 +40,30 @@ public class TurnHistoryPanel : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if(traverseDir.HasValue && Time.timeSinceLevelLoad >= traverseAtTime)
+        {
+            traverseAtTime = Time.timeSinceLevelLoad + traverseDelay;
+            HistoryStep(traverseDir.Value);
+        }
+    }
+
     private void OnDestroy() => board.newTurn -= NewTurn;
+
+    public bool TryGetCurrentBoardState(out BoardState state)
+    {
+        if(panels.Count == 0)
+        {
+            state = (BoardState)default;
+            return false;
+        }
+
+        state = panels[panelPointer.index].GetState(panelPointer.team);
+        if(state.allPiecePositions == null)
+            return false;
+        return true;
+    }
 
     private void NewTurn(BoardState newState)
     {
@@ -60,7 +86,9 @@ public class TurnHistoryPanel : MonoBehaviour
 
     public void UpdateMovePanels(BoardState newState, Move lastMove, int turnNumber)
     {
-        if(newState.currentMove == Team.Black)
+        if(newState.currentMove == Team.None)
+            return;
+        else if(newState.currentMove == Team.Black)
         {
             lastMovePanel?.ClearHighlight();
 
@@ -79,6 +107,7 @@ public class TurnHistoryPanel : MonoBehaviour
             }
 
             lastMovePanel.SetTurnNumber(turnNumber);
+            lastMovePanel.SetIndex(panels.Count - 1);
             lastMovePanel.SetMove(newState, lastMove);
             lastMovePanel.SetTimestamp(newState.executedAtTime, Team.White);
             lastMovePanel.ClearTimestamp(Team.Black);
@@ -113,16 +142,10 @@ public class TurnHistoryPanel : MonoBehaviour
         panels.Clear();
     }
 
-    public void HistoryStep(CallbackContext context)
+    public void HistoryStep(int val)
     {
-        if(!context.performed)
-            return;
-        
         if(panels.Count == 0)
             return;
-
-        // Will be 1, 0, or -1
-        int val = (int)context.ReadValue<float>();
         
         // Prevent trying to move past the final move
         if(panelPointer.index == panels.Count - 1 && val > 0 && panelPointer.team == Team.Black)
@@ -137,53 +160,69 @@ public class TurnHistoryPanel : MonoBehaviour
         (int index, Team team) previousPointer = panelPointer;
         // Calculate the new index based on the button pressed and the previous index
         int newIndex = (previousPointer.team == Team.White && val == -1) || (previousPointer.team == Team.Black && val == 1)
-                ? Mathf.Clamp(previousPointer.index + val, 0, panels.Count - 1)
-                : previousPointer.index;
+            ? Mathf.Clamp(previousPointer.index + val, 0, panels.Count - 1)
+            : previousPointer.index;
 
         Team newTeam = previousPointer.team == Team.White ? Team.Black : Team.White;
-        panelPointer = (newIndex, newTeam);
-        
-        panels[previousPointer.index].ClearHighlight();
-        MovePanel panel = panels[panelPointer.index];
-        panel.HighlightTeam(panelPointer.team);
-        board.SetBoardState(panel.GetState(panelPointer.team));
-        board.HighlightMove(panel.GetMove(panelPointer.team));
+
+        HistoryJump((newIndex, newTeam));
+    }
+
+    public void HistoryStep(CallbackContext context)
+    {
+        if(panels.Count == 0)
+            return;
+
+        // Will be 1, 0, or -1
+        int val = (int)context.ReadValue<float>();
+        if(context.started)
+            traverseDir = val;
+        else if(context.canceled)
+        {
+            traverseDir = null;
+            traverseAtTime = 0;
+        }
     }
 
     public void HistoryJump(CallbackContext context)
     {
         if(!context.performed)
             return;
-        
-        if(panels.Count == 0)
-            return;
 
         int val = (int)context.ReadValue<float>();
 
-        (int index, Team team) previousPointer = panelPointer;
-        
-        panelPointer = val == -1 ? (0, Team.White) : val == 1 ? currentTurnPointer : panelPointer;
-        scrollBar.value = val < 0 ? 0 : val > 0 ? 1 : scrollBar.value;
-
-        panels[previousPointer.index].ClearHighlight();
-        MovePanel panel = panels[panelPointer.index];
-        panel.HighlightTeam(panelPointer.team);
-        board.SetBoardState(panel.GetState(panelPointer.team));
-        board.HighlightMove(panel.GetMove(panelPointer.team));
+        HistoryJump(
+            pointer: val == -1 ? (0, Team.White) : val == 1 ? currentTurnPointer : panelPointer,  
+            scrollBarVal: val < 0 ? 0 : val > 0 ? 1 : scrollBar.value
+        );
     }
 
-    public void JumpToPresent()
+    public void HistoryJump((int index, Team team) pointer, float? scrollBarVal = null)
     {
         if(panels.Count == 0)
             return;
-
+        
+        if(scrollBarVal.HasValue)
+            scrollBar.value = scrollBarVal.Value;
+            
         (int index, Team team) previousPointer = panelPointer;
-        panelPointer = currentTurnPointer;
-        scrollBar.value = 1;
-        panels[previousPointer.index].ClearHighlight();
+        panelPointer = pointer;
         MovePanel panel = panels[panelPointer.index];
-        panel.HighlightTeam(panelPointer.team);
-        board.SetBoardState(panel.GetState(panelPointer.team));
-        board.HighlightMove(panel.GetMove(panelPointer.team));
+        
+        if(panel.TryGetState(panelPointer.team, out BoardState state))
+        {
+            selectPiece.ClearCheckOrMateHighlight();
+            panels[previousPointer.index].ClearHighlight();
+            panel.HighlightTeam(panelPointer.team);
+
+            // If the preview is not disabled prior to setting the board state, we may end up with missing pointer references anytime a piece was promoted/demoted by traversing the history
+            selectPiece.DisablePreview();
+            board.SetBoardState(state, board.promotions, panel.GetMove(panelPointer.team).turn);
+            board.HighlightMove(panel.GetMove(panelPointer.team));
+            selectPiece.HighlightPotentialCheckOrMate(state);
+        }
     }
+
+    public void JumpToFirst() => HistoryJump((0, Team.White), 0);
+    public void JumpToPresent() => HistoryJump(currentTurnPointer, 1);
 }

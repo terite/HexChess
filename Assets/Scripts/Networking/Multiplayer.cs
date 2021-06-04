@@ -7,6 +7,7 @@ public class Multiplayer : MonoBehaviour
     [SerializeField] private GameObject blackKeys;
     [SerializeField] private Timers timers;
     [SerializeField] private TurnChangePanel turnChangePanel;
+    [SerializeField] private TurnHistoryPanel historyPanel;
     Networker networker;
     Board board;
     LastMoveTracker moveTracker;
@@ -48,7 +49,11 @@ public class Multiplayer : MonoBehaviour
     }
 
     public void ReceiveBoard(BoardState state)
-    {
+    { 
+        // If a board state is received and the history panel is displaying a previous move, jump to current move then accept new board state
+        if(historyPanel.currentTurnPointer != historyPanel.panelPointer)
+            historyPanel.JumpToPresent();
+
         if(board.GetCurrentTurn() == gameParams.localTeam)
             return;
 
@@ -104,8 +109,8 @@ public class Multiplayer : MonoBehaviour
     {
         BoardState state = board.GetCurrentBoardState();
         state.currentMove = state.currentMove == Team.White ? Team.Black : Team.White;
-        SendBoard(state);
         networker.SendMessage(new Message(MessageType.Promotion, promo.Serialize()));
+        SendBoard(state);
     }
     public void ReceivePromotion(Promotion promo)
     {

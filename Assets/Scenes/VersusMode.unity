@@ -9559,6 +9559,7 @@ MonoBehaviour:
   blackKeys: {fileID: 1357359909}
   timers: {fileID: 2014511283}
   turnChangePanel: {fileID: 1145501218}
+  historyPanel: {fileID: 608341858}
 --- !u!1 &563756809
 GameObject:
   m_ObjectHideFlags: 0
@@ -10325,6 +10326,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 950830439}
     m_Modifications:
+    - target: {fileID: 1732638257570187523, guid: b6bcf1806d96b11469ade51d987fdd11,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -2
+      objectReference: {fileID: 0}
     - target: {fileID: 6802989489192433808, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
       propertyPath: m_AnchorMax.x
@@ -10525,21 +10531,26 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6802989491041061029, guid: b6bcf1806d96b11469ade51d987fdd11,
+    - target: {fileID: 6802989491032145490, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
-      propertyPath: m_SizeDelta.y
-      value: -5
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6802989491041061029, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -2.5
+      propertyPath: m_SizeDelta.y
+      value: 418
       objectReference: {fileID: 0}
     - target: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
       propertyPath: board
       value: 
       objectReference: {fileID: 155833291}
+    - target: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
+        type: 3}
+      propertyPath: selectPiece
+      value: 
+      objectReference: {fileID: 581258195}
     - target: {fileID: 7086745694904110124, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
       propertyPath: m_AnchorMax.y

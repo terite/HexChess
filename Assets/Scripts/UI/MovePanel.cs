@@ -20,13 +20,19 @@ public class MovePanel : MonoBehaviour
     public Color darkColor;
     public Color lightColor;
     Board board;
+    TurnHistoryPanel historyPanel;
     public BoardState whiteState {get; private set;}
     public BoardState blackState {get; private set;}
     [ShowInInspector] public Move whiteMove {get; private set;}
     [ShowInInspector] public Move blackMove {get; private set;}
+    public int index {get; private set;}
 
-    private void Awake() => board = GameObject.FindObjectOfType<Board>();
-
+    private void Awake()
+    {
+        board = GameObject.FindObjectOfType<Board>();
+        historyPanel = GameObject.FindObjectOfType<TurnHistoryPanel>();
+    }
+    public void SetIndex(int index) => this.index = index;
     public void SetMove(BoardState state, Move move)
     {
         if(move.lastTeam == Team.White)
@@ -89,5 +95,18 @@ public class MovePanel : MonoBehaviour
         blackBG.enabled = false;
     }
     public BoardState GetState(Team team) => team == Team.White ? whiteState : blackState;
+    public bool TryGetState(Team team, out BoardState state)
+    {
+        state = GetState(team);
+        return state.allPiecePositions != null;
+    }
     public Move GetMove(Team team) => team == Team.White ? whiteMove : blackMove;
+
+    public void SetHistory(Team team) 
+    {
+        if(GetMove(team).lastTeam == Team.None)
+            return;
+
+        historyPanel.HistoryJump((index, team));
+    } 
 }

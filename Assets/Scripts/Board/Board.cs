@@ -56,30 +56,67 @@ public class Board : SerializedMonoBehaviour
     private void Awake() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
     private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
 
-    public void SetBoardState(BoardState newState, List<Promotion> promos = null)
+    public void SetBoardState(BoardState newState, List<Promotion> promos = null, int? turn = null)
     {
         BoardState defaultBoard = GetDefaultGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
         promotions = promos == null ? new List<Promotion>() : promos;
-        foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefabs in piecePrefabs)
+        foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefab in piecePrefabs)
         {
             IPiece piece;
-            Jail applicableJail = jails[(int)prefabs.Key.team];
-            IPiece jailedPiece = applicableJail.GetPieceIfInJail(prefabs.Key.piece);
+            Jail applicableJail = jails[(int)prefab.Key.team];
+            IPiece jailedPiece = applicableJail.GetPieceIfInJail(prefab.Key.piece);
 
-            defaultBoard.TryGetIndex(prefabs.Key, out Index startLoc);
+            defaultBoard.TryGetIndex(prefab.Key, out Index startLoc);
             Vector3 loc = GetHexIfInBounds(startLoc.row, startLoc.col).transform.position + Vector3.up;
-            if(activePieces.ContainsKey(prefabs.Key))
+            if(activePieces.ContainsKey(prefab.Key))
             {
-                piece = activePieces[prefabs.Key];
+                piece = activePieces[prefab.Key];
                 // Reset promoted pawn if needed
-                if(prefabs.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
+                if(prefab.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
                 {
-                    IPiece old = activePieces[prefabs.Key];
-                    activePieces.Remove(prefabs.Key);
-                    Destroy(old.obj);
-                    piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                    piece.Init(prefabs.Key.team, prefabs.Key.piece, startLoc);
-                    activePieces.Add(prefabs.Key, piece);
+                    if(turn.HasValue)
+                    {
+                        IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.turnNumber <= turn.Value);
+                        if(applicablePromos.Any())
+                        {
+                            Promotion promotion = applicablePromos.First();
+                            GameObject properPromotedPrefab = piecePrefabs[(promotion.team, promotion.to)];
+                            if(properPromotedPrefab.GetComponent<IPiece>().GetType() != piece.GetType())
+                            {
+                                // Piece is promoted wrong, change type
+                                IPiece old = activePieces[prefab.Key];
+                                activePieces.Remove(prefab.Key);
+                                Debug.Log("Pawn is promoted to the wrong piece.");
+                                Destroy(old.obj);
+                                piece = Instantiate(properPromotedPrefab, loc, Quaternion.identity).GetComponent<IPiece>();
+                                piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
+                                activePieces.Add(prefab.Key, piece);
+                            }   
+                        }
+                        else
+                        {
+                            // No applicable promo, return to pawn
+                            IPiece old = activePieces[prefab.Key];
+                            activePieces.Remove(prefab.Key);
+                            Debug.Log("No applicable promo found, resetting promoted piece to pawn.");
+                            Destroy(old.obj);
+                            piece = Instantiate(prefab.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                            piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
+                            activePieces.Add(prefab.Key, piece);
+                        }
+                    }
+                    else
+                    {
+                        // No turn was provided to check promo status, revert to pawn
+                        IPiece old = activePieces[prefab.Key];
+                        activePieces.Remove(prefab.Key);
+                        Debug.Log("Revert to pawn.");
+                        Destroy(old.obj);
+                        piece = Instantiate(prefab.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                        piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
+                        activePieces.Add(prefab.Key, piece);
+                    }
+
                 }
             }
             else if(jailedPiece != null)
@@ -87,30 +124,30 @@ public class Board : SerializedMonoBehaviour
                 piece = jailedPiece;
                 applicableJail.RemoveFromPrison(piece);
                 // a piece coming out of jail needs to be added back into the Active Pieces dictionary
-                activePieces.Add(prefabs.Key, piece);
+                activePieces.Add(prefab.Key, piece);
             }
             else
             {
-                piece = Instantiate(prefabs.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                piece.Init(prefabs.Key.team, prefabs.Key.piece, startLoc);
-                activePieces.Add(prefabs.Key, piece);
+                piece = Instantiate(prefab.Value, loc, Quaternion.identity).GetComponent<IPiece>();
+                piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
+                activePieces.Add(prefab.Key, piece);
             }
             
             // It might need to be promoted.
             // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
-            piece = GetPromotedPieceIfNeeded(piece, promos != null);
+            piece = GetPromotedPieceIfNeeded(piece, promos != null, turn);
             
             // If the piece is on the board, place it at the correct location
-            if(newState.TryGetIndex(prefabs.Key, out Index newLoc))
+            if(newState.TryGetIndex(prefab.Key, out Index newLoc))
             {
                 if(lastSetState.HasValue 
                     && lastSetState.Value.TryGetPiece(newLoc, out (Team team, Piece piece) teamedPiece) 
-                    && teamedPiece != prefabs.Key 
+                    && teamedPiece != prefab.Key 
                     && activePieces.ContainsKey(teamedPiece)
                 ){
                     IPiece occupyingPiece = activePieces[teamedPiece];
                     if(newState.TryGetIndex((occupyingPiece.team, occupyingPiece.piece), out Index belongsAtLoc) && belongsAtLoc == newLoc)
-                        EnprisonLite(occupyingPiece);
+                        Enprison(occupyingPiece, false);
                 }
                 piece.MoveTo(GetHexIfInBounds(newLoc.row, newLoc.col));
                 continue;
@@ -119,7 +156,7 @@ public class Board : SerializedMonoBehaviour
             else
             {
                 applicableJail.Enprison(piece);
-                activePieces.Remove(prefabs.Key);
+                activePieces.Remove(prefab.Key);
             }
         }
 
@@ -205,8 +242,10 @@ public class Board : SerializedMonoBehaviour
 
         return turnHistory[turnHistory.Count - 1].currentMove;
     }
-
-    public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
+ 
+    public BoardState GetCurrentBoardState() => turnHistoryPanel.TryGetCurrentBoardState(out BoardState state) 
+        ? state 
+        : turnHistory[turnHistory.Count - 1];
 
     public void AdvanceTurn(BoardState newState, bool updateTime = true)
     {
@@ -215,32 +254,17 @@ public class Board : SerializedMonoBehaviour
         // IEnumerable<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         float timestamp = Time.timeSinceLevelLoad + timeOffset;
-        
+        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
+
         if(updateTime)
             newState.executedAtTime = timestamp;
 
-        newState.check = Team.None;
-        newState.checkmate = Team.None;
-
-        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
+        if(multiplayer == null || multiplayer.gameParams.localTeam == newState.currentMove)
+            newState = ResetCheck(newState);
+        else
+            newState = ResetCheck(newState);
         
-        if(IsChecking(newState, newState.currentMove))
-        {
-            List<(Index, MoveType)> validMoves = new List<(Index, MoveType)>();
-            // Check for mate
-            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
-            {
-                (Team team, Piece piece) = kvp.Key;
-                if(team == newState.currentMove)
-                    continue;
-                IEnumerable<(Index, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
-                validMoves.AddRange(vm);
-            }
-            if(validMoves.Count == 0)
-                newState.checkmate = otherTeam;
-            else
-                newState.check = otherTeam;
-        }
+        newState = CheckForCheckAndMate(newState, otherTeam, newState.currentMove);
 
         // Handle potential checkmate
         if(newState.checkmate != Team.None)
@@ -259,7 +283,7 @@ public class Board : SerializedMonoBehaviour
 
             Move move = BoardState.GetLastMove(turnHistory);
             HighlightMove(move);
-            
+
             EndGame(
                 timestamp,
                 endType: GameEndType.Checkmate,
@@ -274,7 +298,7 @@ public class Board : SerializedMonoBehaviour
         foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
         {
             IEnumerable<(Index, MoveType)> validMoves = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
-            if (validMoves.Any())
+            if(validMoves.Any())
             {
                 isStalemate = false;
                 break;
@@ -312,7 +336,7 @@ public class Board : SerializedMonoBehaviour
         IEnumerable<Piece> blackPieces = GetRemainingPieces(Team.Black, newState);
         bool whiteSufficient = true;
         bool blackSufficient = true;
-        
+
         foreach(List<Piece> insufficientSet in insufficientSets)
         {
             whiteSufficient = whiteSufficient ? whitePieces.Except(insufficientSet).Any() : false;
@@ -334,7 +358,7 @@ public class Board : SerializedMonoBehaviour
                 turnHistory.Add(newState);
 
                 Move move = BoardState.GetLastMove(turnHistory);
-                if(move.lastTeam != Team.None)
+                if (move.lastTeam != Team.None)
                     HighlightMove(move);
                 else
                     ClearMoveHighlight();
@@ -367,7 +391,7 @@ public class Board : SerializedMonoBehaviour
         }
 
         turnHistory.Add(newState);
-        
+
         Move newMove = BoardState.GetLastMove(turnHistory);
         if(newMove.lastTeam != Team.None)
             HighlightMove(newMove);
@@ -381,7 +405,7 @@ public class Board : SerializedMonoBehaviour
             turnsSincePawnMovedOrPieceTaken = 0;
         else
             turnsSincePawnMovedOrPieceTaken++;
-        
+
         if(turnsSincePawnMovedOrPieceTaken == 100f)
         {
             if(multiplayer != null)
@@ -393,7 +417,7 @@ public class Board : SerializedMonoBehaviour
             EndGame(timestamp, GameEndType.Draw, Winner.Draw);
             return;
         }
-        
+
         // In sandbox mode, flip the camera when the turn passes if the toggle is on
         if(multiplayer == null)
         {
@@ -401,6 +425,48 @@ public class Board : SerializedMonoBehaviour
             if(flipCameraToggle != null && flipCameraToggle.toggle.isOn)
                 cam.SetToTeam(newState.currentMove);
         }
+    }
+
+    private BoardState ResetCheck(BoardState newState)
+    {
+        if(turnHistory.Count > 0)
+        {
+            BoardState oldState = turnHistory[turnHistory.Count - 1];
+            if(oldState.check != Team.None)
+            {
+                newState.check = Team.None;
+                newState.checkmate = Team.None;
+            }
+        }
+        else
+        {
+            newState.check = Team.None;
+            newState.checkmate = Team.None;
+        }
+        return newState;
+    }
+
+    private BoardState CheckForCheckAndMate(BoardState newState, Team otherTeam, Team t)
+    {
+        if(IsChecking(newState, t))
+        {
+            List<(Index, MoveType)> validMoves = new List<(Index, MoveType)>();
+            // Check for mate
+            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
+            {
+                (Team team, Piece piece) = kvp.Key;
+                if(team == newState.currentMove)
+                    continue;
+                IEnumerable<(Index, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
+                validMoves.AddRange(vm);
+            }
+            if(validMoves.Count == 0)
+                newState.checkmate = otherTeam;
+            else
+                newState.check = otherTeam;
+        }
+
+        return newState;
     }
 
     IEnumerable<Piece> GetRemainingPieces(Team team, BoardState state) =>
@@ -649,14 +715,26 @@ public class Board : SerializedMonoBehaviour
         return newPiece;
     }
 
-    private IPiece GetPromotedPieceIfNeeded(IPiece piece, bool surpressNewPromotion = false)
+    private IPiece GetPromotedPieceIfNeeded(IPiece piece, bool surpressNewPromotion = false, int? turn = null)
     {
         if(piece is Pawn pawn)
         {
             Piece p = pawn.piece;
             foreach(Promotion promo in promotions)
+            {
                 if(promo.team == pawn.team && promo.from == p)
-                    p = promo.to;
+                {
+                    if(turn.HasValue)
+                    {
+                        if(turn.Value >= promo.turnNumber)
+                            p = promo.to;
+                        else
+                            continue;
+                    }
+                    else
+                        p = promo.to;
+                }
+            }
             if(p != pawn.piece)
                 piece = Promote(pawn, p, surpressNewPromotion);
         }
@@ -731,23 +809,19 @@ public class Board : SerializedMonoBehaviour
         return currentState;
     }
 
-    public void EnprisonLite(IPiece toPrison)
-    {
-        Debug.Log($"Sending {toPrison.team} {toPrison.piece} to jail.");
-        jails[(int)toPrison.team].Enprison(toPrison);
-        activePieces.Remove((toPrison.team, toPrison.piece));
-    }
-
-    public void Enprison(IPiece toPrison)
+    public void Enprison(IPiece toPrison, bool updateState = true)
     {
         jails[(int)toPrison.team].Enprison(toPrison);
-        BoardState currentState = GetCurrentBoardState();
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        allPiecePositions.Remove((toPrison.team, toPrison.piece));
-        currentState.allPiecePositions = allPiecePositions;
         activePieces.Remove((toPrison.team, toPrison.piece));
 
-        AdvanceTurn(currentState);
+        if(updateState)
+        {
+            BoardState currentState = GetCurrentBoardState();
+            BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
+            allPiecePositions.Remove((toPrison.team, toPrison.piece));
+            currentState.allPiecePositions = allPiecePositions;
+            AdvanceTurn(currentState);
+        }
     }
 
     public void EndGame(float timestamp, GameEndType endType = GameEndType.Pending, Winner winner = Winner.Pending)

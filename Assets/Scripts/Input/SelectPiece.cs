@@ -6,6 +6,7 @@ using System.Linq;
 using System;
 using TMPro;
 using Extensions;
+using Sirenix.OdinInspector;
 
 public class SelectPiece : MonoBehaviour
 {
@@ -37,7 +38,7 @@ public class SelectPiece : MonoBehaviour
     public Color whiteColor;
     public Color blackColor;
     public Color yellowColor;
-    List<IPiece> attacksConcerningHex = new List<IPiece>();
+    [ShowInInspector, ReadOnly] List<IPiece> attacksConcerningHex = new List<IPiece>();
     Dictionary<IPiece, List<IPiece>> attacksConcerningHexDict = new Dictionary<IPiece, List<IPiece>>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
@@ -67,7 +68,13 @@ public class SelectPiece : MonoBehaviour
     private void NewTurn(BoardState newState)
     {
         attacksConcerningHexDict.Clear();
-        
+
+        ClearCheckOrMateHighlight();
+        HighlightPotentialCheckOrMate(newState);
+    }
+
+    public void ClearCheckOrMateHighlight()
+    {
         if(checkedKingHex != null)
         {
             Move lastMove = BoardState.GetLastMove(board.turnHistory);
@@ -75,13 +82,16 @@ public class SelectPiece : MonoBehaviour
                 checkedKingHex.Unhighlight();
             checkedKingHex = null;
         }
-        
-        if(newState.TryGetIndex((newState.checkmate, Piece.King), out Index matedIndex))
+    }
+
+    public void HighlightPotentialCheckOrMate(BoardState state)
+    {
+        if(state.TryGetIndex((state.checkmate, Piece.King), out Index matedIndex))
         {
             checkedKingHex = board.GetHexIfInBounds(matedIndex);
             checkedKingHex.Highlight(redColor);
         }
-        else if(newState.TryGetIndex((newState.check, Piece.King), out Index checkedIndex))
+        else if(state.TryGetIndex((state.check, Piece.King), out Index checkedIndex))
         {
             checkedKingHex = board.GetHexIfInBounds(checkedIndex);
             checkedKingHex.Highlight(yellowColor);
@@ -425,13 +435,17 @@ public class SelectPiece : MonoBehaviour
     {
         foreach(IPiece piece in set)
         {
+            if(piece != null && !piece.obj)
+                continue;
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
         }
+
+        set.Clear();
     }
     
 
-    private void EnablePreview()
+    public void EnablePreview()
     {
         foreach((Hex hex, MoveType moveType) in previewMoves)
         {
@@ -442,7 +456,7 @@ public class SelectPiece : MonoBehaviour
         ColorizePieces();
     }
 
-    private void DisablePreview()
+    public void DisablePreview()
     {
         foreach ((Hex hex, MoveType moveType) in previewMoves)
             hex.ToggleSelect();
