@@ -12,6 +12,8 @@ public class TurnHistoryPanel : MonoBehaviour
     [SerializeField] private RectTransform collectionContainer;
     [SerializeField] private Board board;
     [SerializeField] private SelectPiece selectPiece;
+    [SerializeField] private LastMoveTracker lastMoveTracker;
+    [SerializeField] private TurnPanel turnPanel;
     MovePanel startPanel;
     MovePanel lastMovePanel;
     private List<MovePanel> panels = new List<MovePanel>();
@@ -217,9 +219,12 @@ public class TurnHistoryPanel : MonoBehaviour
 
             // If the preview is not disabled prior to setting the board state, we may end up with missing pointer references anytime a piece was promoted/demoted by traversing the history
             selectPiece.DisablePreview();
-            board.SetBoardState(state, board.promotions, panel.GetMove(panelPointer.team).turn);
-            board.HighlightMove(panel.GetMove(panelPointer.team));
+            Move move = panel.GetMove(panelPointer.team);
+            board.SetBoardState(state, board.promotions, move.turn);
+            board.HighlightMove(move);
             selectPiece.HighlightPotentialCheckOrMate(state);
+            lastMoveTracker.UpdateText(move);
+            turnPanel.NewTurn(state, move.turn);
         }
     }
 

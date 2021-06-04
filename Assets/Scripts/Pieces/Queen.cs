@@ -101,13 +101,13 @@ public class Queen : MonoBehaviour, IPiece
 
     private bool CanMove(BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
     {
-        if (!HexGrid.GetValidIndex(row, col, out Index index))
+        if(!HexGrid.GetValidIndex(row, col, out Index index))
             return false;
 
-        if (boardState.allPiecePositions.ContainsKey(index))
+        if(boardState.allPiecePositions.ContainsKey(index))
         {
             (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
-            if (occupyingTeam != team || includeBlocking)
+            if(occupyingTeam != team || includeBlocking)
                 possible.Add((index, MoveType.Attack));
             return false;
         }

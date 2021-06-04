@@ -890,7 +890,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 7
@@ -1288,7 +1288,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -1540,12 +1540,12 @@ MonoBehaviour:
     - Name: piecePrefabs
       Entry: 7
       Data: 0|System.Collections.Generic.Dictionary`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[UnityEngine.GameObject,
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[UnityEngine.GameObject,
         UnityEngine.CoreModule]], mscorlib
     - Name: comparer
       Entry: 7
       Data: 1|System.Collections.Generic.GenericEqualityComparer`1[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib]], mscorlib
     - Name: 
       Entry: 8
       Data: 
@@ -1557,7 +1557,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1578,7 +1579,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1599,7 +1601,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1620,7 +1623,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1641,7 +1645,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1662,7 +1667,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1683,7 +1689,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1704,7 +1711,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1725,7 +1733,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1746,7 +1755,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1767,7 +1777,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1788,7 +1799,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1809,7 +1821,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1830,7 +1843,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1851,7 +1865,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1872,7 +1887,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1893,7 +1909,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1914,7 +1931,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1935,7 +1953,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -1956,7 +1975,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -1977,7 +1997,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -1998,7 +2019,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2019,7 +2041,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2040,7 +2063,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2061,7 +2085,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2082,7 +2107,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2103,7 +2129,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2124,7 +2151,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2145,7 +2173,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2166,7 +2195,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2187,7 +2217,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2208,7 +2239,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2229,7 +2261,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2250,7 +2283,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2271,7 +2305,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2292,7 +2327,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2313,7 +2349,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2334,7 +2371,8 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -2394,18 +2432,20 @@ MonoBehaviour:
       Data: 1
     - Name: allPiecePositions
       Entry: 7
-      Data: 3|BidirectionalDictionary`2[[System.ValueTuple`2[[Team, GameAssembly],[Piece,
-        GameAssembly]], mscorlib],[Index, GameAssembly]], GameAssembly
+      Data: 3|BidirectionalDictionary`2[[System.ValueTuple`2[[Team, StandaloneRules],[Piece,
+        StandaloneRules]], mscorlib],[Index, StandaloneRules]], StandaloneRules
     - Name: 
       Entry: 12
       Data: 38
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2417,7 +2457,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -2433,10 +2473,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2448,7 +2490,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -2464,10 +2506,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2479,7 +2523,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -2495,10 +2539,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2510,7 +2556,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -2526,10 +2572,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2541,7 +2589,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -2557,10 +2605,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2572,7 +2622,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -2588,10 +2638,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2603,7 +2655,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -2619,10 +2671,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2634,7 +2688,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -2650,10 +2704,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2665,7 +2721,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -2681,10 +2737,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2696,7 +2754,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -2712,10 +2770,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2727,7 +2787,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -2743,10 +2803,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2758,7 +2820,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -2774,10 +2836,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2789,7 +2853,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -2805,10 +2869,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2820,7 +2886,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -2836,10 +2902,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2851,7 +2919,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -2867,10 +2935,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2882,7 +2952,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -2898,10 +2968,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2913,7 +2985,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -2929,10 +3001,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2944,7 +3018,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -2960,10 +3034,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 1
@@ -2975,7 +3051,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -2991,10 +3067,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3006,7 +3084,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -3022,10 +3100,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3037,7 +3117,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -3053,10 +3133,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3068,7 +3150,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -3084,10 +3166,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3099,7 +3183,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -3115,10 +3199,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3130,7 +3216,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -3146,10 +3232,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3161,7 +3249,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -3177,10 +3265,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3192,7 +3282,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -3208,10 +3298,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3223,7 +3315,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -3239,10 +3331,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3254,7 +3348,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -3270,10 +3364,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3285,7 +3381,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -3301,10 +3397,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3316,7 +3414,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -3332,10 +3430,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3347,7 +3447,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -3363,10 +3463,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3378,7 +3480,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -3394,10 +3496,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3409,7 +3513,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -3425,10 +3529,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3440,7 +3546,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -3456,10 +3562,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3471,7 +3579,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -3487,10 +3595,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3502,7 +3612,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -3518,10 +3628,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3533,7 +3645,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -3549,10 +3661,12 @@ MonoBehaviour:
     - Name: 
       Entry: 7
       Data: System.Collections.Generic.KeyValuePair`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[Index, GameAssembly]], mscorlib
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[Index, StandaloneRules]],
+        mscorlib
     - Name: 
       Entry: 7
-      Data: System.ValueTuple`2[[Team, GameAssembly],[Piece, GameAssembly]], mscorlib
+      Data: System.ValueTuple`2[[Team, StandaloneRules],[Piece, StandaloneRules]],
+        mscorlib
     - Name: Item1
       Entry: 3
       Data: 2
@@ -3564,7 +3678,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -3604,7 +3718,7 @@ MonoBehaviour:
     - Name: activePieces
       Entry: 7
       Data: 4|System.Collections.Generic.Dictionary`2[[System.ValueTuple`2[[Team,
-        GameAssembly],[Piece, GameAssembly]], mscorlib],[IPiece, GameAssembly]],
+        StandaloneRules],[Piece, StandaloneRules]], mscorlib],[IPiece, GameAssembly]],
         mscorlib
     - Name: comparer
       Entry: 9
@@ -4214,7 +4328,7 @@ MonoBehaviour:
     - Name: insufficientSets
       Entry: 7
       Data: 26|System.Collections.Generic.List`1[[System.Collections.Generic.List`1[[Piece,
-        GameAssembly]], mscorlib]], mscorlib
+        StandaloneRules]], mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 0
@@ -4480,7 +4594,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -4633,7 +4747,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 12
@@ -5226,7 +5340,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -5379,7 +5493,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 11
@@ -5532,7 +5646,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 9
@@ -5685,7 +5799,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 11
@@ -5838,7 +5952,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 9
@@ -6321,7 +6435,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 9
@@ -6474,7 +6588,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 7
@@ -6897,7 +7011,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 11
@@ -7166,7 +7280,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 10
@@ -7429,7 +7543,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 0
@@ -7582,7 +7696,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -7735,7 +7849,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -7998,7 +8112,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -8826,7 +8940,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -9237,7 +9351,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 0
@@ -9500,7 +9614,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -9701,7 +9815,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 8
@@ -10307,7 +10421,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -10548,9 +10662,19 @@ PrefabInstance:
       objectReference: {fileID: 155833291}
     - target: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
+      propertyPath: turnPanel
+      value: 
+      objectReference: {fileID: 1428896168}
+    - target: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
+        type: 3}
       propertyPath: selectPiece
       value: 
       objectReference: {fileID: 581258195}
+    - target: {fileID: 6802989491041061033, guid: b6bcf1806d96b11469ade51d987fdd11,
+        type: 3}
+      propertyPath: lastMoveTracker
+      value: 
+      objectReference: {fileID: 1575216244}
     - target: {fileID: 7086745694904110124, guid: b6bcf1806d96b11469ade51d987fdd11,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -10882,7 +11006,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -11035,7 +11159,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -11188,7 +11312,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -11341,7 +11465,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 0
@@ -11494,7 +11618,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -11867,7 +11991,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 10
@@ -12350,7 +12474,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -12503,7 +12627,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -13276,7 +13400,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -13429,7 +13553,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -13692,7 +13816,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -13950,7 +14074,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -14103,7 +14227,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -14377,7 +14501,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -14750,7 +14874,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 12
@@ -15205,7 +15329,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -16066,7 +16190,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 18
@@ -16361,7 +16485,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 3
@@ -16635,7 +16759,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 7
@@ -16788,7 +16912,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -17051,7 +17175,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -17742,7 +17866,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -18005,7 +18129,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 8
@@ -18928,7 +19052,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -19411,7 +19535,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -19808,7 +19932,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -19961,7 +20085,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -20021,7 +20145,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 18
@@ -20267,7 +20391,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 0
@@ -20420,7 +20544,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -20793,7 +20917,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -21156,7 +21280,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 1
@@ -21309,7 +21433,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 12
@@ -21572,7 +21696,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -21725,7 +21849,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -22564,7 +22688,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 7
@@ -22937,7 +23061,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 9
@@ -23348,7 +23472,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -23501,7 +23625,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 5
@@ -23654,7 +23778,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 11
@@ -23807,7 +23931,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 14
@@ -24108,7 +24232,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 4
@@ -24261,7 +24385,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 18
@@ -24524,7 +24648,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 12
@@ -24677,7 +24801,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 6
@@ -24830,7 +24954,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -24983,7 +25107,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 7
@@ -25270,7 +25394,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 8
@@ -25533,7 +25657,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 16
@@ -25686,7 +25810,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 11
@@ -26193,7 +26317,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 9
@@ -26346,7 +26470,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -26730,7 +26854,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 15
@@ -27334,7 +27458,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 8
@@ -28014,7 +28138,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 17
@@ -28277,7 +28401,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 13
@@ -28430,7 +28554,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 6
@@ -28583,7 +28707,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 2
@@ -28846,7 +28970,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 10
@@ -29109,7 +29233,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 6
@@ -29508,7 +29632,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 18
@@ -29661,7 +29785,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 10
@@ -29950,7 +30074,7 @@ MonoBehaviour:
       Data: 0
     - Name: index
       Entry: 7
-      Data: Index, GameAssembly
+      Data: Index, StandaloneRules
     - Name: row
       Entry: 3
       Data: 6

@@ -67,13 +67,17 @@ public class TurnPanel : MonoBehaviour
             return $"After {turnCount} {turnPlurality}, {game.winner} has won by surrender.";
     }
 
-    private void NewTurn(BoardState newState)
+    public void NewTurn(BoardState newState)
+    {
+        int turnCount = Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2;
+        NewTurn(newState, turnCount);
+    }
+
+    public void NewTurn(BoardState newState, int turnCount)
     {
         string text = multiplayer == null 
             ? newState.currentMove == Team.White ? "White's Turn" : "Black's Turn"
             : newState.currentMove == multiplayer.localTeam ? "Your Turn" : "Opponent's Turn";
-
-        int turnCount = Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2;
 
         turnText.text = $"{turnCount}:{text}";
         turnText.color = newState.currentMove == Team.White ? Color.white : Color.black;
