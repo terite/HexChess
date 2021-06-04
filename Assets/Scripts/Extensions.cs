@@ -21,54 +21,8 @@ namespace Extensions
             foreach(T item in source)
                 action(item);
         }
-
-        public static HexNeighborDirection OppositeDirection(this HexNeighborDirection direction) =>
-            (HexNeighborDirection)(((int)direction + 3) % 6);
     
         public static string IP(this TcpClient client) => $"{((IPEndPoint)client?.Client.RemoteEndPoint).Address}";
-
-        public static Span<byte> Add(this Span<byte> span, byte toAdd)
-        {
-            byte[] ba = new byte[span.Length + 1];
-            Span<byte> target = new Span<byte>(ba);
-            span.CopyTo(target.Slice(0, span.Length));
-            MemoryMarshal.Write(target.Slice(span.Length, 1), ref toAdd);
-            return target;
-        }
-
-        public static Span<byte> Add(this Span<byte> span, byte[] toAdd)
-        {
-            byte[] ba = new byte[span.Length + toAdd.Length];
-            Span<byte> add = new Span<byte>(toAdd);
-            Span<byte> target = new Span<byte>(ba);
-            span.CopyTo(target.Slice(0, span.Length));
-            add.CopyTo(target.Slice(span.Length, add.Length));
-            return target;
-        }
-
-        public static string GetPieceShortString(this Piece piece) => piece switch{
-            Piece.King => "k", Piece.Queen => "q",
-            Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => "r",
-            Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => "n",
-            Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => "b",
-            Piece p when (p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire) => "s",
-            Piece p when (p >= Piece.Pawn1) => "p",
-            _ => ""
-        };
-
-        public static string GetPieceLongString(this Piece piece) => piece switch {
-            Piece.King => "King",
-            Piece.Queen => "Queen",
-            Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => "Knight",
-            Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => "Rook",
-            Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => "Bishop",
-            Piece p when (p == Piece.WhiteSquire || p == Piece.GraySquire || p == Piece.BlackSquire) => "Squire",
-            Piece p when (p >= Piece.Pawn1) => "Pawn",
-            _ => ""
-        };
-
-        public static bool IsPawn(this Piece piece) => piece >= Piece.Pawn1;
-
 
         public static string GetStringFromSeconds(this float seconds) => seconds < 60 
             ? @"%s\.f" 

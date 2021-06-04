@@ -1,10 +1,9 @@
 {
-    "name": "EditorTests",
+    "name": "StandaloneRulesTests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "GameAssembly",
         "StandaloneRules"
     ],
     "includePlatforms": [

@@ -1011,5 +1011,3 @@ public class Board : SerializedMonoBehaviour
         return hexesInCol;
     }
 }
-
-public enum HexNeighborDirection{Up, UpRight, DownRight, Down, DownLeft, UpLeft};
