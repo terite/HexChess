@@ -4,6 +4,19 @@ using UnityEngine;
 
 public static class MoveGenerator
 {
+    public static readonly Piece[] DefendableTypes = new Piece[]
+    {
+        Piece.King,
+        Piece.Queen,
+        Piece.KingsKnight,
+        Piece.QueensKnight,
+        Piece.KingsBishop,
+        Piece.QueensBishop,
+        Piece.WhiteSquire,
+        Piece.GraySquire,
+        Piece.BlackSquire,
+    };
+
     public static IEnumerable<(Index, MoveType)> GetAllPossibleKingMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
     {
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
@@ -105,7 +118,7 @@ public static class MoveGenerator
             row <= Index.rows && col >= 0;
             row++, i++
         ){
-            if(!BishopCanMove(team, boardState, row, col, possible, includeBlocking))
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -117,7 +130,7 @@ public static class MoveGenerator
             row <= Index.rows && col <= Index.cols;
             row++, i++
         ){
-            if(!BishopCanMove(team, boardState, row, col, possible, includeBlocking))
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -129,7 +142,7 @@ public static class MoveGenerator
             row >= 0 && col >= 0;
             row--, i++
         ){
-            if(!BishopCanMove(team, boardState, row, col, possible, includeBlocking))
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 == offset)
@@ -141,7 +154,7 @@ public static class MoveGenerator
             row >= 0 && col <= Index.cols;
             row--, i++
         ){
-            if(!BishopCanMove(team, boardState, row, col, possible, includeBlocking))
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
                 break;
 
             if(i % 2 != offset)
@@ -151,7 +164,46 @@ public static class MoveGenerator
         return possible;
     }
 
-    private static bool BishopCanMove(Team team, BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleRookMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
+
+        // Up
+        for(int row = location.row + 2; row <= Index.rows; row += 2)
+            if(!RayCanMove(team, boardState, row, location.col, possible, includeBlocking))
+                break;
+        // Down
+        for(int row = location.row - 2; row >= 0; row -= 2)
+            if(!RayCanMove(team, boardState, row, location.col, possible, includeBlocking))
+                break;
+        // Left
+        for(int col = location.col - 1; col >= 0; col--)
+            if(!RayCanMove(team, boardState, location.row, col, possible, includeBlocking))
+                break;
+        // Right
+        for(int col = location.col + 1; col <= Index.cols - 2 + location.row % 2; col++)
+            if(!RayCanMove(team, boardState, location.row, col, possible, includeBlocking))
+                break;
+
+        // Check defend
+        foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
+        {
+            Index? maybeIndex = location.GetNeighborAt(dir);
+            if (maybeIndex == null)
+                continue;
+            Index index = maybeIndex.Value;
+
+            if(boardState.TryGetPiece(index, out (Team team, Piece piece) occupier))
+            {
+                if(occupier.team == team && Contains(DefendableTypes, occupier.piece))
+                    possible.Add((index, MoveType.Defend));
+            }
+        }
+
+        return possible;
+    }
+
+    private static bool RayCanMove(Team team, BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
     {
         Index index = new Index(row, col);
         if (!index.IsInBounds)
@@ -165,5 +217,10 @@ public static class MoveGenerator
         }
         possible.Add((index, MoveType.Move));
         return true;
+    }
+
+    private static bool Contains(Piece[] haystack, Piece needle)
+    {
+        return System.Array.IndexOf(haystack, needle) >= 0;
     }
 }
