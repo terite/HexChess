@@ -203,6 +203,81 @@ public static class MoveGenerator
         return possible;
     }
 
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleQueenMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        List<(Index, MoveType)> possible = new List<(Index, MoveType)>();
+        int offset = location.row % 2;
+
+        // Up
+        for(int row = location.row + 2; row <= Index.rows; row += 2)
+            if(!RayCanMove(team, boardState, row, location.col, possible, includeBlocking))
+                break;
+        // Down
+        for(int row = location.row - 2; row >= 0; row -= 2)
+            if(!RayCanMove(team, boardState, row, location.col, possible, includeBlocking))
+                break;
+        // Left
+        for(int col = location.col - 1; col >= 0; col--)
+            if(!RayCanMove(team, boardState, location.row, col, possible, includeBlocking))
+                break;
+        // Right
+        for(int col = location.col + 1; col <= Index.cols - 2 + location.row % 2; col++)
+            if(!RayCanMove(team, boardState, location.row, col, possible, includeBlocking))
+                break;
+
+        // Top Left
+        for(
+            (int row, int col, int i) = (location.row + 1, location.col - offset, 0);
+            row <= Index.rows && col >= 0;
+            row++, i++
+        ){
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
+                break;
+
+            if(i % 2 == offset)
+                col--;
+        }
+        // Top Right
+        for(
+            (int row, int col, int i) = (location.row + 1, location.col + Mathf.Abs(1 - offset), 0);
+            row <= Index.rows && col <= Index.cols;
+            row++, i++
+        ){
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
+                break;
+
+            if(i % 2 != offset)
+                col++;
+        }
+        // Bottom Left
+        for(
+            (int row, int col, int i) = (location.row - 1, location.col - offset, 0);
+            row >= 0 && col >= 0;
+            row--, i++
+        ){
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
+                break;
+
+            if(i % 2 == offset)
+                col--;
+        }
+        // Bottom Right
+        for(
+            (int row, int col, int i) = (location.row - 1, location.col + Mathf.Abs(1 - offset), 0);
+            row >= 0 && col <= Index.cols;
+            row--, i++
+        ){
+            if(!RayCanMove(team, boardState, row, col, possible, includeBlocking))
+                break;
+
+            if(i % 2 != offset)
+                col++;
+        }
+
+        return possible;
+
+    }
+
     private static bool RayCanMove(Team team, BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)
     {
         Index index = new Index(row, col);
