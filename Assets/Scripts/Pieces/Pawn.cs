@@ -33,69 +33,7 @@ public class Pawn : MonoBehaviour, IPiece
 
     public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
     {
-        bool isWhite = team == Team.White;
-        Index? leftAttack = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.UpLeft : HexNeighborDirection.DownLeft);
-        Index? rightAttack = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.UpRight : HexNeighborDirection.DownRight);
-
-        // Check takes
-        if (CanTake(leftAttack, boardState, includeBlocking))
-            yield return (leftAttack.Value, MoveType.Attack);
-
-        if (CanTake(rightAttack, boardState, includeBlocking))
-            yield return (rightAttack.Value, MoveType.Attack);
-
-        Index? leftPassant = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.DownLeft : HexNeighborDirection.UpLeft);
-        Index? rightPassant = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.DownRight : HexNeighborDirection.UpRight);
-        
-        // Check en passant
-        if(CanPassant(leftPassant, boardState))
-            yield return (leftAttack.Value, MoveType.EnPassant);
-
-        if (CanPassant(rightPassant, boardState))
-            yield return (rightAttack.Value, MoveType.EnPassant);
-
-        bool isFirstMove = location == startLoc;
-
-        // One forward
-        Index? forward = HexGrid.GetNeighborAt(location, isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
-        if (forward.HasValue && !boardState.IsOccupied(forward.Value))
-        {
-            yield return (forward.Value, MoveType.Move);
-
-            // Two forward on 1st move
-            Index? twoForward = HexGrid.GetNeighborAt(forward.Value, isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
-            if (isFirstMove && twoForward.HasValue && !boardState.IsOccupied(twoForward.Value))
-                yield return (twoForward.Value, MoveType.Move);
-        }
-    }
-
-    private bool CanTake(Index? target, BoardState boardState, bool includeBlocking = false)
-    {
-        if(target == null)
-            return false;
-
-        if(boardState.allPiecePositions.ContainsKey(target.Value))
-        {
-            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[target.Value];
-            if(occupyingTeam != team || includeBlocking)
-                return true;
-        }
-        return false;
-    }
-
-    private bool CanPassant(Index? victimIndex, BoardState boardState)
-    {
-        if(victimIndex == null)
-            return false;
-
-        Index index = victimIndex.Value;
-        
-        if(boardState.allPiecePositions.ContainsKey(index))
-        {
-            (Team occupyingTeam, Piece occupyingType) = boardState.allPiecePositions[index];
-            return occupyingTeam != team && occupyingType.IsPawn();
-        }
-        return false;
+        return MoveGenerator.GetAllPossiblePawnMoves(location, team, boardState, includeBlocking);
     }
 
     public void MoveTo(Hex hex, Action action = null)
