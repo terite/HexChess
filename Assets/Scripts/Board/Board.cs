@@ -623,7 +623,7 @@ public class Board : SerializedMonoBehaviour
         // Update boardstate
         if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
             allPiecePositions.Remove((piece.team, piece.piece));
-        else if(allPiecePositions.ContainsKey(targetLocation))
+        if(allPiecePositions.ContainsKey(targetLocation))
             allPiecePositions.Remove(targetLocation);
         allPiecePositions.Add((piece.team, piece.piece), targetLocation);
         currentState.allPiecePositions = allPiecePositions;

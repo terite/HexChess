@@ -1,0 +1,47 @@
+{
+    "Hexamaster": {
+        "checkpoints": [
+            {
+                "steps": 40,
+                "file_path": "results\\secondTry\\Hexamaster\\Hexamaster-40.nn",
+                "reward": 1.0000000596046448,
+                "creation_time": 1622854426.1889553
+            },
+            {
+                "steps": 10,
+                "file_path": "results\\secondTry\\Hexamaster\\Hexamaster-10.nn",
+                "reward": null,
+                "creation_time": 1622854601.0990949
+            },
+            {
+                "steps": 60,
+                "file_path": "results\\secondTry\\Hexamaster\\Hexamaster-60.nn",
+                "reward": 1.0000000596046448,
+                "creation_time": 1622854815.766862
+            },
+            {
+                "steps": 80,
+                "file_path": "results\\secondTry\\Hexamaster\\Hexamaster-80.nn",
+                "reward": 1.0000000596046448,
+                "creation_time": 1622855144.2002826
+            },
+            {
+                "steps": 100,
+                "file_path": "results\\secondTry\\Hexamaster\\Hexamaster-100.nn",
+                "reward": 1.0000000596046448,
+                "creation_time": 1622855354.6919653
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 100,
+            "file_path": "results\\secondTry\\Hexamaster.nn",
+            "reward": 1.0000000596046448,
+            "creation_time": 1622855354.6919653
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.1.0",
+        "mlagents_version": "0.20.0",
+        "tensorflow_version": "2.3.2"
+    }
+}

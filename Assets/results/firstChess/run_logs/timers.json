@@ -1,0 +1,49 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1622854038",
+        "python_version": "3.8.3 (tags/v3.8.3:6f8c832, May 13 2020, 22:37:02) [MSC v.1924 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Python38\\Scripts\\mlagents-learn results/firstChess/configuration.YAML --run-id=firstChess --resume",
+        "mlagents_version": "0.20.0",
+        "mlagents_envs_version": "0.20.0",
+        "communication_protocol_version": "1.1.0",
+        "tensorflow_version": "2.3.2",
+        "numpy_version": "1.18.5",
+        "end_time_seconds": "1622854049"
+    },
+    "total": 11.2109009,
+    "count": 1,
+    "self": 0.28145780000000187,
+    "children": {
+        "run_training.setup": {
+            "total": 0.005431600000000092,
+            "count": 1,
+            "self": 0.005431600000000092
+        },
+        "TrainerController.start_learning": {
+            "total": 10.924011499999999,
+            "count": 1,
+            "self": 0.00012740000000022178,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 10.708508499999999,
+                    "count": 1,
+                    "self": 10.708508499999999
+                },
+                "TrainerController._save_models": {
+                    "total": 0.21537559999999978,
+                    "count": 1,
+                    "self": 2.0100000000411455e-05,
+                    "children": {
+                        "RLTrainer._checkpoint": {
+                            "total": 0.21535549999999937,
+                            "count": 1,
+                            "self": 0.21535549999999937
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

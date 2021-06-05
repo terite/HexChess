@@ -40,6 +40,8 @@ public struct Index
         this.col = col;
     }
 
+    public int GetSingleVal() => int.Parse(string.Concat($"{row}", $"{col}"));
+
     public string GetKey() => $"{GetLetter()}{GetNumber()}";
 
     public int GetNumber() => (row / 2) + 1;

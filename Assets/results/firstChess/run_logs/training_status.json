@@ -1,0 +1,47 @@
+{
+    "Hexamaster": {
+        "checkpoints": [
+            {
+                "steps": 10,
+                "file_path": "results\\firstChess\\Hexamaster\\Hexamaster-10.nn",
+                "reward": null,
+                "creation_time": 1622852089.5987678
+            },
+            {
+                "steps": 10,
+                "file_path": "results\\firstChess\\Hexamaster\\Hexamaster-10.nn",
+                "reward": null,
+                "creation_time": 1622852649.9702804
+            },
+            {
+                "steps": 10,
+                "file_path": "results\\firstChess\\Hexamaster\\Hexamaster-10.nn",
+                "reward": null,
+                "creation_time": 1622852884.3744895
+            },
+            {
+                "steps": 20,
+                "file_path": "results\\firstChess\\Hexamaster\\Hexamaster-20.nn",
+                "reward": 1.0000000596046448,
+                "creation_time": 1622853154.679514
+            },
+            {
+                "steps": 980,
+                "file_path": "results\\firstChess\\Hexamaster\\Hexamaster-980.nn",
+                "reward": null,
+                "creation_time": 1622853457.1116166
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 980,
+            "file_path": "results\\firstChess\\Hexamaster.nn",
+            "reward": null,
+            "creation_time": 1622853457.1116166
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.1.0",
+        "mlagents_version": "0.20.0",
+        "tensorflow_version": "2.3.2"
+    }
+}
