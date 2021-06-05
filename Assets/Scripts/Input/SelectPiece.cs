@@ -390,8 +390,15 @@ public class SelectPiece : MonoBehaviour
                             previewMoves = incomingPreviewMoves.ToList();
                             previewMoves.Add((hoveredHex, MoveType.None));
 
+                            List<IPiece> validAttacksOnHex = board.GetValidAttacksConcerningHex(hoveredHex).ToList();
+
                             if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
-                                attacksConcerningHexDict.Add(hoveredPiece, board.GetValidAttacksConcerningHex(hoveredHex).ToList());
+                                attacksConcerningHexDict.Add(hoveredPiece, validAttacksOnHex);
+                            else if(attacksConcerningHexDict[hoveredPiece] != validAttacksOnHex)
+                            {
+                                attacksConcerningHexDict.Remove(hoveredPiece);
+                                attacksConcerningHexDict.Add(hoveredPiece, validAttacksOnHex);
+                            }
 
                             EnablePreview();
                         }
@@ -425,25 +432,25 @@ public class SelectPiece : MonoBehaviour
         attacksConcerningHex = attacksConcerningHexDict[hoveredPiece];
         foreach(IPiece piece in attacksConcerningHex)
         {
+            if((MonoBehaviour)piece == null)
+                continue;
+                
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_HighlightColor", piece.team == hoveredPiece.team ? greenColor : orangeColor);
         }
     }
 
-
     private void ClearPiecesColorization(List<IPiece> set)
     {
         foreach(IPiece piece in set)
         {
-            if(piece != null && !piece.obj)
+            if((MonoBehaviour)piece == null)
                 continue;
+
             MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
             renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
         }
-
-        set.Clear();
     }
-    
 
     public void EnablePreview()
     {
