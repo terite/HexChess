@@ -78,5 +78,33 @@ public class IndexTests
                 new Index(10, invalidFile);
             });
         }
+
+    }
+
+    [Test]
+    public void InBoundsTest()
+    {
+        Assert.True(new Index(0, 0).IsInBounds);
+        Assert.True(new Index(18, 3).IsInBounds);
+        Assert.True(new Index(17, 4).IsInBounds);
+    }
+    [Test]
+    public void OutOfBoundsTest()
+    {
+        Assert.False(new Index(-1, 0).IsInBounds);
+        Assert.False(new Index(0, -1).IsInBounds);
+        Assert.False(new Index(18, 4).IsInBounds);
+    }
+    [Test]
+    public void GetNeighborTests()
+    {
+        Index middle = new Index(5, 'E');
+
+        Assert.AreEqual(new Index(6, 'E'), middle.GetNeighborAt(HexNeighborDirection.Up));
+        Assert.AreEqual(new Index(6, 'F'), middle.GetNeighborAt(HexNeighborDirection.UpRight));
+        Assert.AreEqual(new Index(5, 'F'), middle.GetNeighborAt(HexNeighborDirection.DownRight));
+        Assert.AreEqual(new Index(4, 'E'), middle.GetNeighborAt(HexNeighborDirection.Down));
+        Assert.AreEqual(new Index(5, 'D'), middle.GetNeighborAt(HexNeighborDirection.DownLeft));
+        Assert.AreEqual(new Index(6, 'D'), middle.GetNeighborAt(HexNeighborDirection.UpLeft));
     }
 }
