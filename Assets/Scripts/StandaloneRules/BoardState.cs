@@ -39,7 +39,7 @@ public struct BoardState
                 if(kvp.Key.piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
                 {
                     // Pawns that move sideways are always attacks. If the new location was unoccupied, then did En Passant
-                    Index? enemyLocation = HexGrid.GetNeighborAt(nowPos, kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
+                    Index? enemyLocation = nowPos.GetNeighborAt(kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
                     if (enemyLocation != null && lastState.TryGetPiece(enemyLocation.Value, out var captured))
                         capturedPiece = captured.piece;
                 }

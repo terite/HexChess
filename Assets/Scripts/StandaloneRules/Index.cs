@@ -3,8 +3,14 @@ using System;
 [Serializable]
 public struct Index
 {
+    public const int cols = 5;
+    public const int maxCol = cols - 1;
+    public const int rows = 19;
+    public const int maxRow = rows - 1;
+
     public int row;
     public int col;
+
     public Index(int rank, char file)
     {
         if (rank < 1 || rank > 10)
@@ -42,6 +48,16 @@ public struct Index
 
     public int GetSingleVal() => int.Parse(string.Concat($"{row}", $"{col}"));
 
+    public bool IsInBounds
+    {
+        get
+        {
+            bool cond1 = row * (row - maxRow) <= 0 && col * (col - maxCol) <= 0;
+            bool cond2 = !(cols % 2 != 0 && col == cols - 1 && row % 2 == 0);
+            return cond1 && cond2;
+        }
+    }
+
     public string GetKey() => $"{GetLetter()}{GetNumber()}";
 
     public int GetNumber() => (row / 2) + 1;
@@ -57,6 +73,26 @@ public struct Index
             3 when !isEven => "G", 3 when isEven => "H",
             4 => "I", _ => ""
         };
+    }
+
+    public Index? GetNeighborAt(HexNeighborDirection dir)
+    {
+        bool isEven = row % 2 == 0;
+        (int row, int col) offsets = dir switch
+        {
+            HexNeighborDirection.Up => (2, 0),
+            HexNeighborDirection.UpRight => isEven ? (1, 1) : (1, 0),
+            HexNeighborDirection.DownRight => isEven ? (-1, 1) : (-1, 0),
+            HexNeighborDirection.Down => (-2, 0),
+            HexNeighborDirection.DownLeft => isEven ? (-1, 0) : (-1, -1),
+            HexNeighborDirection.UpLeft => isEven ? (1, 0) : (1, -1),
+            _ => (-100, -100)
+        };
+
+        Index neighbor = new Index(row + offsets.row, col + offsets.col);
+        if (neighbor.IsInBounds)
+            return neighbor;
+        return null;
     }
 
     public override string ToString() => $"{row}, {col} ({GetKey()})";
