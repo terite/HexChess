@@ -406,7 +406,7 @@ public class Board : SerializedMonoBehaviour
         else
             turnsSincePawnMovedOrPieceTaken++;
 
-        if(turnsSincePawnMovedOrPieceTaken == 100f)
+        if(turnsSincePawnMovedOrPieceTaken == 100)
         {
             if(multiplayer != null)
             {

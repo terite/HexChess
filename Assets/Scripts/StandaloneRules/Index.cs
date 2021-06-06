@@ -10,6 +10,19 @@ public struct Index
 
     public static Index invalid => new Index(-1, -1);
 
+    static readonly Index[] IndexByteLookup = new Index[85];
+    static readonly byte[,] ByteColRowLookup = new byte[cols, rows];
+
+    static Index()
+    {
+        for (byte b = 0; b < 85; b++)
+        {
+            var index = CalculateFromByte(b);
+            IndexByteLookup[b] = index;
+            ByteColRowLookup[index.col, index.row] = b;
+        }
+    }
+
     public int row;
     public int col;
 
@@ -128,4 +141,27 @@ public struct Index
 
     public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
     public static bool operator !=(Index a, Index b) => !(a==b);
+    public static Index CalculateFromByte(byte v)
+    {
+        int rank = (v / 9) + 1;
+
+        int fileVal = (v % 9);
+
+        char file;
+        if (rank == 10)
+            file = (char)('B' + (fileVal * 2));
+        else
+            file = (char)('A' + fileVal);
+
+        return new Index(rank, file);
+    }
+    public static Index FromByte(byte v)
+    {
+        return IndexByteLookup[v];
+    }
+
+    public byte ToByte()
+    {
+        return ByteColRowLookup[col, row];
+    }
 }

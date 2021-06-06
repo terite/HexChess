@@ -180,6 +180,73 @@ public struct BoardState
                     return true;
             }
         }
+        
+        // Knight checks
+        for (int i = 0; i < 6; ++i)
+        {
+            var firstDirection = (MoveGenerator.KnightOffsets[i, 0]);
+            Index? hex;
+            hex = enemyKingLoc.GetNeighborAt(firstDirection);
+            if (!hex.HasValue)
+                continue;
+            hex = hex.Value.GetNeighborAt(firstDirection);
+            if (!hex.HasValue)
+                continue;
+            Index branchStart = hex.Value;
+
+            hex = branchStart.GetNeighborAt(MoveGenerator.KnightOffsets[i, 1]);
+            (Team team, Piece piece) occupier;
+            if (hex.HasValue && allPiecePositions.TryGetValue(hex.Value, out occupier) && occupier.team == checkForTeam)
+            {
+                Piece realPiece = GetRealPiece(occupier, promotions);
+                if (realPiece.IsKnight())
+                    return true;
+            }
+
+            hex = branchStart.GetNeighborAt(MoveGenerator.KnightOffsets[i, 2]);
+            if (hex.HasValue && allPiecePositions.TryGetValue(hex.Value, out occupier) && occupier.team == checkForTeam)
+            {
+                Piece realPiece = GetRealPiece(occupier, promotions);
+                if (realPiece.IsKnight())
+                    return true;
+            }
+        }
+
+        for (int i = 1; i < 20; ++i) // Queen/Rook slide left
+        {
+            Index hex = new Index(enemyKingLoc.row, enemyKingLoc.col - i);
+            if (!hex.IsInBounds)
+                break;
+
+            if (TryGetPiece(hex, out (Team team, Piece piece) occupier))
+            {
+                if (occupier.team == checkForTeam)
+                {
+                    Piece realPiece = GetRealPiece(occupier, promotions);
+                    if (realPiece.IsRook() || realPiece == Piece.Queen)
+                        return true;
+                }
+                break;
+            }
+        }
+
+        for (int i = 1; i < 20; i++) // Queen/Rook slide right
+        {
+            Index hex = new Index(enemyKingLoc.row, enemyKingLoc.col + i);
+            if (!hex.IsInBounds)
+                break;
+
+            if (TryGetPiece(hex, out (Team team, Piece piece) occupier))
+            {
+                if (occupier.team == checkForTeam)
+                {
+                    Piece realPiece = GetRealPiece(occupier, promotions);
+                    if (realPiece.IsRook() || realPiece == Piece.Queen)
+                        return true;
+                }
+                break;
+            }
+        }
 
         for (int i = 1; i < 20; ++i) // Queen/Rook slide left
         {
