@@ -17,6 +17,15 @@ public struct BoardState
     public Team checkmate;
     public float executedAtTime;
 
+    public BoardState(BidirectionalDictionary<(Team, Piece), Index> allPiecePositions, Team currentMove, Team check, Team checkmate, float executedAtTime)
+    {
+        this.allPiecePositions = allPiecePositions;
+        this.currentMove = currentMove;
+        this.check = check;
+        this.checkmate = checkmate;
+        this.executedAtTime = executedAtTime;
+    }
+
     public static Move GetLastMove(List<BoardState> history)
     {
         if(history.Count > 1)
@@ -85,6 +94,44 @@ public struct BoardState
             return false;
 
         return expected == actual;
+    }
+
+    /// <summary>
+    /// Is a piece from <paramref name="checkForTeam"/> attacking the enemy king?
+    /// </summary>
+    /// <param name="checkForTeam"></param>
+    /// <returns>true if the enemy king is threatened</returns>
+    public bool IsChecking(Team checkForTeam, IEnumerable<Promotion> promotions)
+    {
+        Team otherTeam = checkForTeam == Team.White ? Team.Black : Team.White;
+        Index otherKing = allPiecePositions.Where(kvp => kvp.Key == (otherTeam, Piece.King)).Select(kvp => kvp.Value).FirstOrDefault();
+
+        foreach (KeyValuePair<(Team team, Piece piece), Index> kvp in allPiecePositions)
+        {
+            if (kvp.Key.team != checkForTeam) continue;
+
+            Piece realPiece = kvp.Key.piece;
+            if (promotions != null)
+            {
+                foreach (Promotion promo in promotions)
+                {
+                    if (promo.team == checkForTeam && promo.from == realPiece)
+                    {
+                        realPiece = promo.to;
+                        break;
+                    }
+                }
+            }
+
+            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this);
+            foreach((Index hex, MoveType moveType) in moves)
+            {
+                if(moveType == MoveType.Attack && hex == otherKing)
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     // Json (including newtonsoft) can not properly serialize a dictionary that uses a key that is any type other than than a string.

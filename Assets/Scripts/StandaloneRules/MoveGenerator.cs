@@ -17,6 +17,41 @@ public static class MoveGenerator
         Piece.BlackSquire,
     };
 
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Index location, Piece piece, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        switch (piece)
+        {
+            case Piece.King:
+                return GetAllPossibleKingMoves(location, team, boardState, includeBlocking);
+            case Piece.Queen:
+                return GetAllPossibleQueenMoves(location, team, boardState, includeBlocking);
+            case Piece.KingsRook:
+            case Piece.QueensRook:
+                return GetAllPossibleRookMoves(location, team, boardState, includeBlocking);
+            case Piece.KingsKnight:
+            case Piece.QueensKnight:
+                return GetAllPossibleKnightMoves(location, team, boardState, includeBlocking);
+            case Piece.KingsBishop:
+            case Piece.QueensBishop:
+                return GetAllPossibleBishopMoves(location, team, boardState, includeBlocking);
+            case Piece.WhiteSquire:
+            case Piece.GraySquire:
+            case Piece.BlackSquire:
+                return GetAllPossibleSquireMoves(location, team, boardState, includeBlocking);
+            case Piece.Pawn1:
+            case Piece.Pawn2:
+            case Piece.Pawn3:
+            case Piece.Pawn4:
+            case Piece.Pawn5:
+            case Piece.Pawn6:
+            case Piece.Pawn7:
+            case Piece.Pawn8:
+                return GetAllPossiblePawnMoves(location, team, boardState, includeBlocking);
+            default:
+                throw new ArgumentException($"Unhandled piece type: {piece}", nameof(piece));
+        }
+    }
+
     public static IEnumerable<(Index, MoveType)> GetAllPossibleKingMoves(Index location, Team team, BoardState boardState, bool includeBlocking = false)
     {
         foreach(HexNeighborDirection dir in EnumArray<HexNeighborDirection>.Values)
