@@ -111,13 +111,17 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
     public bool Remove(K key, T val) => forwardDict.Remove(val) && backwardsDict.Remove(key);
     public bool Remove(T key) 
     {
-        K val = forwardDict[key];
-        return Remove(key, val);
+        if (forwardDict.TryGetValue(key, out K val))
+            return Remove(key, val);
+
+        return false;
     }
     public bool Remove(K key)
     {
-        T val = backwardsDict[key];
-        return Remove(key, val);
+        if (backwardsDict.TryGetValue(key, out T val))
+            return Remove(key, val);
+
+        return false;
     }
     public void Remove(object key)
     {
