@@ -558,22 +558,7 @@ public class Board : SerializedMonoBehaviour
     
     public bool IsChecking(BoardState boardState, Team checkForTeam)
     {
-        Team otherTeam = checkForTeam == Team.White ? Team.Black : Team.White;
-       
-        IEnumerable<KeyValuePair<(Team, Piece), IPiece>> pieces = activePieces.Where(kvp => kvp.Key.Item1 == checkForTeam
-            && boardState.allPiecePositions.ContainsKey(kvp.Key)
-        );
-
-        foreach(KeyValuePair<(Team, Piece), IPiece> kvp in pieces)
-        {
-            IEnumerable<(Index, MoveType)> moves = kvp.Value.GetAllPossibleMoves(boardState);
-            foreach((Index hex, MoveType moveType) in moves)
-            {
-                if(moveType == MoveType.Attack && boardState.allPiecePositions.ContainsKey(hex) && boardState.allPiecePositions[hex] == (otherTeam, Piece.King))
-                    return true;
-            }
-        }
-        return false;
+        return boardState.IsChecking(checkForTeam, promotions);
     }
 
     public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
