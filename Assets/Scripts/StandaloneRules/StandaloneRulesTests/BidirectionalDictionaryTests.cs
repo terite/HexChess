@@ -79,4 +79,30 @@ public class BidirectionalDictionaryTests
 
         Assert.AreEqual(1, dict.Count);
     }
+
+    [Test]
+    public void RemoveTest()
+    {
+        var dict = new BidirectionalDictionary<char, int>();
+        dict.Add('A', 1);
+        dict.Add('B', 2);
+
+        Assert.False(dict.Remove('C'));
+        Assert.AreEqual(2, dict.Count);
+
+        Assert.False(dict.Remove(3));
+        Assert.AreEqual(2, dict.Count);
+
+        Assert.True(dict.Remove(2));
+        Assert.AreEqual(1, dict.Count);
+
+        Assert.False(dict.Remove('B'));
+        Assert.AreEqual(1, dict.Count);
+
+        Assert.True(dict.Remove('A'));
+        Assert.AreEqual(0, dict.Count);
+
+        Assert.False(dict.Remove(1));
+        Assert.AreEqual(0, dict.Count);
+    }
 }
