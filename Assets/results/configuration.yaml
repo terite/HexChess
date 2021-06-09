@@ -14,7 +14,7 @@ default_settings:
   reward_signals:
     curiosity:
       gamma: 0.99
-      strength: 0.02
+      strength: 0.2
     extrinsic:
       gamma: 0.99
       strength: 1.0
@@ -45,7 +45,7 @@ engine_settings:
   no_graphics: false
 environment_parameters: null
 checkpoint_settings:
-  run_id: fourthTry
+  run_id: 4
   initialize_from: null
   load_model: false
   resume: false

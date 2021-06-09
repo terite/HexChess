@@ -46,7 +46,7 @@ public struct Index
         this.col = col;
     }
 
-    public int GetSingleVal() => int.Parse(string.Concat($"{row}", $"{col}"));
+    public int GetSingleVal() => int.Parse(string.Concat($"{row:D2}", $"{col}"));
 
     public bool IsInBounds
     {
