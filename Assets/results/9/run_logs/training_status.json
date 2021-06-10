@@ -1,0 +1,23 @@
+{
+    "Hexamaster": {
+        "checkpoints": [
+            {
+                "steps": 412788,
+                "file_path": "results\\9\\Hexamaster\\Hexamaster-412788.nn",
+                "reward": -28.184740230751533,
+                "creation_time": 1623369260.1103442
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 412788,
+            "file_path": "results\\9\\Hexamaster.nn",
+            "reward": -28.184740230751533,
+            "creation_time": 1623369260.1103442
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.1.0",
+        "mlagents_version": "0.20.0",
+        "tensorflow_version": "2.3.2"
+    }
+}

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.MLAgents;
+using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 
@@ -8,11 +9,32 @@ public class Hexamaster : Agent
 {
 
     [SerializeField] private Board board;
+    [SerializeField] private BehaviorParameters parameters;
     List<(IPiece, Index, MoveType)> cachedMoves = new List<(IPiece, Index, MoveType)>();
+
+    Move twoAgo;
+    Move oneAgo;
+
+    public void Init(Board board, int teamID)
+    {
+        this.board = board;
+        parameters.TeamId = teamID;
+    }
 
     public override void OnEpisodeBegin()
     {
 
+    }
+
+    public override void CollectDiscreteActionMasks(DiscreteActionMasker actionMasker)
+    {
+        if(cachedMoves.Count > 100)
+            Debug.LogError($"Cached moves is of size: {cachedMoves.Count}");
+        int numberOfInvalidIndices = 100 - cachedMoves.Count;
+        int[] invalidIndices = new int[numberOfInvalidIndices];
+        for(int i = 0; i < numberOfInvalidIndices; i++)
+            invalidIndices[i] = cachedMoves.Count + i;
+        actionMasker.SetMask(0, invalidIndices);
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -21,6 +43,7 @@ public class Hexamaster : Agent
         List<Promotion> promotions = board.promotions;
         List<float> froms = new List<float>();
         List<float> tos = new List<float>();
+        cachedMoves.Clear();
 
         foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in state.allPiecePositions)
         {
@@ -47,12 +70,13 @@ public class Hexamaster : Agent
         sensor.AddObservation((float)state.currentMove);
         sensor.AddObservation(froms);
         sensor.AddObservation(tos);
-        sensor.AddObservation(tos.Count - 1);
+        // sensor.AddObservation(cachedMoves.Count - 1);
         sensor.AddObservation(board.turnsSincePawnMovedOrPieceTaken);
     }
 
     public override void OnActionReceived(float[] vectorAction)
     {
+        // Debug.Log($"choice: {(int)vectorAction[0]}, max: {cachedMoves.Count}");
         MakeDecision((int)vectorAction[0], (int)vectorAction[1]);
     }
     public override void Heuristic(float[] actionsOut)
@@ -74,6 +98,7 @@ public class Hexamaster : Agent
                 {
                     // Invalid promotion choice, punish and requery
                     AddReward(-0.1f);
+                    CollectObservations(new VectorSensor(310));
                     RequestDecision();
                     return;
                 }
@@ -86,21 +111,42 @@ public class Hexamaster : Agent
                 }
             }
 
+            // Query move
             BoardState newState = board.GetCurrentBoardState();
+            if(move.type == MoveType.Attack || move.type == MoveType.Move)
+                newState = board.MovePiece(move.piece, move.target, newState, true);
+            else if(move.type == MoveType.Defend && newState.TryGetPiece(move.target, out (Team team, Piece piece) otherPiece) && board.activePieces.ContainsKey(otherPiece))
+                newState = board.Swap(move.piece, board.activePieces[otherPiece], newState, true);
+            else if(move.type == MoveType.EnPassant && newState.TryGetPiece(move.target, out (Team team, Piece piece) enemyPiece))
+                newState = board.EnPassant((Pawn)move.piece, enemyPiece.team, enemyPiece.piece, move.target, newState, true);
+
+            // Punish for progressing 5 fold repetition
+            if(board.CheckFiveFoldProgress(newState))
+                reward -= 0.1f;
+            
+            // Play move
+            // board.SetBoardState(newState);
+            newState = board.GetCurrentBoardState();
             if(move.type == MoveType.Attack || move.type == MoveType.Move)
                 newState = board.MovePiece(move.piece, move.target, newState);
             else if(move.type == MoveType.Defend && newState.TryGetPiece(move.target, out (Team team, Piece piece) otherPiece) && board.activePieces.ContainsKey(otherPiece))
                 newState = board.Swap(move.piece, board.activePieces[otherPiece], newState);
             else if(move.type == MoveType.EnPassant && newState.TryGetPiece(move.target, out (Team team, Piece piece) enemyPiece))
                 newState = board.EnPassant((Pawn)move.piece, enemyPiece.team, enemyPiece.piece, move.target, newState);
-            
-            // reward += .1f;
 
             board.AdvanceTurn(newState, true, true);
             Move m = BoardState.GetLastMove(board.turnHistory);
             reward += -0.00001f * m.turn;
 
-            cachedMoves.Clear();
+            if(m.lastPiece == twoAgo.lastPiece && m.from == twoAgo.from && m.to == twoAgo.to)
+            {
+                reward -= 0.1f;
+            }
+
+            twoAgo = oneAgo;
+            oneAgo = m;
+
+            // cachedMoves.Clear();
         }
         else
         {
@@ -108,6 +154,7 @@ public class Hexamaster : Agent
                 reward -= 0.5f;
             reward -= 0.5f;
 
+            // CollectObservations(new VectorSensor(310));
             RequestDecision();
         }
         AddReward(reward);

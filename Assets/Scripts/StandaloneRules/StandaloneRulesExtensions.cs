@@ -35,5 +35,14 @@ namespace Extensions
         };
 
         public static bool IsPawn(this Piece piece) => piece >= Piece.Pawn1;
+
+        public static int GetMaterialValue(this Piece piece) => piece switch {
+            Piece.Queen => 9,
+            Piece p when p == Piece.QueensRook || p == Piece.KingsRook => 5,
+            Piece p when p == Piece.QueensBishop || p == Piece.KingsBishop || p == Piece.QueensKnight || p == Piece.KingsKnight=> 3,
+            Piece p when p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire => 2,
+            Piece p when p >= Piece.Pawn1 => 1,
+            _ => 0
+        };
     }
 }

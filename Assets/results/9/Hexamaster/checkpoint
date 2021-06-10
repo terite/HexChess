@@ -1,0 +1,2 @@
+model_checkpoint_path: "Hexamaster-412788.ckpt"
+all_model_checkpoint_paths: "Hexamaster-412788.ckpt"

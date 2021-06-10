@@ -474,7 +474,7 @@ public class SelectPiece : MonoBehaviour
 
     public void LeftClick(CallbackContext context)
     {
-        if(promotionDialogue.gameObject.activeSelf)
+        if(promotionDialogue != null && promotionDialogue.gameObject.activeSelf)
             return;
         
         if(context.started)

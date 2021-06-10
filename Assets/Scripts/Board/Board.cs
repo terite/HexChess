@@ -39,6 +39,7 @@ public class Board : SerializedMonoBehaviour
     public float timeOffset {get; private set;} = 0f;
     public int turnsSincePawnMovedOrPieceTaken = 0;
     [OdinSerialize] public List<List<Piece>> insufficientSets = new List<List<Piece>>();
+    public bool surpressVictoryAudio = false;
 
     private BoardState? lastSetState = null;
 
@@ -53,8 +54,11 @@ public class Board : SerializedMonoBehaviour
     }
     // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
 
-    private void Awake() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
-    private void Start() => newTurn.Invoke(turnHistory[turnHistory.Count - 1]);
+    private void Awake() => LoadDefaultBoard();
+    private void Start() => newTurn?.Invoke(turnHistory[turnHistory.Count - 1]);
+    public void LoadDefaultBoard() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
+
+    public bool CheckFiveFoldProgress(BoardState toCheck) => turnHistory.Any(state => state == toCheck);
 
     public void SetBoardState(BoardState newState, List<Promotion> promos = null, int? turn = null)
     {
@@ -187,19 +191,22 @@ public class Board : SerializedMonoBehaviour
         if(turnHistory.Count > 1)
             timeOffset = state.executedAtTime - Time.timeSinceLevelLoad;
         
-        if(game.timerDuration <= 0)
+        if(timers != null)
         {
-            timers.gameObject.SetActive(game.hasClock);
-            timers.isClock = game.hasClock;
-        }
-        else
-        {
-            timers.gameObject.SetActive(true);
-            timers.SetTimers(game.timerDuration);
+            if(game.timerDuration <= 0)
+            {
+                timers.gameObject.SetActive(game.hasClock);
+                timers.isClock = game.hasClock;
+            }
+            else
+            {
+                timers.gameObject.SetActive(true);
+                timers.SetTimers(game.timerDuration);
+            }
         }
     
         SetBoardState(state, game.promotions);
-        turnHistoryPanel.SetGame(game);
+        turnHistoryPanel?.SetGame(game);
         
         Move move = BoardState.GetLastMove(turnHistory);
         if(move.lastTeam != Team.None)
@@ -223,7 +230,7 @@ public class Board : SerializedMonoBehaviour
         {
             if(game.winner == Winner.Pending)
             {
-                turnPanel.Reset();
+                turnPanel?.Reset();
                 newTurn?.Invoke(state);
                 cam.SetToTeam(state.currentMove);
             }
@@ -243,7 +250,7 @@ public class Board : SerializedMonoBehaviour
         return turnHistory[turnHistory.Count - 1].currentMove;
     }
  
-    public BoardState GetCurrentBoardState() => turnHistoryPanel.TryGetCurrentBoardState(out BoardState state) 
+    public BoardState GetCurrentBoardState() => turnHistoryPanel != null && turnHistoryPanel.TryGetCurrentBoardState(out BoardState state) 
         ? state 
         : turnHistory[turnHistory.Count - 1];
 
@@ -353,7 +360,7 @@ public class Board : SerializedMonoBehaviour
                 else
                     return;
             }
-            else if(!freePlaceMode.toggle.isOn)
+            else if(freePlaceMode == null || !freePlaceMode.toggle.isOn)
             {
                 newState.currentMove = otherTeam;
                 turnHistory.Add(newState);
@@ -402,7 +409,14 @@ public class Board : SerializedMonoBehaviour
         newTurn.Invoke(newState);
 
         // The game ends in a draw due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
-        if(newMove.capturedPiece.HasValue || newMove.lastPiece >= Piece.Pawn1)
+        IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.team == newMove.lastTeam && promo.from == newMove.lastPiece);
+        Piece lastPiece = newMove.lastPiece >= Piece.Pawn1 
+            ? applicablePromos.Any() 
+                ? applicablePromos.First().to 
+                : newMove.lastPiece 
+            : newMove.lastPiece;
+
+        if(newMove.capturedPiece.HasValue || lastPiece >= Piece.Pawn1)
             turnsSincePawnMovedOrPieceTaken = 0;
         else
             turnsSincePawnMovedOrPieceTaken++;
@@ -582,6 +596,8 @@ public class Board : SerializedMonoBehaviour
                 // Capture the enemy piece
                 if(!isQuery)
                 {
+                    if(occupyingPiece.piece == Piece.King)
+                        Debug.LogError("Kings can't be captured. Game should not allow this state to occur.");
                     jails[(int)teamedPiece.occupyingTeam].Enprison(occupyingPiece);
                     activePieces.Remove(teamedPiece);
                 }
@@ -594,7 +610,7 @@ public class Board : SerializedMonoBehaviour
         // Move piece
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(
+            moveTracker?.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 piece.team,
                 piece.piece,
@@ -634,6 +650,8 @@ public class Board : SerializedMonoBehaviour
                 takenPieceAtLocation = occupyingType;
                 IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
 
+                if(occupyingPiece.piece == Piece.King)
+                    Debug.LogError("Kings can't be captured!");
                 // Capture the enemy piece
                 jails[(int)occupyingTeam].Enprison(occupyingPiece);
                 activePieces.Remove((occupyingTeam, occupyingType));
@@ -732,13 +750,13 @@ public class Board : SerializedMonoBehaviour
         if(p1 == p2)
             return boardState;
 
-        Index p1StartLoc = p1.location;
-        Index p2StartLoc = p2.location;
         BoardState currentState = boardState;
+        currentState.TryGetIndex((p1.team, p1.piece), out Index p1StartLoc);
+        currentState.TryGetIndex((p2.team, p2.piece), out Index p2StartLoc);
         
         if(!isQuery)
         {
-            moveTracker.UpdateText(new Move(
+            moveTracker?.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 p1.team,
                 p1.piece,
@@ -752,8 +770,8 @@ public class Board : SerializedMonoBehaviour
         }
 
         BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        allPiecePositions.Remove((p1.team, p1.piece));
-        allPiecePositions.Remove((p2.team, p2.piece));
+        allPiecePositions.Remove((p1.team, p1.piece), p1StartLoc);
+        allPiecePositions.Remove((p2.team, p2.piece), p2StartLoc);
         allPiecePositions.Add((p1.team, p1.piece), p2StartLoc);
         allPiecePositions.Add((p2.team, p2.piece), p1StartLoc);
         
@@ -767,11 +785,13 @@ public class Board : SerializedMonoBehaviour
         if(!isQuery)
         {
             IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
+            if(enemyPiece == Piece.King)
+                Debug.LogError("Kings can't be captured.");
             activePieces.Remove((enemyTeam, enemyPiece));
             // Capture enemy
             jails[(int)enemyTeam].Enprison(enemyIPiece);
             // Move pawn
-            moveTracker.UpdateText(new Move(
+            moveTracker?.UpdateText(new Move(
                 Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
                 pawn.team,
                 pawn.piece,
@@ -824,10 +844,10 @@ public class Board : SerializedMonoBehaviour
             else if(winner == Winner.Black)
                 winningTeam = Team.Black;
 
-            if(multiplayer.gameParams.localTeam == winningTeam)
+            if(multiplayer.gameParams.localTeam == winningTeam && !surpressVictoryAudio)
                 audioSource.PlayOneShot(winFanfare);
         }
-        else
+        else if(!surpressVictoryAudio)
             audioSource.PlayOneShot(winFanfare);
 
         currentState.currentMove = Team.None;
@@ -840,8 +860,8 @@ public class Board : SerializedMonoBehaviour
             promotions,
             winner,
             endType,
-            timers.timerDruation,
-            timers.isClock
+            timers == null ? 0 : timers.timerDruation,
+            timers == null ? false : timers.isClock
         );
 
         gameOver.Invoke(game);

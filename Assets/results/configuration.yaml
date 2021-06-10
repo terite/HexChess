@@ -10,22 +10,31 @@ default_settings:
     hidden_units: 128
     num_layers: 2
     vis_encode_type: simple
-    memory: null
+
+    #memory
+    use_recurrent: true
+    sequence_length: 64
+    memory_size: 256
+
   reward_signals:
     curiosity:
       gamma: 0.99
-      strength: 0.2
+      strength: 0.02
     extrinsic:
       gamma: 0.99
       strength: 1.0
   init_path: null
   keep_checkpoints: 5
   checkpoint_interval: 500000
-  max_steps: 500000
+  max_steps: 50000000
   time_horizon: 64
   summary_freq: 50000
   threaded: true
-  self_play: null
+  self_play:
+    window: 10
+    save_steps: 10000
+    swap_steps: 10000
+    play_against_latest_model_ratio: 0.5
   behavioral_cloning: null
   framework: tensorflow
 behaviors: {}
@@ -45,7 +54,7 @@ engine_settings:
   no_graphics: false
 environment_parameters: null
 checkpoint_settings:
-  run_id: 4
+  run_id: 9
   initialize_from: null
   load_model: false
   resume: false

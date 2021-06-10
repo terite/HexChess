@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.MLAgents.Sensors;
 using UnityEngine;
+using Extensions;
 
 public class HexamasterManager : MonoBehaviour
 {
@@ -14,13 +16,15 @@ public class HexamasterManager : MonoBehaviour
 
     private bool gameOver = false;
 
-    // public float decisionTime = 1f;
-    // private float decideAtTime;
-    // private Hexamaster nextDecision;
+    public float decisionTime = 1f;
+    private float decideAtTime;
+    private Hexamaster nextDecision;
 
     private void Start() {
         board.newTurn += NewTurn;
         board.gameOver += GameOver;
+
+        SpawnAI();
 
         NewTurn(board.GetCurrentBoardState());
     }
@@ -38,59 +42,98 @@ public class HexamasterManager : MonoBehaviour
         {
             case Winner.White:
                 if(whiteAI)
-                    whiteAgent?.AddReward(10);
+                    whiteAgent?.AddReward(1);
                 if(blackAI)
-                    blackAgent?.AddReward(-10);
+                    blackAgent?.AddReward(-1);
                 break;
             case Winner.Black:
                 if(whiteAI)
-                    whiteAgent?.AddReward(-10);
+                    whiteAgent?.AddReward(-1);
                 if(blackAI)
-                    blackAgent?.AddReward(10);
+                    blackAgent?.AddReward(1);
                 break;
             case Winner.Draw:
                 if(whiteAI)
-                    whiteAgent?.AddReward(0.5f);
+                    whiteAgent?.AddReward(0);
                 if(blackAI)
-                    blackAgent?.AddReward(0.5f);
+                    blackAgent?.AddReward(0);
                 break;
             case Winner.None:
                 if(whiteAI)
-                    whiteAgent?.AddReward(-0.5f);
+                    whiteAgent?.AddReward(0);
                 if(blackAI)
-                    blackAgent?.AddReward(-0.5f);
+                    blackAgent?.AddReward(0);
                 break;
         }
+
+        if(whiteAI && whiteAgent != null)
+        {
+            whiteAgent.EndEpisode();
+            Destroy(whiteAgent.gameObject);
+        }
+        if(blackAI && blackAgent != null)
+        {
+            blackAgent.EndEpisode();
+            Destroy(blackAgent.gameObject);
+        }
+
         gameOver = true;
+        Reset();
+    }
+
+    private void SpawnAI()
+    {
         if(whiteAI)
-            whiteAgent?.EndEpisode();
+        {
+            if(whiteAgent != null)
+                Destroy(whiteAgent.gameObject);
+            whiteAgent = Instantiate(agentPrefab);
+            whiteAgent.Init(board, 0);
+        }
         if(blackAI)
-            blackAgent?.EndEpisode();
+        {
+            if(blackAgent != null)
+                Destroy(blackAgent.gameObject);
+            blackAgent = Instantiate(agentPrefab);
+            blackAgent.Init(board, 1);
+        }
+    }
+
+    private void Reset()
+    {
+        board.LoadDefaultBoard();
+        SpawnAI();
+
+        if(whiteAI)
+            whiteAgent?.CollectObservations(new VectorSensor(310));
+        if(blackAI)
+            blackAgent?.CollectObservations(new VectorSensor(310));
+        
+        gameOver = false;
+        
+        NewTurn(board.GetCurrentBoardState());
     }
 
     private void NewTurn(BoardState newState)
     {
         if(gameOver)
             return;
+
+        Move m = BoardState.GetLastMove(board.turnHistory);
+        if(m.capturedPiece.HasValue)
+        {
+            // Reward the team that captured a piece, while punishing the team who's piece was captured
+            float val = 0.1f * (float)m.capturedPiece.Value.GetMaterialValue();
+
+            Hexamaster positiveAgent = m.lastTeam == Team.White ? whiteAI ? whiteAgent : null : m.lastTeam == Team.Black ? blackAI ? blackAgent : null : null;
+            Hexamaster negativeAgent = m.lastTeam == Team.White ? blackAI ? blackAgent : null : m.lastTeam == Team.Black ? whiteAI ? whiteAgent : null : null;
+
+            positiveAgent?.AddReward(val);
+            negativeAgent?.AddReward(-val);
+        }
         
         // Reward the team that checked or mated, but punish the team that was checked or mated
-        if(newState.checkmate != Team.None)
-        {
-            if(newState.checkmate == Team.White)
-            {
-                if(whiteAI)
-                    whiteAgent?.AddReward(-10f);
-                if(blackAI)
-                    blackAgent?.AddReward(100f);
-            }
-            else
-            {
-                if(whiteAI)
-                    whiteAgent?.AddReward(100f);
-                if(blackAI)
-                    blackAgent?.AddReward(-10f);
-            }
-        }
+        if(newState.checkmate != Team.None){ }
         else if(newState.check != Team.None)
         {
             if(newState.check == Team.White)
@@ -108,26 +151,6 @@ public class HexamasterManager : MonoBehaviour
                     blackAgent?.AddReward(-0.2f);
             }
         }
-
-        Move m = BoardState.GetLastMove(board.turnHistory);
-        if(m.capturedPiece.HasValue)
-        {
-            // Reward the team that captured a piece, while punishing the team who's piece was captured
-            if(m.lastTeam == Team.White)
-            {
-                if(whiteAI)
-                    whiteAgent?.AddReward(0.1f);
-                if(blackAI)
-                    blackAgent?.AddReward(-0.1f);
-            }
-            else if(m.lastTeam == Team.Black)
-            {
-                if(whiteAI)
-                    whiteAgent?.AddReward(-0.1f);
-                if(blackAI)
-                    blackAgent?.AddReward(0.1f);
-            }
-        }
     
         Hexamaster agent = newState.currentMove switch {
             Team.White when whiteAI => whiteAgent,
@@ -135,9 +158,11 @@ public class HexamasterManager : MonoBehaviour
             _ => null
         };
 
+        agent?.CollectObservations(new VectorSensor(310));
         agent?.RequestDecision();
         // if(agent != null)
         // {
+        //     agent.CollectObservations(new VectorSensor(310));
         //     nextDecision = agent;
         //     decideAtTime = Time.timeSinceLevelLoad + decisionTime;
         // }

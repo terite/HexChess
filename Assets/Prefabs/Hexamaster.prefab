@@ -45,12 +45,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 310
+    VectorObservationSize: 360
     NumStackedVectorObservations: 1
     VectorActionSize: 6400000005000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
-  m_Model: {fileID: 5022602860645237092, guid: 04c42ff762e7252449c5167f6c699d12, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: fcf8e1a4d534e1f4b9c58633143e00db, type: 3}
   m_InferenceDevice: 0
   m_BehaviorType: 0
   m_BehaviorName: Hexamaster
@@ -73,3 +73,4 @@ MonoBehaviour:
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
   board: {fileID: 0}
+  parameters: {fileID: 9192594583234677469}
