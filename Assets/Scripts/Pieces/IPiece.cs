@@ -11,7 +11,6 @@ public interface IPiece
     Index location {get; set;}
     bool captured {get; set;}
     ushort value {get; set;}
-    IEnumerable<(Index target, MoveType moveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false);
     void MoveTo(Hex hex, Action action = null);
     void CancelMove();
     void Init(Team team, Piece piece, Index startingLocation);

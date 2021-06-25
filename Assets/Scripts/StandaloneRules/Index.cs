@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 [Serializable]
 public struct Index
@@ -10,6 +11,8 @@ public struct Index
 
     public int row;
     public int col;
+
+    public static readonly Index invalid = new Index(-1, -1);
 
     public Index(int rank, char file)
     {
@@ -46,7 +49,7 @@ public struct Index
         this.col = col;
     }
 
-    public int GetSingleVal() => int.Parse(string.Concat($"{row:D2}", $"{col}"));
+    public int GetSingleVal() => row < 0 || col < 0 ? -1 : int.Parse(string.Concat($"{row:D2}", $"{col}"));
 
     public bool IsInBounds
     {
@@ -95,6 +98,20 @@ public struct Index
         return null;
     }
 
+    public static IEnumerable<Index> GetAllIndices()
+    {
+        for(int row = 0; row <= maxRow; row++)
+        {
+            for(int col = 0; col <= maxCol; col++)
+            {
+                if(cols % 2 != 0 && col == cols - 1 && row % 2 == 0)
+                    continue;
+
+                yield return new Index(row, col);
+            }
+        }
+    }
+
     public override string ToString() => $"{row}, {col} ({GetKey()})";
 
     public override bool Equals(object obj) => 
@@ -112,5 +129,4 @@ public struct Index
 
     public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
     public static bool operator !=(Index a, Index b) => !(a==b);
-
 }

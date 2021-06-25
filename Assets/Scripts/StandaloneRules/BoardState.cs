@@ -90,7 +90,7 @@ public struct BoardState
     }
     public readonly bool IsOccupiedBy(Index index, (Team expectedTeam, Piece expectedPiece) expected)
     {
-        if (!TryGetPiece(index, out (Team actualTeam, Piece actualPiece) actual))
+        if(!TryGetPiece(index, out (Team actualTeam, Piece actualPiece) actual))
             return false;
 
         return expected == actual;
@@ -123,7 +123,7 @@ public struct BoardState
                 }
             }
 
-            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this);
+            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this, promotions);
             foreach((Index hex, MoveType moveType) in moves)
             {
                 if(moveType == MoveType.Attack && hex == otherKing)
@@ -155,7 +155,7 @@ public struct BoardState
             }
 
             Team enemyTeam = kvp.Key.team == Team.White ? Team.Black : Team.White;
-            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this);
+            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this, promotions);
             foreach (var potentialMove in pieceMoves)
             {
                 (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);

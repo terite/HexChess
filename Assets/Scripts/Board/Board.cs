@@ -34,6 +34,7 @@ public class Board : SerializedMonoBehaviour
     [OdinSerialize] public List<List<Hex>> hexes = new List<List<Hex>>();
     List<Hex> highlightedHexes = new List<Hex>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
+    public List<string> gamesToLoadLoc = new List<string>();
     [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
     public Color lastMoveHighlightColor;
     public float timeOffset {get; private set;} = 0f;
@@ -45,24 +46,27 @@ public class Board : SerializedMonoBehaviour
 
     // Used to write the default boardstate out to file
     [Button]
-    public void WriteTurnHistoryToFile()
+    public void WriteTurnHistoryToFile(string name)
     {
-        Game game = new Game(turnHistory, promotions);
+        List<BoardState> hist = new List<BoardState>();
+        hist.Add(GetCurrentBoardState());
+        Game game = new Game(hist, promotions);
         string json = game.Serialize();
-        File.WriteAllText("Assets/Resources/" + defaultBoardStateFileLoc + ".json", json);
-        Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
+        File.WriteAllText("Assets/Resources/" + name + ".json", json);
+        // Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
     }
     // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
 
-    private void Awake() => LoadDefaultBoard();
+    private void Awake() => ResetPieces();
     private void Start() => newTurn?.Invoke(turnHistory[turnHistory.Count - 1]);
-    public void LoadDefaultBoard() => LoadGame(GetDefaultGame(defaultBoardStateFileLoc));
+    public void LoadDefaultBoard() => LoadGame(GetGame(defaultBoardStateFileLoc));
 
     public bool CheckFiveFoldProgress(BoardState toCheck) => turnHistory.Any(state => state == toCheck);
+    public int GetFiveFoldProgress(BoardState toCheck) => turnHistory.Count(state => state == toCheck);
 
     public void SetBoardState(BoardState newState, List<Promotion> promos = null, int? turn = null)
     {
-        BoardState defaultBoard = GetDefaultGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
+        BoardState defaultBoard = GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
         promotions = promos == null ? new List<Promotion>() : promos;
         foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefab in piecePrefabs)
         {
@@ -239,8 +243,14 @@ public class Board : SerializedMonoBehaviour
         }
     }
 
-    public Game GetDefaultGame(string loc) =>
-        Game.Deserialize(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);
+    public Game GetGame(string loc) 
+    {
+        #if UNITY_EDITOR
+        AssetDatabase.Refresh();
+        #endif
+
+        return Game.Deserialize(((TextAsset)Resources.Load(loc, typeof(TextAsset))).text);        
+    }
 
     public Team GetCurrentTurn()
     {
@@ -253,6 +263,19 @@ public class Board : SerializedMonoBehaviour
     public BoardState GetCurrentBoardState() => turnHistoryPanel != null && turnHistoryPanel.TryGetCurrentBoardState(out BoardState state) 
         ? state 
         : turnHistory[turnHistory.Count - 1];
+
+    public BoardState ExecuteMove((IPiece piece, Index target, MoveType type) move, BoardState startState, bool isQuery = false)
+    {
+        if(move.type == MoveType.Attack || move.type == MoveType.Move)
+            return MovePiece(move.piece, move.target, startState, isQuery);
+        else if(move.type == MoveType.Defend && startState.TryGetPiece(move.target, out (Team team, Piece piece) otherPiece) && activePieces.ContainsKey(otherPiece))
+            return Swap(move.piece, activePieces[otherPiece], startState, isQuery);
+        else if(move.type == MoveType.EnPassant && startState.TryGetPiece(move.target, out (Team team, Piece piece) enemyPiece))
+            return EnPassant((Pawn)move.piece, enemyPiece.team, enemyPiece.piece, move.target, startState, isQuery);
+        return startState;
+    }
+
+    public BoardState QueryMove((IPiece piece, Index target, MoveType type) move, BoardState startState) => ExecuteMove(move, startState, true);
 
     public void AdvanceTurn(BoardState newState, bool updateTime = true, bool surpressAudio = false)
     {
@@ -475,6 +498,7 @@ public class Board : SerializedMonoBehaviour
                 IEnumerable<(Index, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
                 validMoves.AddRange(vm);
             }
+            // Debug.Log(validMoves.First().Item1.GetKey());
             if(validMoves.Count == 0)
                 newState.checkmate = otherTeam;
             else
@@ -491,6 +515,74 @@ public class Board : SerializedMonoBehaviour
                 return applicablePromos.First().to;
             return kvp.Key.Item2;
         });
+
+    public IEnumerable<(Index target, MoveType type)> InvalidateImpossibleMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
+    {
+        foreach(var possibleMove in possibleMoves)
+        {
+            (Index possibleHex, MoveType possibleMoveType) = possibleMove;
+
+            BoardState newState;
+            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
+                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
+            else if(possibleMoveType == MoveType.Defend)
+                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex]], boardState, true);
+            else if(possibleMoveType == MoveType.EnPassant)
+            {
+                Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
+                Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+                if(!enemyLoc.HasValue || !enemyStartLoc.HasValue)
+                {
+                    // Debug.LogError($"Invalid hex for EnPassant on {possibleHex}");
+                    yield return (Index.invalid, MoveType.None);
+                    continue;
+                }
+                if(!boardState.TryGetPiece(enemyLoc.Value, out (Team team, Piece piece) enemy))
+                {
+                    yield return (Index.invalid, MoveType.None);
+                    continue;
+                }
+
+                if(turnHistory.Count - 2 >= 0)
+                {
+                    BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
+                    if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                    {
+                        yield return (Index.invalid, MoveType.None);
+                        continue;
+                    }
+                    newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
+                }
+                else
+                {
+                    yield return (Index.invalid, MoveType.None);
+                    continue;
+                }
+
+            }
+            else if(possibleMoveType == MoveType.None)
+            {
+                yield return (possibleHex, possibleMoveType);
+                continue;
+            }
+            else
+            {
+                Debug.LogWarning($"Unhandled move type {possibleMoveType}");
+                yield return (Index.invalid, MoveType.None);
+                continue;
+            }
+
+            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
+
+            if(IsChecking(newState, otherTeam))
+            {
+                yield return (Index.invalid, MoveType.None);
+                continue;
+            }
+
+            yield return (possibleMove.target, possibleMove.moveType);
+        }
+    }
 
     public IEnumerable<(Index target, MoveType moveType)> ValidateMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
@@ -514,13 +606,21 @@ public class Board : SerializedMonoBehaviour
                 }
                 if(!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
                 {
-                    Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
+                    // Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
                     continue;
                 }
-                BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
-                if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                if(turnHistory.Count - 2 >= 0)
+                {
+                    BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
+                    if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
+                        continue;
+                    else
+                        newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
+                }
+                else
+                {
                     continue;
-                newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
+                }
             }
             else
             {
@@ -530,19 +630,36 @@ public class Board : SerializedMonoBehaviour
 
             Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
             // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if (!IsChecking(newState, otherTeam))
+            if(!IsChecking(newState, otherTeam))
                 yield return (possibleMove.target, possibleMove.moveType);
         }
     }
+
+    public List<(IPiece piece, Index target, MoveType moveType)> GetAllValidMovesForTeam(Team team, bool includeBlocking = false)
+    {
+        List<(IPiece piece, Index target, MoveType moveType)> moves = new List<(IPiece piece, Index target, MoveType moveType)>();
+        BoardState currentState = GetCurrentBoardState();
+        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
+        {
+            if(piece.Key.Item1 != team)
+                continue;
+            moves.AddRange(
+                GetAllValidMovesForPiece(piece.Value, currentState, includeBlocking)
+                .Select(move => (piece.Value, move.target, move.moveType))
+            );
+        }
+        return moves;
+    }
+
     public IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
-        IEnumerable<(Index, MoveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking);
+        IEnumerable<(Index, MoveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking);
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
     }
 
     public IEnumerable<Index> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
     {
-        IEnumerable<(Index target, MoveType moveType)> possibleMoves = piece.GetAllPossibleMoves(boardState, includeBlocking)
+        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking)
             .Where(kvp => kvp.target != null && kvp.target == hexIndex)
             .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
 
@@ -561,7 +678,7 @@ public class Board : SerializedMonoBehaviour
         return activePieces
         .Where(kvp => kvp.Key.Item1 == checkForTeam
             && boardState.allPiecePositions.ContainsKey(kvp.Key)
-            && kvp.Value.GetAllPossibleMoves(boardState)
+            && MoveGenerator.GetAllPossibleMoves(kvp.Value.location, kvp.Value.piece, kvp.Value.team, boardState, promotions)
                 .Any(move =>
                     move.Item2 == MoveType.Attack
                     && boardState.allPiecePositions.ContainsKey(move.Item1)
@@ -569,11 +686,9 @@ public class Board : SerializedMonoBehaviour
                 )
         ).Select(kvp => kvp.Value);
     }
-    
-    public bool IsChecking(BoardState boardState, Team checkForTeam)
-    {
-        return boardState.IsChecking(checkForTeam, promotions);
-    }
+
+    public bool IsChecking(BoardState boardState, Team checkForTeam) => 
+        boardState.IsChecking(checkForTeam, promotions);
 
     public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
@@ -591,6 +706,7 @@ public class Board : SerializedMonoBehaviour
             if(teamedPiece.occupyingTeam != piece.team || includeBlocking)
             {
                 takenPieceAtLocation = teamedPiece.occupyingType;
+                // Debug.Log($"{piece.team} : {piece.piece} at {piece.location.GetKey()} to capture {teamedPiece.occupyingTeam} : {teamedPiece.occupyingType} at {targetLocation.GetKey()}");
                 IPiece occupyingPiece = activePieces[teamedPiece];
 
                 // Capture the enemy piece
@@ -864,7 +980,7 @@ public class Board : SerializedMonoBehaviour
             timers == null ? false : timers.isClock
         );
 
-        gameOver.Invoke(game);
+        gameOver?.Invoke(game);
     }
 
     public void HighlightMove(Move move)
@@ -891,6 +1007,12 @@ public class Board : SerializedMonoBehaviour
         foreach(Hex hex in highlightedHexes)
             hex.Unhighlight();
         highlightedHexes.Clear();
+    }
+
+    public void ResetPieces() 
+    {
+        string lessonSet = gamesToLoadLoc[UnityEngine.Random.Range(0, gamesToLoadLoc.Count)];
+        LoadGame(GetGame(lessonSet));
     }
 
     public void Reset()

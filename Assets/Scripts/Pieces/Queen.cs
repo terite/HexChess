@@ -25,11 +25,6 @@ public class Queen : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
-    {
-        return MoveGenerator.GetAllPossibleQueenMoves(location, team, boardState, includeBlocking);
-    }
-
     public void MoveTo(Hex hex, Action action = null)
     {
         targetPos = hex.transform.position + Vector3.up;

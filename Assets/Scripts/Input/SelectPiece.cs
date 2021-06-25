@@ -115,6 +115,7 @@ public class SelectPiece : MonoBehaviour
         else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
             return;
 
+
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
         {
             if(hit.collider.TryGetComponent<TextMeshPro>(out TextMeshPro hitKey))
@@ -124,7 +125,6 @@ public class SelectPiece : MonoBehaviour
                 
                 keyHighlightedHexes = Enumerable.Empty<Hex>();
                 lastHoveredKey = null;
-                return;
             }
             
             if(lastHoveredKey == hitKey)
@@ -497,6 +497,10 @@ public class SelectPiece : MonoBehaviour
     {
         // Later allow players to queue a move, but for now, just prevent even clicking a piece when not their turn
         if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+            return;
+
+        // If the game is over, prevent any further moves
+        if(board.game.endType != GameEndType.Pending)
             return;
 
         // When moveing pieces on the board, we determine what piece is being moved by the hex the player is hovering

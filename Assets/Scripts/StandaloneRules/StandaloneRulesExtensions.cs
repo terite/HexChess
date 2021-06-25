@@ -38,11 +38,24 @@ namespace Extensions
 
         public static int GetMaterialValue(this Piece piece) => piece switch {
             Piece.Queen => 9,
-            Piece p when p == Piece.QueensRook || p == Piece.KingsRook => 5,
-            Piece p when p == Piece.QueensBishop || p == Piece.KingsBishop || p == Piece.QueensKnight || p == Piece.KingsKnight=> 3,
-            Piece p when p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire => 2,
-            Piece p when p >= Piece.Pawn1 => 1,
+            Piece p when (p == Piece.QueensRook || p == Piece.KingsRook) => 5,
+            Piece p when (p == Piece.QueensBishop || p == Piece.KingsBishop || p == Piece.QueensKnight) || p == Piece.KingsKnight=> 3,
+            Piece p when (p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire) => 2,
+            Piece p when (p >= Piece.Pawn1) => 1,
             _ => 0
         };
+
+        public static int GetMaxMoveCount(this Piece piece) => piece switch {
+            Piece.King => 6,
+            Piece.Queen => 58,
+            Piece p when (p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire) => 6,
+            Piece p when (p == Piece.KingsBishop || p == Piece.QueensBishop) => 32,
+            Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => 30,
+            Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => 12,
+            Piece p when (p >= Piece.Pawn1) => 4,
+            _ => 0
+        };
+
+        public static readonly Vector3 invalidMove = new Vector3(-1, -1, (int)MoveType.None);
     }
 }
