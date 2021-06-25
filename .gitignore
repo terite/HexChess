@@ -63,3 +63,4 @@ crashlytics-build.properties
 
 # ML-Agents run logs
 [Aa]ssets/results/**/run_logs
+[Aa]seets/results/**/**/*.pt
