@@ -88,6 +88,7 @@ Material:
     - _Height: 1
     - _HighlightPower: 0
     - _Metallic: 0
+    - _MouseRingSize: 0.003
     - _OcclusionStrength: 1
     - _QueueOffset: 0
     - _Radius: 1

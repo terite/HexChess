@@ -7,6 +7,8 @@ using UnityEngine.EventSystems;
 public class LiftOnHover : MonoBehaviour
 {
     [SerializeField] private Hex hex;
+    [SerializeField] private AudioSource source;
+    public List<AudioClip> clips = new List<AudioClip>();
     public Color orangeColor;
     private Color orgColor;
     public float raiseDuration = 0.333f;
@@ -46,6 +48,7 @@ public class LiftOnHover : MonoBehaviour
     public void Lift()
     {
         // y = toY;
+        source.PlayOneShot(clips[UnityEngine.Random.Range(0, clips.Count)]);
         transitioning = true;
         mode = TransitionMode.In;
         orgColor = hex.GetOutlineColor();
