@@ -9,7 +9,11 @@ public class MenuCamera : MonoBehaviour
     [SerializeField] private Camera cam;
     private LiftOnHover lastHovered;
     private void Update() {
-        if(Physics.Raycast(cam.ScreenPointToRay(Mouse.current.position.ReadValue()), out RaycastHit hit, 100))
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        
+        Vector2 scaledMousePos = new Vector2(mousePos.x / Screen.width, mousePos.y / Screen.height);
+        Shader.SetGlobalVector("_MousePos", scaledMousePos);
+        if(Physics.Raycast(cam.ScreenPointToRay(mousePos), out RaycastHit hit, 100))
         {
             if(hit.collider == null)
             {
