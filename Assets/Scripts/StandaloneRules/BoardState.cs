@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
-using UnityEngine;
-using UnityEngine.Serialization;
 using Extensions;
 
 public struct BoardState
 {
     public Team currentMove;
-    [FormerlySerializedAs("biDirPiecePositions")]
-    public BidirectionalDictionary<(Team, Piece), Index> allPiecePositions;
+    public BidirectionalDictionary<(Team team, Piece piece), Index> allPiecePositions;
 
     public Team check;
     public Team checkmate;
@@ -54,7 +51,7 @@ public struct BoardState
                 }
 
                 return new Move(
-                    turn: Mathf.FloorToInt((float)history.Count / 2f),
+                    turn: history.Count / 2,
                     lastTeam: kvp.Key.team,
                     lastPiece: kvp.Key.piece,
                     from: kvp.Value,
