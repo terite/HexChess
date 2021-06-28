@@ -253,7 +253,8 @@ public struct BoardState
 
                 }
 
-                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);
+                // What we promote to doesn't matter for the purpose of determining enemy checks
+                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions, Piece.Pawn1);
                 if (newState.IsChecking(enemyTeam, newPromotions))
                     continue;
 
@@ -275,16 +276,16 @@ public struct BoardState
 
     public (BoardState newState, List<Promotion> promotions) ApplyMove(Index start, Index target, MoveType moveType, Piece promoteTo, List<Promotion> promotions)
     {
-        return ApplyMove(allPiecePositions[start], start, (target, moveType), promotions);
+        return ApplyMove(allPiecePositions[start], start, (target, moveType), promotions, promoteTo);
     }
 
-    public (BoardState newState, List<Promotion> promotions) ApplyMove((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
+    public (BoardState newState, List<Promotion> promotions) ApplyMove((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions, Piece promoteTo)
     {
         switch (move.moveType)
         {
             case MoveType.Move:
             case MoveType.Attack:
-                return MoveOrAttack(piece, startLocation, move, promotions);
+                return MoveOrAttack(piece, startLocation, move, promotions, promoteTo);
             case MoveType.Defend:
                 return Defend(piece, startLocation, move, promotions);
             case MoveType.EnPassant:
@@ -294,17 +295,26 @@ public struct BoardState
         }
     }
 
-    public readonly (BoardState newState, List<Promotion> promotions) MoveOrAttack((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
+    public readonly (BoardState newState, List<Promotion> promotions) MoveOrAttack((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions, Piece promoteTo)
     {
         var newPositions = allPiecePositions.Clone();
         newPositions.Remove(startLocation);
         newPositions.Remove(move.target);
         newPositions.Add(piece, move.target);
 
-        // TODO: promotions
+        List<Promotion> newPromotions;
+        if (!promoteTo.IsPawn() && MoveGenerator.IsPromotionRank(piece.team, move.target))
+        {
+            newPromotions = (promotions == null) ? new List<Promotion>(1) : new List<Promotion>(promotions);
+            newPromotions.Add(new Promotion(piece.team, piece.piece, promoteTo, 1));
+        }
+        else
+        {
+            newPromotions = promotions;
+        }
 
         var newState = new BoardState(newPositions, currentMove.Enemy(), check, checkmate, executedAtTime);
-        return (newState, promotions);
+        return (newState, newPromotions);
     }
     public readonly (BoardState newState, List<Promotion> promotions) Defend((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
     {

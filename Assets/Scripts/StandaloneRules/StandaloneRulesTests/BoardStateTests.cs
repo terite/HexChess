@@ -177,7 +177,7 @@ public class BoardStateTests
 
     #region ApplyMove tests
     [Test]
-    public void SimpleMoveTest()
+    public void ApplyMove_MoveTest()
     {
         var bs = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
@@ -187,15 +187,33 @@ public class BoardStateTests
 
         (Team, Piece) piece = (Team.White, Piece.Pawn1);
         (Index target, MoveType) move = (new Index(2, 'E'), MoveType.Move);
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(piece, new Index(1, 'E'), move, null);
+        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(piece, new Index(1, 'E'), move, null, Piece.Pawn1);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(move.target, piece));
         Assert.False(newState.IsOccupied(new Index(1, 'E')));
     }
+    [Test]
+    public void ApplyMove_PromotionTest()
+    {
+        var bs = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(8, 'E'), Team.White, Piece.Pawn1),
+        });
+
+        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(new Index(8, 'E'), new Index(9, 'E'), MoveType.Move, Piece.Queen, null);
+
+        Assert.AreEqual(promotions[0], new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 1));
+        Assert.AreEqual(1, promotions.Count);
+
+        Assert.NotNull(promotions);
+        Assert.True(newState.IsOccupiedBy(new Index(9, 'E'), (Team.White, Piece.Pawn1)));
+        Assert.False(newState.IsOccupied(new Index(8, 'E')));
+    }
 
     [Test]
-    public void SimpleAttackTest()
+    public void ApplyMove_AttackTest()
     {
         Index victimLocation = new Index(5, 'E');
         Index attackerLocation = new Index(1, 'E');
@@ -209,7 +227,7 @@ public class BoardStateTests
 
         (Index target, MoveType) move = (victimLocation, MoveType.Attack);
         var attacker = bs.allPiecePositions[attackerLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation, move, null);
+        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation, move, null, Piece.Pawn1);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(move.target, attacker));
@@ -217,7 +235,7 @@ public class BoardStateTests
     }
 
     [Test]
-    public void SimpleDefendTest()
+    public void ApplyMove_DefendTest()
     {
         Index victimLocation = new Index(2, 'E');
         Index defenderLocation = new Index(1, 'E');
@@ -231,7 +249,7 @@ public class BoardStateTests
         (Index target, MoveType) move = (victimLocation, MoveType.Defend);
         var defender = bs.allPiecePositions[defenderLocation];
         var victim = bs.allPiecePositions[victimLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(defender, defenderLocation, move, null);
+        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(defender, defenderLocation, move, null, Piece.Pawn1);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(victimLocation, defender));
@@ -239,7 +257,7 @@ public class BoardStateTests
     }
 
     [Test]
-    public void SimpleEnPassantTest()
+    public void ApplyMove_EnPassantTest()
     {
         Index attackerLocation = new Index(6, 'B');
         Index victimLocation = new Index(6, 'A');
@@ -254,7 +272,7 @@ public class BoardStateTests
         (Index target, MoveType) move = (victimLocation.GetNeighborAt(HexNeighborDirection.Up)!.Value, MoveType.EnPassant);
         var victim = bs.allPiecePositions[victimLocation];
         var attacker = bs.allPiecePositions[attackerLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation , move, null);
+        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation , move, null, Piece.Pawn1);
 
         Assert.Null(promotions);
         Assert.False(newState.IsOccupied(attackerLocation));
