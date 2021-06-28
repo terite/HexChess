@@ -7,7 +7,13 @@ using Extensions;
 
 public class BoardStateTests
 {
+    static readonly Team[] Teams = new Team[] { Team.White, Team.Black };
+
     private static BoardState CreateBoardState(IEnumerable<(Index location, Team team, Piece piece)>? pieces)
+    {
+        return CreateBoardState(Team.White, pieces);
+    }
+    private static BoardState CreateBoardState(Team toMove, IEnumerable<(Index location, Team team, Piece piece)>? pieces)
     {
         var allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>();
         if (pieces != null)
@@ -18,19 +24,19 @@ public class BoardStateTests
             }
         }
 
-        return new BoardState(allPiecePositions, Team.White, Team.None, Team.None, 0);
+        return new BoardState(allPiecePositions, toMove, Team.None, Team.None, 0);
     }
 
     #region IsChecking tests
     [Test]
-    public void NoPiecesTest()
+    public void IsChecking_NoPiecesTest()
     {
         var bs = CreateBoardState(Array.Empty<(Index, Team, Piece)>());
         Assert.False(bs.IsChecking(Team.White, null));
         Assert.False(bs.IsChecking(Team.Black, null));
     }
     [Test]
-    public void KingOnlyNoCheckTest()
+    public void IsChecking_KingOnlyNoCheckTest()
     {
         var bs = CreateBoardState(new[] {
             (new Index(1, 'E'), Team.White, Piece.King),
@@ -42,7 +48,7 @@ public class BoardStateTests
     }
 
     [Test]
-    public void KingCheckEachOtherTest()
+    public void IsChecking_KingCheckEachOtherTest()
     {
         var bs = CreateBoardState(new[] {
             (new Index(5, 'E'), Team.White, Piece.King),
@@ -54,7 +60,7 @@ public class BoardStateTests
     }
 
     [Test]
-    public void PawnCheckTest()
+    public void IsChecking_PawnCheckTest()
     {
         var bs = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
@@ -65,9 +71,96 @@ public class BoardStateTests
         Assert.True(bs.IsChecking(Team.White, null));
         Assert.False(bs.IsChecking(Team.Black, null));
     }
+    
+    [Test]
+    public void IsChecking_BishopCheckTest()
+    {
+        var bs1 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(7, 'A'), Team.White, Piece.KingsBishop),
+        });
+        Assert.True(bs1.IsChecking(Team.White, null));
+
+        var bs2 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(7, 'A'), Team.White, Piece.KingsBishop),
+            (new Index(7, 'B'), Team.White, Piece.KingsRook), // blocking bishop
+        });
+        Assert.False(bs2.IsChecking(Team.White, null));
+    }
 
     [Test]
-    public void PawnPromotionCheckTest()
+    public void IsChecking_RookCheckTest()
+    {
+        var bs1 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(5, 'A'), Team.White, Piece.KingsRook),
+        });
+        Assert.True(bs1.IsChecking(Team.White, null));
+
+        var bs2 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(5, 'B'), Team.White, Piece.KingsRook),
+        });
+        Assert.False(bs2.IsChecking(Team.White, null));
+
+        var bs3 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(5, 'A'), Team.White, Piece.KingsRook),
+            (new Index(5, 'C'), Team.White, Piece.Pawn5), // blocks rook
+        });
+        Assert.False(bs3.IsChecking(Team.White, null));
+    }
+    [Test]
+    public void IsChecking_KnightCheckTest()
+    {
+        var bs1 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(5, 'H'), Team.White, Piece.KingsKnight),
+        });
+        Assert.True(bs1.IsChecking(Team.White, null));
+
+        var bs2 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(4, 'H'), Team.White, Piece.KingsKnight),
+        });
+        Assert.False(bs2.IsChecking(Team.White, null));
+
+        var bs3 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(5, 'H'), Team.Black, Piece.KingsKnight), // Knight on same team as king
+        });
+        Assert.False(bs3.IsChecking(Team.White, null));
+
+    }
+    [Test]
+    public void IsChecking_SquireCheckTest()
+    {
+        var bs1 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(4, 'F'), Team.White, Piece.WhiteSquire),
+        });
+        Assert.True(bs1.IsChecking(Team.White, null));
+
+        var bs2 = CreateBoardState(new[] {
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(5, 'E'), Team.Black, Piece.King),
+            (new Index(4, 'G'), Team.White, Piece.WhiteSquire),
+        });
+        Assert.False(bs2.IsChecking(Team.White, null));
+    }
+
+    [Test]
+    public void IsChecking_PawnPromotionCheckTest()
     {
         var bs = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
@@ -177,35 +270,64 @@ public class BoardStateTests
     public void AnyValid_EmptyBoardTest()
     {
         var board1 = CreateBoardState(null);
-        Assert.False(board1.HasAnyValidMoves(Team.White, null));
-        Assert.False(board1.HasAnyValidMoves(Team.Black, null));
+        Assert.False(board1.HasAnyValidMoves(Team.White, null, default));
+        Assert.False(board1.HasAnyValidMoves(Team.Black, null, default));
 
         var board2 = CreateBoardState(new[] {
             (new Index(5, 'E'), Team.White, Piece.King),
         });
 
-        Assert.True(board2.HasAnyValidMoves(Team.White, null));
-        Assert.False(board2.HasAnyValidMoves(Team.Black, null));
+        Assert.True(board2.HasAnyValidMoves(Team.White, null, default));
+        Assert.False(board2.HasAnyValidMoves(Team.Black, null, default));
 
         var board3 = CreateBoardState(new[] {
             (new Index(5, 'E'), Team.Black, Piece.King),
         });
 
-        Assert.False(board3.HasAnyValidMoves(Team.White, null));
-        Assert.True(board3.HasAnyValidMoves(Team.Black, null));
+        Assert.False(board3.HasAnyValidMoves(Team.White, null, default));
+        Assert.True(board3.HasAnyValidMoves(Team.Black, null, default));
     }
 
     [Test]
-    public void AnyValid_BlackStalemateTest()
+    public void AnyValid_StalemateTest([ValueSource(nameof(Teams))] Team attacker)
     {
-        var bs = CreateBoardState(new[] {
-            (new Index(9, 'A'), Team.White, Piece.King),
-            (new Index(3, 'B'), Team.White, Piece.Queen),
-            (new Index(1, 'A'), Team.Black, Piece.King),
+        Team defender = attacker.Enemy();
+        var bs = CreateBoardState(defender, new[] {
+            (new Index(9, 'A'), attacker, Piece.King),
+            (new Index(3, 'B'), attacker, Piece.Queen),
+            (new Index(1, 'A'), defender, Piece.King),
         });
-        Assert.True(bs.HasAnyValidMoves(Team.White, null));
-        Assert.False(bs.HasAnyValidMoves(Team.Black, null));
+        Assert.False(bs.HasAnyValidMoves(defender, null, default));
     }
 
+    #endregion
+
+    #region Move generation and validation
+
+    [Test]
+    public void ValidateEnPassantTest()
+    {
+        // White pawn C2 -> C4
+        var state1 = CreateBoardState(Team.White, new[] {
+            (new Index(9, 'I'), Team.Black, Piece.King),
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(2, 'C'), Team.White, Piece.Pawn1),
+            (new Index(4, 'B'), Team.Black, Piece.Pawn1),
+        });
+        // Black pawn on B4 can enpassant -> C3
+        var state2 = CreateBoardState(Team.Black, new[] {
+            (new Index(9, 'I'), Team.Black, Piece.King),
+            (new Index(1, 'A'), Team.White, Piece.King),
+            (new Index(4, 'C'), Team.White, Piece.Pawn1),
+            (new Index(4, 'B'), Team.Black, Piece.Pawn1),
+        });
+
+        var enPassantMove = (new Index(4, 'B'), new Index(3, 'C'), MoveType.EnPassant, Piece.Pawn1);
+        var moves = state2.GenerateAllValidMoves(Team.Black, null, state1).ToArray();
+        Assert.That(moves, Has.Member(enPassantMove));
+
+        moves = state2.GenerateAllValidMoves(Team.Black, null, state2).ToArray();
+        Assert.That(moves, Has.No.Member(enPassantMove));
+    }
     #endregion
 }
