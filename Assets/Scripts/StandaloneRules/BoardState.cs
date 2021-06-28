@@ -268,6 +268,24 @@ public struct BoardState
             executedAtTime = boardstate.executedAtTime
         };
     }
+
+    public Piece GetRealPiece(Index index, List<Promotion> promotions)
+    {
+        return GetRealPiece(allPiecePositions[index], promotions);
+    }
+    public static Piece GetRealPiece((Team team, Piece piece) piece, List<Promotion> promotions)
+    {
+        if (promotions != null && piece.piece >= Piece.Pawn1)
+            foreach (var promotion in promotions)
+            {
+                if (promotion.from == piece.piece && promotion.team == piece.team)
+                {
+                    return promotion.to;
+                }
+            }
+
+        return piece.piece;
+    }
 }
 
 [System.Serializable]
