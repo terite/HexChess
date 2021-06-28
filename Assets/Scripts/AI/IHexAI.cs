@@ -1,4 +1,7 @@
+using System.Threading.Tasks;
+
 public interface IHexAI
 {
-    public HexAIMove GetMove(Board board);
+    public Task<HexAIMove> GetMove(Board board);
+    public void CancelMove();
 }

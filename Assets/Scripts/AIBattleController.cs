@@ -7,9 +7,6 @@ using Extensions;
 
 public class AIBattleController : MonoBehaviour
 {
-    // Turn to false for easier debugging
-    public static bool asyncMove = true;
-
     public float MinimumTurnTimeSec = 1f;
 
 
@@ -127,14 +124,7 @@ public class AIBattleController : MonoBehaviour
             moveRequestedAt = Time.timeSinceLevelLoad;
             moveRequestedFor = currentMoveFor;
 
-            if (!asyncMove)
-            {
-                pendingMove = Task.FromResult(ai.GetMove(board));
-            }
-            else
-            {
-                pendingMove = Task.Run(() => ai.GetMove(board));
-            }
+            pendingMove = ai.GetMove(board);
         }
     }
 
@@ -223,4 +213,12 @@ public class AIBattleController : MonoBehaviour
         return;
     }
     #endregion
+
+    private void OnDestroy()
+    {
+        if (whiteAI != null)
+            whiteAI.CancelMove();
+        if (blackAI != null)
+            blackAI.CancelMove();
+    }
 }

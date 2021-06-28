@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 public class TeriteAI : IHexAI
 {
@@ -19,6 +20,7 @@ public class TeriteAI : IHexAI
     readonly int maxSearchDepth;
 
     readonly List<FastMove>[] moveCache;
+    volatile bool cancellationRequested;
 
     public TeriteAI() : this(4)
     {
@@ -32,10 +34,14 @@ public class TeriteAI : IHexAI
         for (int i = 0; i < moveCache.Length; i++)
             moveCache[i] = new List<FastMove>(100);
     }
-    public HexAIMove GetMove(Board board)
+    public Task<HexAIMove> GetMove(Board board)
     {
+        cancellationRequested = false;
         var root = new FastBoardNode(board.GetCurrentBoardState(), board.promotions);
-        return GetMove(root).ToHexMove();
+        return Task.Run(() =>
+        {
+            return GetMove(root).ToHexMove();
+        });
     }
 
     public FastMove GetMove(FastBoardNode root)
@@ -97,6 +103,9 @@ public class TeriteAI : IHexAI
 
         foreach (var move in moves)
         {
+            if (cancellationRequested)
+                return (0, FastMove.Invalid);
+
             applyTimer.Start();
             node.DoMove(move);
             applyTimer.Stop();
@@ -157,6 +166,9 @@ public class TeriteAI : IHexAI
 
         foreach (var move in moves)
         {
+            if (cancellationRequested)
+                return 0;
+
             applyTimer.Start();
             node.DoMove(move);
             applyTimer.Stop();
@@ -382,8 +394,8 @@ public class TeriteAI : IHexAI
         }
     }
 
-    static readonly List<FastMove> threatMoveCache = new List<FastMove>();
-    static void EvaluateThreats(FastBoardNode node, out BitsBoard whiteThreats, out BitsBoard blackThreats, out BitsBoard whitePawnThreats, out BitsBoard blackPawnThreats)
+    readonly List<FastMove> threatMoveCache = new List<FastMove>();
+    void EvaluateThreats(FastBoardNode node, out BitsBoard whiteThreats, out BitsBoard blackThreats, out BitsBoard whitePawnThreats, out BitsBoard blackPawnThreats)
     {
         whiteThreats = new BitsBoard();
         blackThreats = new BitsBoard();
@@ -423,4 +435,9 @@ public class TeriteAI : IHexAI
     }
 
     #endregion
+
+    public void CancelMove()
+    {
+        cancellationRequested = true;
+    }
 }
