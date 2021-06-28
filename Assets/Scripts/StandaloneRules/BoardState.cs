@@ -98,70 +98,184 @@ public struct BoardState
     /// </summary>
     /// <param name="checkForTeam"></param>
     /// <returns>true if the enemy king is threatened</returns>
-    public bool IsChecking(Team checkForTeam, IEnumerable<Promotion> promotions)
+    public bool IsChecking(Team checkForTeam, List<Promotion> promotions)
     {
-        Team otherTeam = checkForTeam == Team.White ? Team.Black : Team.White;
-        Index otherKing = allPiecePositions.Where(kvp => kvp.Key == (otherTeam, Piece.King)).Select(kvp => kvp.Value).FirstOrDefault();
+        Team enemy = checkForTeam.Enemy();
 
-        foreach (KeyValuePair<(Team team, Piece piece), Index> kvp in allPiecePositions)
+        if (!allPiecePositions.TryGetValue((enemy, Piece.King), out Index enemyKingLoc))
+            return false;
+
+        foreach (var rayDirection in EnumArray<HexNeighborDirection>.Values)
         {
-            if (kvp.Key.team != checkForTeam) continue;
-
-            Piece realPiece = kvp.Key.piece;
-            if (promotions != null)
+            Index? hex = enemyKingLoc;
+            (Team team, Piece piece) occupier;
+            bool isBishopDirection = rayDirection switch
             {
-                foreach (Promotion promo in promotions)
+                HexNeighborDirection.Up => false,
+                HexNeighborDirection.Down => false,
+                _ => true
+            };
+
+            bool isRookDirection = !isBishopDirection;
+
+            bool isPawnDirection = rayDirection switch
+            {
+                HexNeighborDirection.DownLeft => checkForTeam == Team.White,
+                HexNeighborDirection.DownRight => checkForTeam == Team.White,
+                HexNeighborDirection.UpLeft => checkForTeam != Team.White,
+                HexNeighborDirection.UpRight => checkForTeam != Team.White,
+                _ => false
+            };
+
+            for (int distance = 1; distance < 20; distance++)
+            {
+                hex = hex.Value.GetNeighborAt(rayDirection);
+                if (!hex.HasValue)
+                    break;
+
+                if (allPiecePositions.TryGetValue(hex.Value, out occupier))
                 {
-                    if (promo.team == checkForTeam && promo.from == realPiece)
+                    if (occupier.team == checkForTeam)
                     {
-                        realPiece = promo.to;
-                        break;
+
+                        Piece realPiece = GetRealPiece(occupier, promotions);
+
+                        if (distance == 1)
+                        {
+                            if (isPawnDirection && realPiece.IsPawn())
+                                return true;
+
+                            if (realPiece == Piece.King)
+                                return true;
+                        }
+
+                        if (isBishopDirection && (realPiece.IsBishop() || realPiece == Piece.Queen))
+                            return true;
+
+                        if (isRookDirection && (realPiece.IsRook() || realPiece == Piece.Queen))
+                            return true;
+
                     }
+                    break;
                 }
             }
+        }
 
-            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this);
-            foreach((Index hex, MoveType moveType) in moves)
+        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleSquireMoves(enemyKingLoc, enemy, this))
+        {
+            if (move.moveType == MoveType.Attack && TryGetPiece(move.target, out var occupier))
             {
-                if(moveType == MoveType.Attack && hex == otherKing)
+                Piece realPiece = GetRealPiece(occupier, promotions);
+                if (realPiece.IsSquire())
                     return true;
+            }
+        }
+
+        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleKnightMoves(enemyKingLoc, enemy, this))
+        {
+            if (move.moveType == MoveType.Attack && TryGetPiece(move.target, out var occupier))
+            {
+                Piece realPiece = GetRealPiece(occupier, promotions);
+                if (realPiece.IsKnight())
+                    return true;
+            }
+        }
+
+        for (int i = 1; i < 20; ++i) // Queen/Rook slide left
+        {
+            Index hex = new Index(enemyKingLoc.row, enemyKingLoc.col - i);
+            if (!hex.IsInBounds)
+                break;
+
+            if (TryGetPiece(hex, out (Team team, Piece piece) occupier))
+            {
+                if (occupier.team == checkForTeam)
+                {
+                    Piece realPiece = GetRealPiece(occupier, promotions);
+                    if (realPiece.IsRook() || realPiece == Piece.Queen)
+                        return true;
+                }
+                break;
+            }
+        }
+
+        for (int i = 1; i < 20; i++) // Queen/Rook slide right
+        {
+            Index hex = new Index(enemyKingLoc.row, enemyKingLoc.col + i);
+            if (!hex.IsInBounds)
+                break;
+
+            if (TryGetPiece(hex, out (Team team, Piece piece) occupier))
+            {
+                if (occupier.team == checkForTeam)
+                {
+                    Piece realPiece = GetRealPiece(occupier, promotions);
+                    if (realPiece.IsRook() || realPiece == Piece.Queen)
+                        return true;
+                }
+                break;
             }
         }
 
         return false;
     }
 
-    public bool HasAnyValidMoves(Team checkForTeam, List<Promotion> promotions)
+    public bool HasAnyValidMoves(Team checkForTeam, List<Promotion> promotions, BoardState previousState)
     {
+        return GenerateAllValidMoves(checkForTeam, promotions, previousState).Any();
+    }
+    public IEnumerable<(Index start, Index target, MoveType moveType, Piece promoteTo)> GenerateAllValidMoves(Team checkForTeam, List<Promotion> promotions, BoardState previousState)
+    {
+        Team enemyTeam = checkForTeam.Enemy();
         foreach (KeyValuePair<(Team team, Piece piece), Index> kvp in allPiecePositions)
         {
             if (kvp.Key.team != checkForTeam)
                 continue;
 
-            Piece realPiece = kvp.Key.piece;
-            if (promotions != null)
+            Piece realPiece = GetRealPiece(kvp.Key, promotions);
+            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this);
+            foreach ((Index target, MoveType moveType) potentialMove in pieceMoves)
             {
-                foreach (Promotion promo in promotions)
+                if (potentialMove.moveType == MoveType.EnPassant)
                 {
-                    if (promo.team == checkForTeam && promo.from == realPiece)
-                    {
-                        realPiece = promo.to;
-                        break;
-                    }
+                    if (!potentialMove.target.TryGetNeighbor(checkForTeam == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down, out Index enemyStartLoc))
+                        continue;
+
+                    if (IsOccupied(enemyStartLoc))
+                        continue;
+
+                    if (!previousState.TryGetPiece(enemyStartLoc, out var victim))
+                        continue;
+
+                    Piece realVictim = previousState.GetRealPiece(enemyStartLoc, promotions);
+                    if (!realVictim.IsPawn())
+                        continue;
+
+                }
+
+                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);
+                if (newState.IsChecking(enemyTeam, newPromotions))
+                    continue;
+
+                if (realPiece.IsPawn() && MoveGenerator.IsPromotionRank(checkForTeam, potentialMove.target))
+                {
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Queen);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensBishop);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensRook);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensKnight);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.BlackSquire);
+                }
+                else
+                {
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Pawn1);
                 }
             }
-
-            Team enemyTeam = kvp.Key.team == Team.White ? Team.Black : Team.White;
-            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this);
-            foreach (var potentialMove in pieceMoves)
-            {
-                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);
-                if (!newState.IsChecking(enemyTeam, newPromotions))
-                    return true;
-            }
         }
+    }
 
-        return false;
+    public (BoardState newState, List<Promotion> promotions) ApplyMove(Index start, Index target, MoveType moveType, Piece promoteTo, List<Promotion> promotions)
+    {
+        return ApplyMove(allPiecePositions[start], start, (target, moveType), promotions);
     }
 
     public (BoardState newState, List<Promotion> promotions) ApplyMove((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
@@ -189,7 +303,7 @@ public struct BoardState
 
         // TODO: promotions
 
-        var newState = new BoardState(newPositions, currentMove, check, checkmate, executedAtTime);
+        var newState = new BoardState(newPositions, currentMove.Enemy(), check, checkmate, executedAtTime);
         return (newState, promotions);
     }
     public readonly (BoardState newState, List<Promotion> promotions) Defend((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
@@ -201,7 +315,7 @@ public struct BoardState
         newPositions.Add(piece, move.target);
         newPositions.Add(targetPiece, startLocation);
 
-        var newState = new BoardState(newPositions, currentMove, check, checkmate, executedAtTime);
+        var newState = new BoardState(newPositions, currentMove.Enemy(), check, checkmate, executedAtTime);
         return (newState, promotions);
     }
     public readonly (BoardState newState, List<Promotion> promotions) EnPassant((Team team, Piece piece) piece, Index startLocation, (Index target, MoveType moveType) move, List<Promotion> promotions)
@@ -213,7 +327,7 @@ public struct BoardState
         newPositions.Remove(victimLocation);
         newPositions.Add(piece, move.target);
 
-        var newState = new BoardState(newPositions, currentMove, check, checkmate, executedAtTime);
+        var newState = new BoardState(newPositions, currentMove.Enemy(), check, checkmate, executedAtTime);
         return (newState, promotions);
     }
 
