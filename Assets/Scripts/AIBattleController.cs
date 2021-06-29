@@ -137,6 +137,17 @@ public class AIBattleController : MonoBehaviour
         {
             Debug.Log("Game Completed!");
             isGameRunning = false;
+            return;
+        }
+
+        if (pendingMove != null)
+        {
+            Debug.LogWarning($"Clearning pending move for {moveRequestedFor}");
+            pendingMove = null;
+            if (moveRequestedFor == Team.White && whiteAI != null)
+                whiteAI.CancelMove();
+            else if (moveRequestedFor == Team.Black && blackAI != null)
+                blackAI.CancelMove();
         }
     }
 
@@ -170,7 +181,6 @@ public class AIBattleController : MonoBehaviour
 
     private void ApplyMoveOrAttack(IPiece piece, HexAIMove move)
     {
-        // TODO: promote on odd square
         BoardState newState;
         if((piece is Pawn pawn) && !move.promoteTo.IsPawn())
         {

@@ -73,4 +73,48 @@ public class FastBoardNodeTests
         Assert.That(moves, Has.No.Member(new FastMove(new Index(3, 'C'), new Index(2, 'E'), MoveType.Move)));
         Assert.That(moves, Has.No.Member(new FastMove(new Index(3, 'C'), new Index(1, 'G'), MoveType.Attack)));
     }
+
+    [Test]
+    public void IsChecking_KnightAttack([ValueSource(nameof(Teams))] Team attacker)
+    {
+        Team defender = attacker.Enemy();
+        var board = CreateBoardNode(attacker, new[]
+        {
+            (attacker, Piece.King, new Index(1, 'C')),
+            (defender, Piece.King, new Index(1, 'G')),
+            (attacker, Piece.QueensKnight, new Index(4, 'F')),
+        });
+
+        Assert.True(board.IsChecking(attacker));
+        Assert.IsFalse(board.IsChecking(defender));
+    }
+    [Test]
+    public void IsChecking_KnightAttackEdge([ValueSource(nameof(Teams))] Team attacker)
+    {
+        Team defender = attacker.Enemy();
+        var board = CreateBoardNode(attacker, new[]
+        {
+            (attacker, Piece.King, new Index(1, 'C')),
+            (defender, Piece.King, new Index(1, 'G')),
+            (attacker, Piece.QueensKnight, new Index(1, 'D')),
+        });
+
+        Assert.True(board.IsChecking(attacker));
+        Assert.IsFalse(board.IsChecking(defender));
+    }
+
+    [Test]
+    public void IsChecking_SquireAttack([ValueSource(nameof(Teams))] Team attacker)
+    {
+        Team defender = attacker.Enemy();
+        var board = CreateBoardNode(attacker, new[]
+        {
+            (attacker, Piece.King, new Index(1, 'C')),
+            (defender, Piece.King, new Index(1, 'G')),
+            (attacker, Piece.BlackSquire, new Index(1, 'E')),
+        });
+
+        Assert.True(board.IsChecking(attacker));
+        Assert.IsFalse(board.IsChecking(defender));
+    }
 }

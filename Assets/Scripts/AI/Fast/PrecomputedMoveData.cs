@@ -44,20 +44,31 @@ public static class PrecomputedMoveData
 
     static IEnumerable<FastIndex> GenerateAllPossibleKnightMoves(FastIndex start)
     {
+        FastIndex left = start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft];
+        if (!left.IsInBounds)
+            left = start[HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft];
+
+        FastIndex right = start[HexNeighborDirection.UpRight][HexNeighborDirection.DownRight];
+        if (!right.IsInBounds)
+            right = start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight];
+
         var possibleMoves = new FastIndex[]
         {
             start[HexNeighborDirection.Up][HexNeighborDirection.Up][HexNeighborDirection.UpLeft],
             start[HexNeighborDirection.Up][HexNeighborDirection.Up][HexNeighborDirection.UpRight],
+            start[HexNeighborDirection.UpLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.Up],
             start[HexNeighborDirection.UpRight][HexNeighborDirection.UpRight][HexNeighborDirection.Up],
-            start[HexNeighborDirection.UpRight][HexNeighborDirection.UpRight][HexNeighborDirection.DownRight],
-            start[HexNeighborDirection.DownRight][HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
-            start[HexNeighborDirection.DownRight][HexNeighborDirection.DownRight][HexNeighborDirection.Down],
+
             start[HexNeighborDirection.Down][HexNeighborDirection.Down][HexNeighborDirection.DownRight],
             start[HexNeighborDirection.Down][HexNeighborDirection.Down][HexNeighborDirection.DownLeft],
             start[HexNeighborDirection.DownLeft][HexNeighborDirection.DownLeft][HexNeighborDirection.Down],
-            start[HexNeighborDirection.DownLeft][HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft],
-            start[HexNeighborDirection.UpLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
-            start[HexNeighborDirection.UpLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.Up],
+            start[HexNeighborDirection.DownRight][HexNeighborDirection.DownRight][HexNeighborDirection.Down],
+
+            left[HexNeighborDirection.UpLeft],
+            left[HexNeighborDirection.DownLeft],
+
+            right[HexNeighborDirection.UpRight],
+            right[HexNeighborDirection.DownRight],
         };
 
         foreach (var index in possibleMoves)
@@ -78,14 +89,22 @@ public static class PrecomputedMoveData
 
     static IEnumerable<FastIndex> GenerateAllPossibleSquireMoves(FastIndex start)
     {
+        FastIndex left = start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft];
+        if (!left.IsInBounds)
+            left = start[HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft];
+
+        FastIndex right = start[HexNeighborDirection.UpRight][HexNeighborDirection.DownRight];
+        if (!right.IsInBounds)
+            right = start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight];
+
         var possibleMoves = new FastIndex[]
         {
             start[HexNeighborDirection.Up][HexNeighborDirection.UpLeft],
-            start[HexNeighborDirection.UpRight][HexNeighborDirection.Up],
-            start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
+            start[HexNeighborDirection.Up][HexNeighborDirection.UpRight],
             start[HexNeighborDirection.Down][HexNeighborDirection.DownRight],
-            start[HexNeighborDirection.DownLeft][HexNeighborDirection.Down],
-            start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
+            start[HexNeighborDirection.Down][HexNeighborDirection.DownLeft],
+            left,
+            right,
         };
 
         foreach (var index in possibleMoves)
