@@ -23,25 +23,7 @@ public static class MoveGenerator
         Piece.BlackSquire,
     };
 
-    public static readonly HexNeighborDirection[,] SquireOffsets = new HexNeighborDirection[6,2] {
-        { HexNeighborDirection.Up, HexNeighborDirection.UpLeft },
-        { HexNeighborDirection.UpRight, HexNeighborDirection.Up },
-        { HexNeighborDirection.DownRight, HexNeighborDirection.UpRight },
-        { HexNeighborDirection.Down, HexNeighborDirection.DownRight },
-        { HexNeighborDirection.DownLeft, HexNeighborDirection.Down },
-        { HexNeighborDirection.UpLeft, HexNeighborDirection.DownLeft },
-    };
-
-    public static readonly HexNeighborDirection[,] KnightOffsets = new HexNeighborDirection[6,3] {
-        { HexNeighborDirection.Up, HexNeighborDirection.UpLeft, HexNeighborDirection.UpRight },
-        { HexNeighborDirection.UpRight, HexNeighborDirection.Up, HexNeighborDirection.DownRight },
-        { HexNeighborDirection.DownRight, HexNeighborDirection.UpRight, HexNeighborDirection.Down},
-        { HexNeighborDirection.Down, HexNeighborDirection.DownRight, HexNeighborDirection.DownLeft },
-        { HexNeighborDirection.DownLeft, HexNeighborDirection.Down, HexNeighborDirection.UpLeft },
-        { HexNeighborDirection.UpLeft, HexNeighborDirection.DownLeft, HexNeighborDirection.Up },
-    };
-
-    public static IEnumerable<(Index target, MoveType moveType)> GetAllPossibleMoves(Index location, Piece piece, Team team, BoardState boardState, bool includeBlocking = false)
+    public static IEnumerable<(Index, MoveType)> GetAllPossibleMoves(Index location, Piece piece, Team team, BoardState boardState, bool includeBlocking = false)
     {
         switch (piece)
         {
@@ -89,10 +71,14 @@ public static class MoveGenerator
             if(boardState.TryGetPiece(index, out (Team team, Piece piece) occupier))
             {
                 if(includeBlocking || occupier.team != team)
+                {
                     yield return (index, MoveType.Attack);
+                    continue;
+                }
+                else
+                    continue;
             }
-            else
-                yield return (index, MoveType.Move);
+            yield return (index, MoveType.Move);
         }
     }
 
@@ -116,8 +102,10 @@ public static class MoveGenerator
 
             if(boardState.TryGetPiece(index, out (Team team, Piece piece) occupier))
             {
-                if (occupier.team != team || includeBlocking)
-                    yield return (index, MoveType.Attack);
+                if (occupier.team == team && !includeBlocking)
+                    continue;
+
+                yield return (index, MoveType.Attack);
             }
             else
                 yield return (index, MoveType.Move);
@@ -344,12 +332,11 @@ public static class MoveGenerator
             yield return (rightAttack.Value, MoveType.Attack);
 
         // Check en passant
-        // TODO: only generate when on passant ranks
         Index? leftPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownLeft : HexNeighborDirection.UpLeft);
         Index? rightPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownRight : HexNeighborDirection.UpRight);
-        if(leftPassant.HasValue && leftAttack.HasValue && !boardState.IsOccupied(leftAttack.Value) && PawnCanPassant(team, leftPassant.Value, boardState))
+        if(leftPassant.HasValue && PawnCanPassant(team, leftPassant.Value, boardState))
             yield return (leftAttack.Value, MoveType.EnPassant);
-        if(rightPassant.HasValue && rightAttack.HasValue && !boardState.IsOccupied(rightAttack.Value) && PawnCanPassant(team, rightPassant.Value, boardState))
+        if(rightPassant.HasValue && PawnCanPassant(team, rightPassant.Value, boardState))
             yield return (rightAttack.Value, MoveType.EnPassant);
 
         // One forward
@@ -417,6 +404,6 @@ public static class MoveGenerator
 
     private static bool Contains(Piece[] haystack, Piece needle)
     {
-        return Array.IndexOf(haystack, needle) >= 0;
+        return System.Array.IndexOf(haystack, needle) >= 0;
     }
 }
