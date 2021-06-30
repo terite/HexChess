@@ -118,4 +118,20 @@ public readonly struct FastIndex : IEquatable<FastIndex>
     {
         return HexId.GetHashCode();
     }
+
+    public FastIndex Mirror()
+    {
+        Index index = Index.FromByte(HexId);
+
+        int rank = index.GetNumber();
+        char file = index.GetLetter();
+        bool isTall = file == 'B' || file == 'D' || file == 'F' || file == 'H';
+
+        if (isTall)
+            rank = 11 - rank;
+        else
+            rank = 10 - rank;
+
+        return new FastIndex(rank, file);
+    }
 }
