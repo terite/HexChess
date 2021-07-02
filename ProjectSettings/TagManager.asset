@@ -36,8 +36,11 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - VirtualCursor
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: VirtualCursor
+    uniqueID: 172324341
     locked: 0

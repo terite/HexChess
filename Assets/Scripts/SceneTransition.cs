@@ -22,7 +22,6 @@ public class SceneTransition : MonoBehaviour
         group.interactable = false;
         group.blocksRaycasts = false;
         DontDestroyOnLoad(gameObject);
-
     } 
 
     private void Update() {

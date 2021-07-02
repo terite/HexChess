@@ -129,6 +129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   group: {fileID: 7949027016433570523}
+  canvas: {fileID: 8336256788526697887}
   transitionTime: 0.333
 --- !u!223 &8336256788526697887
 Canvas:

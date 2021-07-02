@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 9192594583234677466}
   - component: {fileID: 9192594583234677469}
   - component: {fileID: 9192594583234677468}
+  - component: {fileID: 9132976879795910167}
   m_Layer: 0
-  m_Name: Hexamaster
+  m_Name: HexMachina
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 2339
+    VectorObservationSize: 2084
     NumStackedVectorObservations: 10
     m_ActionSpec:
       m_NumContinuousActions: 0
@@ -80,3 +81,16 @@ MonoBehaviour:
   MaxStep: 0
   board: {fileID: 0}
   parameters: {fileID: 9192594583234677469}
+--- !u!114 &9132976879795910167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9192594583234677471}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 793fac6c7021b3a49b09cfdc9f66eeb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  board: {fileID: 0}

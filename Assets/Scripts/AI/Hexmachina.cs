@@ -52,22 +52,22 @@ public class Hexmachina : Agent
         sensor.AddObservation(board.turnsSincePawnMovedOrPieceTaken);
 
         // Observe the boardstate
-        foreach(Index index in Index.GetAllIndices())
-        {
-            if(state.TryGetPiece(index, out (Team team, Piece piece) teamedPiece))
-            {
-                IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == teamedPiece.piece && promo.team == teamedPiece.team);
-                Piece realPiece = applicablePromos.Any() ? applicablePromos.First().to : teamedPiece.piece;
+        // foreach(Index index in Index.GetAllIndices())
+        // {
+        //     if(state.TryGetPiece(index, out (Team team, Piece piece) teamedPiece))
+        //     {
+        //         IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == teamedPiece.piece && promo.team == teamedPiece.team);
+        //         Piece realPiece = applicablePromos.Any() ? applicablePromos.First().to : teamedPiece.piece;
                 
-                sensor.AddObservation(new Vector3(
-                    (float)teamedPiece.team,
-                    (float)realPiece,
-                    index.GetSingleVal()
-                ));
-            }
-            else
-                sensor.AddObservation(new Vector3(-1, -1, index.GetSingleVal()));
-        }
+        //         sensor.AddObservation(new Vector3(
+        //             (float)teamedPiece.team,
+        //             (float)realPiece,
+        //             index.GetSingleVal()
+        //         ));
+        //     }
+        //     else
+        //         sensor.AddObservation(new Vector3(-1, -1, index.GetSingleVal()));
+        // }
 
         // Observe all potential moves
         foreach(Piece piece in EnumArray<Piece>.Values)

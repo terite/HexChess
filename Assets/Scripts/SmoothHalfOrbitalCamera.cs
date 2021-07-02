@@ -30,6 +30,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     public bool IsSandboxMode { get; private set; }
 
+    private VirtualCursor cursor;
+
     private void OnValidate()
     {
         selectPiece = FindObjectOfType<SelectPiece>();
@@ -39,6 +41,10 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         ResetRotation();
         LookTowardsOrigin();
         SetDefaultTeam(team);
+    }
+
+    private void Awake() {
+        cursor = GameObject.FindObjectOfType<VirtualCursor>();    
     }
 
     private void Start()
@@ -114,15 +120,14 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     void StartRotating()
     {
         rotating = true;
-        Cursor.visible = false;
+        cursor?.Hide();
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     void StopRotating()
     {
         rotating = false;
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        
         release_rotation = temp_rotation;
         nomalizedElaspedTime = 0;
         float delta = (defaultRotation - release_rotation).magnitude / minimumRotationMagnitude;
@@ -169,8 +174,14 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             }
             else
             {
-                temp_rotation = defaultRotation;
-                scroll = defaultScroll;
+                // This shouldn't run every frame, but only once when the camera returns to default position
+                if(Cursor.lockState != CursorLockMode.None)
+                {
+                    cursor?.Show();
+                    Cursor.lockState = CursorLockMode.None;
+                    temp_rotation = defaultRotation;
+                    scroll = defaultScroll;
+                }
             }
 
             LookTowardsOrigin();
