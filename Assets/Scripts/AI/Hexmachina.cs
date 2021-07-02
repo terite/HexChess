@@ -47,9 +47,9 @@ public class Hexmachina : Agent
         cachedMoves.Clear();
 
         // current turn
-        sensor.AddObservation((float)state.currentMove);
+        // sensor.AddObservation((float)state.currentMove);
         // progression towards 50 move rule
-        sensor.AddObservation(board.turnsSincePawnMovedOrPieceTaken);
+        // sensor.AddObservation(board.turnsSincePawnMovedOrPieceTaken);
 
         // Observe the boardstate
         // foreach(Index index in Index.GetAllIndices())

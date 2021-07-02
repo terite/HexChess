@@ -1,8 +1,5 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class LiftOnHover : MonoBehaviour
 {
@@ -17,8 +14,8 @@ public class LiftOnHover : MonoBehaviour
     private bool transitioning = false;
     private TransitionMode mode;
 
-    float from = 1f;
-    float to = 3f;
+    public float from = 1f;
+    public float to = 3f;
 
     private void Update()
     {
@@ -47,7 +44,6 @@ public class LiftOnHover : MonoBehaviour
 
     public void Lift()
     {
-        // y = toY;
         source.PlayOneShot(clips[UnityEngine.Random.Range(0, clips.Count)]);
         transitioning = true;
         mode = TransitionMode.In;
@@ -57,7 +53,6 @@ public class LiftOnHover : MonoBehaviour
 
     public void Reset()
     {
-        // y = fromY;
         transitioning = true;
         if(ellapsedDuration == 0)
             ellapsedDuration = raiseDuration;

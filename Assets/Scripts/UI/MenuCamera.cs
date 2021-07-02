@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
@@ -53,7 +51,8 @@ public class MenuCamera : MonoBehaviour
         
         if(lastHovered != null)
         {
-            if(lastHovered.gameObject.TryGetComponent<IObjectButton>(out IObjectButton button))
+            IObjectButton[] buttons = lastHovered.gameObject.GetComponents<IObjectButton>();
+            foreach(IObjectButton button in buttons)
                 button.Click();
         }
     }

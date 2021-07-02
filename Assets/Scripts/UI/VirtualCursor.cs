@@ -14,7 +14,14 @@ public class VirtualCursor : MonoBehaviour
     Camera cam;
     CursorType currentType;
 
-    private void Awake() => DontDestroyOnLoad(gameObject);
+    private void Awake()
+    {
+        VirtualCursor[] allCursors = GameObject.FindObjectsOfType<VirtualCursor>();
+        if(allCursors == null || allCursors.Length <= 1)
+            DontDestroyOnLoad(gameObject);
+        else
+            Destroy(gameObject);
+    } 
     private void OnEnable() => SceneManager.sceneLoaded += SceneChanged;
     private void OnDisable() => SceneManager.sceneLoaded -= SceneChanged;
     private void Start() => SetCursor(CursorType.Default);

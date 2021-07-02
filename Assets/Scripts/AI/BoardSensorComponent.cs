@@ -13,6 +13,6 @@ public class BoardSensorComponent : SensorComponent
         if(board == null)
             return Array.Empty<ISensor>();
         
-        return new BoardSensor[1]{new BoardSensor(board)};
+        return new ISensor[2]{new GameStateSensor(board), new BoardSensor(board)};
     }
 }

@@ -22,9 +22,6 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private PromotionDialogue promotionDialogue;
     [SerializeField] private TurnHistoryPanel historyPanel;
-    [SerializeField] private CursorData defaultCursor;
-    [SerializeField] private CursorData handCursor;
-    [SerializeField] private CursorData grabbyCursor;
     public AudioClip cancelNoise;
     public AudioClip pickupNoise;
     public IPiece selectedPiece {get; private set;}
@@ -119,13 +116,19 @@ public class SelectPiece : MonoBehaviour
         if(onMouse.isPickedUp || cursor == null)
             return;
         
+        // Not this player's turn
         if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+            return;
+        
+        // Previewing an old move, don't make the player think they can play a move by giving hand cursor
+        if(historyPanel.panelPointer != historyPanel.currentTurnPointer)
             return;
 
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
         {
             if(hit.collider == null)
                 return;
+
             BoardState currentBoardState = board.GetCurrentBoardState();
             if(hit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
             {
@@ -554,7 +557,7 @@ public class SelectPiece : MonoBehaviour
                 if(pieceOnHex.team == currentBoardState.currentMove)
                 {
                     Select(currentBoardState, pieceOnHex);
-                    audioSource.PlayOneShot(pickupNoise);
+                    PlayPickupNoise();
                     return;
                 }
             }
@@ -572,7 +575,7 @@ public class SelectPiece : MonoBehaviour
                 if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece) && clickedPiece.team == currentBoardState.currentMove && clickedPiece.captured)
                 {
                     Select(currentBoardState, clickedPiece, true);
-                    audioSource.PlayOneShot(pickupNoise);
+                    PlayPickupNoise();
                     return;
                 }
             }
@@ -696,10 +699,13 @@ public class SelectPiece : MonoBehaviour
         }
         if(selectedPiece != null)
         {
-            audioSource.PlayOneShot(cancelNoise);
+            PlayCancelNoise();
             DeselectPiece(selectedPiece.location, selectedPiece.captured);
         }
     }
+
+    public void PlayCancelNoise() => audioSource.PlayOneShot(cancelNoise);
+    public void PlayPickupNoise() => audioSource.PlayOneShot(pickupNoise);
 
     private void Select(BoardState currentBoardState, IPiece clickedPiece, bool fromJail = false)
     {

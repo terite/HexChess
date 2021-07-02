@@ -203,15 +203,6 @@ MonoBehaviour:
   audioSource: {fileID: 6983169283407362394}
   promotionDialogue: {fileID: 0}
   historyPanel: {fileID: 0}
-  defaultCursor:
-    cursor: {fileID: 2800000, guid: 9eb7d1d57044ac84eb23be454f2da848, type: 3}
-    hotspotOffset: {x: 9, y: 2}
-  handCursor:
-    cursor: {fileID: 2800000, guid: 17b405a36925b18449670bce91fad58a, type: 3}
-    hotspotOffset: {x: 20, y: 13}
-  grabbyCursor:
-    cursor: {fileID: 2800000, guid: 7009cad044734a64eb29766eaba82396, type: 3}
-    hotspotOffset: {x: 10, y: -12}
   cancelNoise: {fileID: 8300000, guid: ba2a0d48902eea04ead3e58e073a88b7, type: 3}
   pickupNoise: {fileID: 8300000, guid: 9c7f611590e186b4a84a7d71a7e9260e, type: 3}
   onMouse: {fileID: 0}
