@@ -194,20 +194,7 @@ public class Board : SerializedMonoBehaviour
 
         if(turnHistory.Count > 1)
             timeOffset = state.executedAtTime - Time.timeSinceLevelLoad;
-        
-        if(timers != null)
-        {
-            if(game.timerDuration <= 0)
-            {
-                timers.gameObject.SetActive(game.hasClock);
-                timers.isClock = game.hasClock;
-            }
-            else
-            {
-                timers.gameObject.SetActive(true);
-                timers.SetTimers(game.timerDuration);
-            }
-        }
+
     
         SetBoardState(state, game.promotions);
         turnHistoryPanel?.SetGame(game);
@@ -229,7 +216,16 @@ public class Board : SerializedMonoBehaviour
 
         // game.endType may not exist in older game saves, this bit of code supports both new and old save styles
         if(game.endType != GameEndType.Pending)
+        {
+            IEnumerable<BoardState> lastMoveTurns = turnHistory.Skip(turnHistory.Count - 3).Take(2);
+            newTurn?.Invoke(lastMoveTurns.Last());
+            move = BoardState.GetLastMove(lastMoveTurns.ToList());
+            turnHistoryPanel.UpdateMovePanels(lastMoveTurns.Last(), move, Mathf.FloorToInt((float)turnHistory.Count / 2f) + turnHistory.Count % 2);
+            moveTracker.UpdateText(move);
+            HighlightMove(move);
+            
             gameOver?.Invoke(game);
+        }
         else
         {
             if(game.winner == Winner.Pending)
@@ -240,6 +236,20 @@ public class Board : SerializedMonoBehaviour
             }
             else
                 gameOver?.Invoke(game);
+        }
+
+        if(timers != null)
+        {
+            if(game.timerDuration <= 0)
+            {
+                timers.gameObject.SetActive(game.hasClock);
+                timers.isClock = game.hasClock;
+            }
+            else
+            {
+                timers.gameObject.SetActive(true);
+                timers.SetTimers(game.timerDuration);
+            }
         }
     }
 
@@ -389,7 +399,7 @@ public class Board : SerializedMonoBehaviour
                 turnHistory.Add(newState);
 
                 Move move = BoardState.GetLastMove(turnHistory);
-                if (move.lastTeam != Team.None)
+                if(move.lastTeam != Team.None)
                     HighlightMove(move);
                 else
                     ClearMoveHighlight();

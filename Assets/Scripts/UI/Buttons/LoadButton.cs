@@ -23,11 +23,12 @@ public class LoadButton : MonoBehaviour
         };
         string path = Application.persistentDataPath + $"/saves";
         
-        cursor?.SetCursor(CursorType.None);
+        // cursor?.SetCursor(CursorType.None);
+        Cursor.visible = true;
 
         string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", path, extensions, false);
-        
-        cursor?.SetCursor(CursorType.Default);
+
+        Cursor.visible = false;
 
         if(paths.Length > 0)
             board.LoadGame(Game.Deserialize(File.ReadAllText(paths.First())));

@@ -408,6 +408,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!1 &47149487
 GameObject:
   m_ObjectHideFlags: 0
@@ -4659,6 +4661,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!114 &980818318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5000,6 +5004,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!114 &1026142570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5437,6 +5443,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!114 &1056459257
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6641,6 +6649,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!1 &1204274878
 GameObject:
   m_ObjectHideFlags: 0
@@ -9343,6 +9353,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!114 &1764616053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9916,7 +9928,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1927575332}
-  - component: {fileID: 1927575331}
   - component: {fileID: 1927575333}
   - component: {fileID: 1927575334}
   m_Layer: 31
@@ -9926,19 +9937,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1927575331
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1927575330}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 936c4464b8725c84bb5bc5b2943113d6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cursor: {fileID: 2800000, guid: 9eb7d1d57044ac84eb23be454f2da848, type: 3}
 --- !u!4 &1927575332
 Transform:
   m_ObjectHideFlags: 0
@@ -10202,6 +10200,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!114 &1935445091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10995,6 +10995,8 @@ MonoBehaviour:
   orangeColor: {r: 1, g: 0.5254902, b: 0.1254902, a: 1}
   raiseDuration: 0.25
   power: 0.03
+  from: 1
+  to: 3
 --- !u!1 &2039399558
 GameObject:
   m_ObjectHideFlags: 0
