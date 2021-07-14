@@ -663,7 +663,11 @@ public class Board : SerializedMonoBehaviour
 
     public IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
     {
-        IEnumerable<(Index, MoveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking);
+        Piece realPiece = piece.piece >= Piece.Pawn1 && !(piece is Pawn)
+            ? promotions.Where(promo => promo.from == piece.piece && promo.team == piece.team).First().to
+            : piece.piece;
+
+        IEnumerable<(Index, MoveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, realPiece, piece.team, boardState, promotions, includeBlocking);
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
     }
 

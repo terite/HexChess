@@ -90,7 +90,7 @@ public class HexmachinaManager : MonoBehaviour
         }
 
         gameOver = true;
-        Reset();
+        // Reset();
     }
 
     private void SpawnAI()

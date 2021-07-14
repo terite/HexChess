@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Lesson8 : MonoBehaviour
@@ -35,14 +34,14 @@ public class Lesson8 : MonoBehaviour
                 move.piece = board.Promote(pawn, Piece.Queen);
 
             BoardState newState = board.ExecuteMove(move, board.GetCurrentBoardState());
-            board.AdvanceTurn(newState);
+            board.AdvanceTurn(newState, true, true);
         }
     }
 
     private void NewTurn(BoardState newState)
     {
         Move move = BoardState.GetLastMove(board.turnHistory);
-        float reward = move.capturedPiece.HasValue ? 0.1f : 0f;
+        float reward = move.capturedPiece.HasValue ? 0.001f : 0f;
         int mod = newState.currentMove == Team.White ? 1 : newState.currentMove == Team.Black ? -1 : 0;
         
         agent.AddReward(reward * mod);

@@ -154,6 +154,7 @@ public class Hexmachina : Agent
             Debug.Log($"Promo choice: {promoChoice}");
             Piece promoTo = GetPromoPiece(promoChoice);
             move.piece = board.Promote(pawn, promoTo);
+            AddReward(0.0001f);
         }
 
         BoardState currentBoardState = board.GetCurrentBoardState();
@@ -172,7 +173,7 @@ public class Hexmachina : Agent
         // Move m = BoardState.GetLastMove(board.turnHistory);
         // AddReward(-0.00001f * m.turn);
 
-        // AddReward(-0.00001f);
+        AddReward(-0.00005f);
     }
 
     public Piece GetPromoPiece(int promo) => promo switch {
