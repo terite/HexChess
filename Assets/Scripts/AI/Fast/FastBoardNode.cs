@@ -9,13 +9,10 @@ sealed public class FastBoardNode
     public Team currentMove = Team.None;
     public FastIndex whiteKing = FastIndex.Invalid;
     public FastIndex blackKing = FastIndex.Invalid;
+    public FastIndex passantableIndex = FastIndex.Invalid;
+    public int plySincePawnMovedOrPieceTaken = 0;
     public readonly (Team team, FastPiece piece)[] positions = new (Team team, FastPiece piece)[85];
 
-    public int PlySincePawnMovedOrPieceTaken => plySincePawnMovedOrPieceTaken;
-    public FastIndex PassantableIndex => passantableIndex;
-
-    private int plySincePawnMovedOrPieceTaken = 0;
-    private FastIndex passantableIndex = FastIndex.Invalid;
     private readonly Stack<(Team team, FastPiece piece)> captureHistory = new Stack<(Team team, FastPiece piece)>(10);
     private readonly Stack<int> fiftyMoveRuleHistory = new Stack<int>(10);
     private readonly Stack<FastIndex> passantableHistory = new Stack<FastIndex>(10);
@@ -38,6 +35,10 @@ sealed public class FastBoardNode
                     blackKing = index;
             }
         }
+    }
+
+    public FastBoardNode()
+    {
     }
 
     /// <summary>
@@ -190,20 +191,15 @@ sealed public class FastBoardNode
     }
     private void DoDefend(FastMove move)
     {
-        byte position1 = move.start.ToByte();
-        byte position2 = move.target.ToByte();
+        byte position1 = move.start.HexId;
+        byte position2 = move.target.HexId;
         var piece1 = this[position1];
         var piece2 = this[position2];
         this[position1] = piece2;
         this[position2] = piece1;
 
-        // TODO: Is checking both necessary? Is the "swapper" always the start?
-        if (whiteKing == move.start)
-            whiteKing = move.target;
-        else if (whiteKing == move.target)
+        if (whiteKing == move.target)
             whiteKing = move.start;
-        else if (blackKing == move.start)
-            blackKing = move.target;
         else if (blackKing == move.target)
             blackKing = move.start;
     }
@@ -296,19 +292,17 @@ sealed public class FastBoardNode
     public (Team team, FastPiece piece) this[Index index]
     {
         get => positions[index.ToByte()];
-        private set { this[index.ToByte()] = value; }
+        set { this[index.ToByte()] = value; }
     }
     public (Team team, FastPiece piece) this[FastIndex index]
     {
-        get => positions[index.ToByte()];
-        private set { this[index.ToByte()] = value; }
+        get => positions[index.HexId];
+        set { this[index.HexId] = value; }
     }
     public (Team team, FastPiece piece) this[byte index]
     {
         get => positions[index];
-        private set {
-            positions[index] = value;
-        }
+        set { positions[index] = value; }
     }
 
     public bool TryGetPiece(FastIndex index, out (Team team, FastPiece piece) piece)
@@ -381,12 +375,11 @@ sealed public class FastBoardNode
     {
         for (byte i = 0; i < positions.Length; i++)
         {
-            FastIndex index = FastIndex.FromByte(i);
             var piece = positions[i];
-
             if (piece.team != team)
                 continue;
 
+            FastIndex index = FastIndex.FromByte(i);
             FastPossibleMoveGenerator.AddAllPossibleMoves(moves, index, piece.piece, team, this, generateQuiet);
         }
     }

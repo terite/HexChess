@@ -3,11 +3,13 @@
 public readonly struct FastIndex : IEquatable<FastIndex>
 {
     readonly static FastIndex[] NeighborMap;
+    readonly static FastIndex[] MirrorMap;
 
     static FastIndex()
     {
         var directions = EnumArray<HexNeighborDirection>.Values;
         NeighborMap = new FastIndex[85 * directions.Length];
+        MirrorMap = new FastIndex[85];
         for (byte i = 0; i < 85; i++)
         {
             var slowIndex = Index.CalculateFromByte(i);
@@ -21,6 +23,8 @@ public readonly struct FastIndex : IEquatable<FastIndex>
                     neighbor = new FastIndex(slowNeighbor);
                 NeighborMap[offsetStart + j] = neighbor;
             }
+
+            MirrorMap[i] = CalculateMirror(FromByte(i));
         }
     }
 
@@ -121,7 +125,12 @@ public readonly struct FastIndex : IEquatable<FastIndex>
 
     public FastIndex Mirror()
     {
-        Index index = Index.FromByte(HexId);
+        return MirrorMap[HexId];
+    }
+
+    public static FastIndex CalculateMirror(FastIndex from)
+    {
+        Index index = Index.FromByte(from.HexId);
 
         int rank = index.GetNumber();
         char file = index.GetLetter();
@@ -134,4 +143,5 @@ public readonly struct FastIndex : IEquatable<FastIndex>
 
         return new FastIndex(rank, file);
     }
+
 }

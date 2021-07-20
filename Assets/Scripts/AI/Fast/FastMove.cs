@@ -1,4 +1,5 @@
 using Extensions;
+using System;
 
 public readonly struct FastMove
 {
@@ -60,9 +61,20 @@ public readonly struct FastMove
     public override string ToString()
     {
         string promoteMsg = promoteTo == FastPiece.Pawn ? string.Empty : $"to {promoteTo}";
-        return $"{moveType}({start} -> {target}){promoteMsg}";
+        return $"{moveType}({((Index)start).GetKey()} -> {((Index)target).GetKey()}){promoteMsg}";
     }
 
     public static explicit operator FastMove(HexAIMove move) => new FastMove(move);
     public static explicit operator HexAIMove(FastMove move) => move.ToHexMove();
+
+    public string ToString(FastBoardNode node)
+    {
+        string promoteMsg = promoteTo == FastPiece.Pawn ? string.Empty : $"to {promoteTo}";
+        string sFrom = ((Index)start).GetKey() + $"({node[start]})";
+        string sTo = ((Index)target).GetKey();
+        if (moveType == MoveType.Attack || moveType == MoveType.Defend)
+            sTo += $" ({node[target]})";
+
+        return $"{moveType} {sFrom} -> {sTo}{promoteMsg}";
+    }
 }

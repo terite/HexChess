@@ -70,7 +70,7 @@ public class AIBattleController : MonoBehaviour
             StartGame();
         }
 
-        GUI.enabled = needsReset;
+        GUI.enabled = true;
         if (GUILayout.Button("Reset"))
         {
             board.Reset();
