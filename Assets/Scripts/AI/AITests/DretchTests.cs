@@ -216,12 +216,13 @@ public class DretchTests
     }
 
     [Test]
-    public void DoesValuePromotionTest()
+    public void EvaluationValuesPromotion([ValueSource(nameof(Teams))]Team toMove)
     {
         var ai = new DretchEngine();
 
-        Team attacker = Team.White;
+        Team attacker = toMove;
         Team defender = attacker.Enemy();
+        int perspective = attacker == Team.White ? 1 : -1;
 
         var board = CreateBoardNode(attacker, new[]
         {
@@ -230,7 +231,7 @@ public class DretchTests
             (attacker, Piece.Pawn1, new Index(9, 'H')),
         });
 
-        var value1 = ai.EvaluateBoard(board, 1);
+        var value1 = ai.EvaluateBoard(board, 1) * perspective;
         UnityEngine.Debug.Log($"Board 1 valued at {value1}");
         UnityEngine.Debug.Log("-----------");
 
@@ -238,7 +239,38 @@ public class DretchTests
         board.DoMove(new FastMove(new Index(9, 'H'), new Index(10, 'H'), MoveType.Move, FastPiece.Queen));
         Assert.AreEqual((attacker, FastPiece.Queen), board[new Index(10, 'H')]);
 
-        var value2 = ai.EvaluateBoard(board, 1);
+        var value2 = ai.EvaluateBoard(board, 1) * perspective;
+        UnityEngine.Debug.Log($"Board 2 valued at {value2}");
+
+        Assert.Greater(value2, value1);
+    }
+    [Test]
+    public void EvaluationValuesNotBeingAttacked([ValueSource(nameof(Teams))]Team toMove)
+    {
+        var ai = new DretchEngine();
+        Team attacker = toMove;
+        Team defender = attacker.Enemy();
+        int perspective = attacker == Team.White ? 1 : -1;
+
+        var board1 = CreateBoardNode(attacker, new[] // squire attacked
+        {
+            (attacker, Piece.King, new Index(1, 'D')),
+            (attacker, Piece.BlackSquire, new Index(2, 'C')),
+            (defender, Piece.King, new Index(3, 'C')),
+        });
+
+        var board2 = CreateBoardNode(attacker, new[] // Not attacked
+        {
+            (attacker, Piece.King, new Index(1, 'D')),
+            (attacker, Piece.BlackSquire, new Index(2, 'A')),
+            (defender, Piece.King, new Index(3, 'C')),
+        });
+
+        var value1 = ai.EvaluateBoard(board1, 1) * perspective;
+        UnityEngine.Debug.Log($"Board 1 valued at {value1}");
+        UnityEngine.Debug.Log("-----------");
+
+        var value2 = ai.EvaluateBoard(board2, 1) * perspective;
         UnityEngine.Debug.Log($"Board 2 valued at {value2}");
 
         Assert.Greater(value2, value1);
@@ -251,6 +283,7 @@ public class DretchTests
 
         Team attacker = toMove;
         Team defender = attacker.Enemy();
+        int perspective = attacker == Team.White ? 1 : -1;
 
         Index pawnPos;
         Index nextPawnPos;
@@ -272,14 +305,14 @@ public class DretchTests
             (attacker, Piece.Pawn1, pawnPos),
         });
 
-        var value1 = ai.EvaluateBoard(board, 1);
+        var value1 = ai.EvaluateBoard(board, 1) * perspective;
         UnityEngine.Debug.Log($"Board 1 valued at {value1}");
         UnityEngine.Debug.Log("-----------");
 
         board.DoMove(new FastMove(pawnPos, nextPawnPos, MoveType.Move));
         Assert.AreEqual((attacker, FastPiece.Pawn), board[nextPawnPos]);
 
-        var value2 = ai.EvaluateBoard(board, 1);
+        var value2 = ai.EvaluateBoard(board, 1) * perspective;
         UnityEngine.Debug.Log($"Board 2 valued at {value2}");
 
         Assert.Greater(value2, value1);

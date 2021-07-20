@@ -11,7 +11,7 @@ namespace Dretch
         public readonly DiagnosticInfo diagnostics = new DiagnosticInfo();
 
         readonly int maxSearchDepth;
-        readonly bool quiescenceSearchEnabled = false;
+        readonly bool quiescenceSearchEnabled = true;
         public bool iterativeDeepeningEnabled = true;
         public bool previousOrderingEnabled = true;
         public bool pawnValueMapEnabled = true;
@@ -23,9 +23,7 @@ namespace Dretch
 
         FastMove bestMove;
 
-        public DretchEngine() : this(4)
-        {
-        }
+        public DretchEngine() : this(4) { }
 
         public DretchEngine(int maxSearchDepth = 4)
         {
@@ -377,8 +375,8 @@ namespace Dretch
                 using (diagnostics.MeasureEvalThreats())
                 {
                     evaluationData.Prepare(node);
-                    // boardValue += evaluationData.WhiteThreats.Count - evaluationData.BlackThreats.Count;
-                    // boardValue += (evaluationData.WhitePawnThreats.Count * 2) - (evaluationData.BlackPawnThreats.Count * 2);
+                    boardValue += evaluationData.WhiteThreats.Count - evaluationData.BlackThreats.Count;
+                    boardValue += (evaluationData.WhitePawnThreats.Count * 2) - (evaluationData.BlackPawnThreats.Count * 2);
                 }
 
                 return boardValue;
