@@ -103,6 +103,11 @@ public class BloodthirstyAI : IHexAI
     {
         return;
     }
+
+    public IEnumerable<string> GetDiagnosticInfo()
+    {
+        return null;
+    }
 }
 
 

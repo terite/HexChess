@@ -60,6 +60,9 @@ public readonly struct FastMove
 
     public override string ToString()
     {
+        if (moveType == MoveType.None)
+            return "Invalid";
+
         string promoteMsg = promoteTo == FastPiece.Pawn ? string.Empty : $"to {promoteTo}";
         return $"{moveType}({((Index)start).GetKey()} -> {((Index)target).GetKey()}){promoteMsg}";
     }

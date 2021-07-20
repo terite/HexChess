@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using System.Threading.Tasks;
 using Extensions;
+using Dretch;
 
 public class AIBattleController : MonoBehaviour
 {
@@ -36,10 +37,10 @@ public class AIBattleController : MonoBehaviour
         AIOptions = new (string, Func<IHexAI?>)[] {
             ("Clueless", () => new RandomAI()),
             ("Bloodthirsty", () => new BloodthirstyAI()),
-            ("Terite (depth 2)", () => new TeriteAI(2)),
-            ("Terite (depth 4)", () => new TeriteAI(4)),
-            ("Terite (depth 5)", () => new TeriteAI(5)),
-            ("Terite (depth 6)", () => new TeriteAI(6)),
+            ("Dretch (depth 2)", () => new DretchEngine(2)),
+            ("Dretch (depth 4)", () => new DretchEngine(4)),
+            ("Dretch (depth 5)", () => new DretchEngine(5)),
+            ("Dretch (depth 6)", () => new DretchEngine(6)),
             ("None", () => null)
         };
         AINames = AIOptions.Select(ai => ai.name).ToArray();
@@ -74,6 +75,29 @@ public class AIBattleController : MonoBehaviour
         if (GUILayout.Button("Reset"))
         {
             board.Reset();
+        }
+
+        if (isGameRunning)
+        {
+            if (whiteAI != null)
+            {
+                GUILayout.BeginHorizontal();
+                var whiteLines = whiteAI.GetDiagnosticInfo();
+                if (whiteLines != null)
+                    foreach (var line in whiteLines)
+                        GUILayout.Label(line);
+                GUILayout.EndHorizontal();
+            }
+            if (blackAI != null)
+            {
+                GUILayout.BeginHorizontal();
+                var blackLines = blackAI.GetDiagnosticInfo();
+                if (blackLines != null)
+                    foreach (var line in blackLines)
+                        GUILayout.Label(line);
+                GUILayout.EndHorizontal();
+            }
+
         }
     }
 

@@ -4,8 +4,9 @@ using Extensions;
 using Unity.PerformanceTesting;
 using System;
 using System.Collections.Generic;
+using Dretch;
 
-public class TeriteAITests
+public class DretchTests
 {
     static readonly Team[] Teams = new Team[] { Team.White, Team.Black };
 
@@ -24,7 +25,7 @@ public class TeriteAITests
     [Test]
     public void MateInOne_EnPassant()
     {
-        var ai = new TeriteAI(1);
+        var ai = new DretchEngine(1);
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
 
@@ -57,7 +58,7 @@ public class TeriteAITests
     [Test]
     public void MateInTwo_Test1([ValueSource(nameof(Teams))] Team attacker)
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
 
         Team defender = attacker.Enemy();
 
@@ -94,7 +95,7 @@ public class TeriteAITests
     [Test]
     public void MateInTwo_Test2([ValueSource(nameof(Teams))] Team attacker)
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
         Team defender = attacker.Enemy();
 
         var board = CreateBoardNode(attacker, new[]
@@ -133,7 +134,7 @@ public class TeriteAITests
     [Test]
     public void MateInThree_One()
     {
-        var ai = new TeriteAI(maxSearchDepth: 6);
+        var ai = new DretchEngine(maxSearchDepth: 6);
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
 
@@ -196,7 +197,7 @@ public class TeriteAITests
     [Test]
     public void MateInOne_Promotion()
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
 
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
@@ -217,7 +218,7 @@ public class TeriteAITests
     [Test]
     public void DoesValuePromotionTest()
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
 
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
@@ -246,7 +247,7 @@ public class TeriteAITests
     [Test]
     public void DoesValuePawnAdvancing([ValueSource(nameof(Teams))]Team toMove)
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
 
         Team attacker = toMove;
         Team defender = attacker.Enemy();
@@ -287,7 +288,7 @@ public class TeriteAITests
     [Test, Performance]
     public void ForProfiling_Depth([ValueSource(nameof(Depths))] int searchDepth, [ValueSource(nameof(Teams))] Team toMove)
     {
-        var ai = new TeriteAI(searchDepth);
+        var ai = new DretchEngine(searchDepth);
         var board = CreateBoardNode(toMove, new[]
         {
             (Team.White, Piece.Pawn1, new Index(2, 'A')),
@@ -347,7 +348,7 @@ public class TeriteAITests
     [Test, Performance]
     public void Performance_Depth([ValueSource(nameof(Depths))] int searchDepth, [ValueSource(nameof(Teams))] Team toMove)
     {
-        var ai = new TeriteAI(searchDepth);
+        var ai = new DretchEngine(searchDepth);
 
         Team attacker = toMove;
         Team defender = attacker.Enemy();
@@ -408,7 +409,7 @@ public class TeriteAITests
     [Test]
     public void QuiescenceSearchTest([ValueSource(nameof(Teams))] Team attacker)
     {
-        var ai = new TeriteAI(maxSearchDepth: 1);
+        var ai = new DretchEngine(maxSearchDepth: 1);
         Team defender = attacker.Enemy();
 
         var board = CreateBoardNode(attacker, new[]
@@ -424,7 +425,7 @@ public class TeriteAITests
         Assert.That(foundMove, Is.Not.EqualTo(new FastMove(new Index(3, 'E'), new Index(9, 'E'), MoveType.Attack)));
     }
 
-    private void LogDiagnostics(TeriteAI.DiagnosticInfo ai)
+    private void LogDiagnostics(DiagnosticInfo ai)
     {
         var evalPerSecond = (ai.boardEvaluations / ai.evalTimer.Elapsed.TotalSeconds);
         var nodePerSecond = (ai.boardEvaluations / ai.getMoveTimer.Elapsed.TotalSeconds);
@@ -521,7 +522,7 @@ public class TeriteAITests
     [Test]
     public void MateInOneTest([ValueSource(nameof(GetMateInOnes))]MateInOneInfo info)
     {
-        var ai = new TeriteAI();
+        var ai = new DretchEngine();
 
         Team attacker = info.ToMove;
         Team defender = attacker.Enemy();
