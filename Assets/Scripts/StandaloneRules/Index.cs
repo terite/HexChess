@@ -9,8 +9,6 @@ public struct Index
     public const int rows = 19;
     public const int maxRow = rows - 1;
 
-    public static Index invalid => new Index(-1, -1);
-
     public int row;
     public int col;
 

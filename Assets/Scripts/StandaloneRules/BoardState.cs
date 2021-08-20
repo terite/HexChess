@@ -161,8 +161,10 @@ public struct BoardState
             }
         }
 
-            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this, promotions);
-            foreach((Index hex, MoveType moveType) in moves)
+        // foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleSquireMoves(enemyKingLoc, enemy, this))
+        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleMoves(enemyKingLoc, Piece.BlackSquire, enemy, this, promotions))
+        {
+            if (move.moveType == MoveType.Attack && TryGetPiece(move.target, out var occupier))
             {
                 Piece realPiece = GetRealPiece(occupier, promotions);
                 if (realPiece.IsSquire())
@@ -170,7 +172,8 @@ public struct BoardState
             }
         }
 
-        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleKnightMoves(enemyKingLoc, enemy, this))
+        // foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleKnightMoves(enemyKingLoc, enemy, this))
+        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleMoves(enemyKingLoc, Piece.KingsKnight, enemy, this, promotions))
         {
             if (move.moveType == MoveType.Attack && TryGetPiece(move.target, out var occupier))
             {
@@ -223,6 +226,7 @@ public struct BoardState
     {
         return GenerateAllValidMoves(checkForTeam, promotions, previousState).Any();
     }
+
     public IEnumerable<(Index start, Index target, MoveType moveType, Piece promoteTo)> GenerateAllValidMoves(Team checkForTeam, List<Promotion> promotions, BoardState previousState)
     {
         Team enemyTeam = checkForTeam.Enemy();
@@ -232,7 +236,7 @@ public struct BoardState
                 continue;
 
             Piece realPiece = GetRealPiece(kvp.Key, promotions);
-            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this);
+            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this, promotions);
             foreach ((Index target, MoveType moveType) potentialMove in pieceMoves)
             {
                 if (potentialMove.moveType == MoveType.EnPassant)
@@ -252,13 +256,23 @@ public struct BoardState
 
                 }
 
-            Team enemyTeam = kvp.Key.team == Team.White ? Team.Black : Team.White;
-            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this, promotions);
-            foreach (var potentialMove in pieceMoves)
-            {
-                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);
-                if (!newState.IsChecking(enemyTeam, newPromotions))
-                    return true;
+                // What we promote to doesn't matter for the purpose of determining enemy checks
+                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions, Piece.Pawn1);
+                if (newState.IsChecking(enemyTeam, newPromotions))
+                    continue;
+
+                if (realPiece.IsPawn() && MoveGenerator.IsPromotionRank(checkForTeam, potentialMove.target))
+                {
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Queen);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensBishop);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensRook);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensKnight);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.BlackSquire);
+                }
+                else
+                {
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Pawn1);
+                }
             }
         }
     }
