@@ -80,7 +80,7 @@ public class SelectPiece : MonoBehaviour
     {
         if(checkedKingHex != null)
         {
-            Move lastMove = BoardState.GetLastMove(board.turnHistory);
+            Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions);
             if(lastMove.from != checkedKingHex.index && lastMove.to != checkedKingHex.index)
                 checkedKingHex.Unhighlight();
             checkedKingHex = null;

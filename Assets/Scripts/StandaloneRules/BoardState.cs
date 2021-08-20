@@ -23,7 +23,7 @@ public struct BoardState
         this.executedAtTime = executedAtTime;
     }
 
-    public static Move GetLastMove(List<BoardState> history)
+    public static Move GetLastMove(List<BoardState> history, List<Promotion> promotions)
     {
         if(history.Count > 1)
         {
@@ -37,12 +37,14 @@ public struct BoardState
                 if(kvp.Value == nowPos)
                     continue;
 
+                Piece piece = kvp.Key.piece;
+
                 (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
                     ? lastState.allPiecePositions[nowPos]
                     : (Team.None, (Piece?)null);
 
                 Piece? capturedPiece = previousTeamAtLocation == kvp.Key.team ? null : previousPieceAtLocation;
-                if(kvp.Key.piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
+                if(piece.IsPawn() && kvp.Value.GetLetter() != nowPos.GetLetter() && capturedPiece == null)
                 {
                     // Pawns that move sideways are always attacks. If the new location was unoccupied, then did En Passant
                     Index? enemyLocation = nowPos.GetNeighborAt(kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
@@ -50,17 +52,29 @@ public struct BoardState
                         capturedPiece = captured.piece;
                 }
 
+                Index from = kvp.Value;
+                Index to = nowPos;
+
+                // In the case of a defend, we may check the piece being defended before the rook doing the defending. 
+                // If this is the case, we need to ensure the piece is the rook and the defended piece is the non-rook, as well as the proper to/from indcies
+                // May need to get real piece for previousPieceAtLocation. A pawn promoted to a rook defending another piece would likely show as a pawn here
+                Piece? defendedPiece = previousTeamAtLocation != kvp.Key.team ? null : (Piece?)GetRealPiece((kvp.Key.team, previousPieceAtLocation.Value), promotions);
+                if(defendedPiece != null && (defendedPiece == Piece.QueensRook || defendedPiece == Piece.KingsRook))
+                {
+                    (defendedPiece, piece) = (piece, defendedPiece.Value);
+                    (to, from) = (from, to);
+                }
+
                 return new Move(
                     turn: history.Count / 2,
                     lastTeam: kvp.Key.team,
-                    lastPiece: kvp.Key.piece,
-                    from: kvp.Value,
-                    to: nowPos,
+                    lastPiece: piece,
+                    from: from,
+                    to: to,
                     capturedPiece: capturedPiece,
-                    defendedPiece: previousTeamAtLocation != kvp.Key.team ? null : previousPieceAtLocation,
+                    defendedPiece: defendedPiece,
                     duration: nowState.executedAtTime - lastState.executedAtTime
                 );
-                
             }
         }
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));

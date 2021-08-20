@@ -40,7 +40,7 @@ public class Lesson8 : MonoBehaviour
 
     private void NewTurn(BoardState newState)
     {
-        Move move = BoardState.GetLastMove(board.turnHistory);
+        Move move = BoardState.GetLastMove(board.turnHistory, board.promotions);
         float reward = move.capturedPiece.HasValue ? 0.001f : 0f;
         int mod = newState.currentMove == Team.White ? 1 : newState.currentMove == Team.Black ? -1 : 0;
         

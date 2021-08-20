@@ -170,7 +170,7 @@ public class Board : SerializedMonoBehaviour
 
         if(newState.currentMove != Team.None && turnHistory.Count > 1)
         {
-            Move newMove = BoardState.GetLastMove(turnHistory);
+            Move newMove = BoardState.GetLastMove(turnHistory, promotions);
             if(newMove.lastTeam != Team.None)
                 HighlightMove(newMove);
             else
@@ -199,7 +199,7 @@ public class Board : SerializedMonoBehaviour
         SetBoardState(state, game.promotions);
         turnHistoryPanel?.SetGame(game);
         
-        Move move = BoardState.GetLastMove(turnHistory);
+        Move move = BoardState.GetLastMove(turnHistory, promotions);
         if(move.lastTeam != Team.None)
             moveTracker.UpdateText(move);
 
@@ -207,7 +207,7 @@ public class Board : SerializedMonoBehaviour
         turnsSincePawnMovedOrPieceTaken = 0;
         for(int i = 0; i < turnHistory.Count - 1; i++)
         {
-            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList());
+            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList(), promotions);
             if(moveStep.capturedPiece.HasValue || moveStep.lastPiece >= Piece.Pawn1)
                 turnsSincePawnMovedOrPieceTaken = 0;
             else
@@ -219,7 +219,7 @@ public class Board : SerializedMonoBehaviour
         {
             IEnumerable<BoardState> lastMoveTurns = turnHistory.Skip(turnHistory.Count - 3).Take(2);
             newTurn?.Invoke(lastMoveTurns.Last());
-            move = BoardState.GetLastMove(lastMoveTurns.ToList());
+            move = BoardState.GetLastMove(lastMoveTurns.ToList(), promotions);
             turnHistoryPanel.UpdateMovePanels(lastMoveTurns.Last(), move, Mathf.FloorToInt((float)turnHistory.Count / 2f) + turnHistory.Count % 2);
             moveTracker.UpdateText(move);
             HighlightMove(move);
@@ -322,7 +322,7 @@ public class Board : SerializedMonoBehaviour
                     return;
             }
 
-            Move move = BoardState.GetLastMove(turnHistory);
+            Move move = BoardState.GetLastMove(turnHistory, promotions);
             HighlightMove(move);
 
             EndGame(
@@ -360,7 +360,7 @@ public class Board : SerializedMonoBehaviour
             newState.currentMove = otherTeam;
             turnHistory.Add(newState);
 
-            Move move = BoardState.GetLastMove(turnHistory);
+            Move move = BoardState.GetLastMove(turnHistory, promotions);
             if(move.lastTeam != Team.None)
                 HighlightMove(move);
             else
@@ -398,7 +398,7 @@ public class Board : SerializedMonoBehaviour
                 newState.currentMove = otherTeam;
                 turnHistory.Add(newState);
 
-                Move move = BoardState.GetLastMove(turnHistory);
+                Move move = BoardState.GetLastMove(turnHistory, promotions);
                 if(move.lastTeam != Team.None)
                     HighlightMove(move);
                 else
@@ -433,7 +433,7 @@ public class Board : SerializedMonoBehaviour
 
         turnHistory.Add(newState);
 
-        Move newMove = BoardState.GetLastMove(turnHistory);
+        Move newMove = BoardState.GetLastMove(turnHistory, promotions);
         if(newMove.lastTeam != Team.None)
             HighlightMove(newMove);
         else

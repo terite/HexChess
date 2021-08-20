@@ -24,7 +24,7 @@ public class Lesson1 : MonoBehaviour
     {
         if(newState.currentMove == Team.Black)
         {
-            Move move = BoardState.GetLastMove(board.turnHistory);
+            Move move = BoardState.GetLastMove(board.turnHistory, board.promotions);
             if(move.capturedPiece.HasValue)
                 agent.AddReward(0.1f);
 

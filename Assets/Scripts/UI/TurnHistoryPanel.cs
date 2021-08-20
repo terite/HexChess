@@ -74,7 +74,7 @@ public class TurnHistoryPanel : MonoBehaviour
     private void NewTurn(BoardState newState)
     {
         // If the current move is black, we know white just made a move, let's add an entry to the list
-        Move lastMove = BoardState.GetLastMove(board.turnHistory);
+        Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions);
         UpdateMovePanels(newState, lastMove, Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2);
     }
 
@@ -85,7 +85,7 @@ public class TurnHistoryPanel : MonoBehaviour
         {
             BoardState state = game.turnHistory[i];
             List<BoardState> subset = game.turnHistory.Take(i + 1).ToList();
-            Move lastMove = BoardState.GetLastMove(subset);
+            Move lastMove = BoardState.GetLastMove(subset, board.promotions);
             UpdateMovePanels(state, lastMove, Mathf.FloorToInt((float)subset.Count / 2f) + subset.Count % 2);
         }
     }

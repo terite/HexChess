@@ -126,7 +126,7 @@ public class HexmachinaManager : MonoBehaviour
         if(gameOver)
             return;
 
-        Move m = BoardState.GetLastMove(board.turnHistory);
+        Move m = BoardState.GetLastMove(board.turnHistory, board.promotions);
         if(m.capturedPiece.HasValue)
         {
             // Reward the team that captured a piece, while punishing the team who's piece was captured
