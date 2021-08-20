@@ -23,7 +23,7 @@ public class Hex : SerializedMonoBehaviour
         }
     }
 
-    public void AssignIndex(Index index, Board board)
+    public void AssignIndex(Index index, Board board = null)
     {
         this.index = index;
         this.board = board;
@@ -35,6 +35,11 @@ public class Hex : SerializedMonoBehaviour
     {
         meshRenderer.material.SetColor("_HighlightColor", highlightColor);
         meshRenderer.material.SetFloat("_HighlightPower", 0.6f);
+    }
+
+    public void SetHighlightPower(float pow)
+    {
+        meshRenderer.material.SetFloat("_HighlightPower", pow);
     }
 
     public void Unhighlight() => meshRenderer.material.SetFloat("_HighlightPower", 0f);
@@ -57,8 +62,29 @@ public class Hex : SerializedMonoBehaviour
     public void SetOutlineColor(Color color)
     {
         outlineColor = color;
+#if UNITY_EDITOR
+        Material mat = new Material(meshRenderer.sharedMaterial);
+        mat.SetColor("_EdgeColor", color);
+        meshRenderer.material = mat;
+#else
         meshRenderer.material.SetColor("_EdgeColor", color);
+#endif
     }
+
+    public Color GetOutlineColor() => meshRenderer.material.GetColor("_EdgeColor");
+
+    [Button(ButtonSizes.Medium, ButtonStyle.FoldoutButton)]
+    public void SetOutlineThickness(float thickness)
+    {
+#if UNITY_EDITOR
+        Material mat = new Material(meshRenderer.sharedMaterial);
+        mat.SetFloat("_Thickness", thickness);
+        meshRenderer.material = mat;
+#else
+        meshRenderer.material.SetFloat("_Thickness", thickness);
+#endif
+    }
+    
 
     private void Select()
     {

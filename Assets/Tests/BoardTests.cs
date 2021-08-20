@@ -28,8 +28,9 @@ public class BoardTests
         });
 
         Assert.AreEqual(1, board.activePieces.Count);
-        var kingMoves = board.activePieces[(Team.White, Piece.King)]
-            .GetAllPossibleMoves(board.GetCurrentBoardState()).Select(m => (m.Item1, m.Item2))
+        IPiece piece = board.activePieces[(Team.White, Piece.King)];
+        var kingMoves = MoveGenerator
+            .GetAllPossibleMoves(piece.location, piece.piece, piece.team, board.GetCurrentBoardState(), board.promotions)
             .ToArray();
 
         Assert.AreEqual(6, kingMoves.Length);
@@ -91,7 +92,8 @@ public class BoardTests
         // Black pawn should be able to capture white pawn by going to A3
         var pawn = new GameObject().AddComponent<Pawn>();
         pawn.Init(Team.Black, Piece.Pawn1, new Index(4, 'B'));
-        var moves = pawn.GetAllPossibleMoves(state2).ToList();
+        var board = GameObject.FindObjectOfType<Board>();
+        var moves = MoveGenerator.GetAllPossibleMoves(pawn.location, pawn.piece, pawn.team, state2, board.promotions).ToList();
 
         Assert.AreEqual((new Index(3, 'A'), MoveType.EnPassant), moves[0]);
         Assert.AreEqual((new Index(3, 'B'), MoveType.Move), moves[1]);

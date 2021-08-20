@@ -53,17 +53,20 @@ public class SelectPiece : MonoBehaviour
 
     Hex checkedKingHex = null;
 
+    private VirtualCursor cursor;
+
     private void Awake() 
     {
         cam = Camera.main;
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
             singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        
         keys = GameObject.FindObjectOfType<Keys>();
-
+        cursor = GameObject.FindObjectOfType<VirtualCursor>();
         board.newTurn += NewTurn;
     }
+
+    private void Start() => cursor?.SetCursor(CursorType.Default);
 
     private void NewTurn(BoardState newState)
     {
@@ -104,6 +107,42 @@ public class SelectPiece : MonoBehaviour
         ColorizeBasedOnMove();
         HighlightKeysOnHoverHex();
         HighlightHexOnHoverKey();
+
+        ChangeCursorOnHover();
+    }
+
+    private void ChangeCursorOnHover()
+    {
+        if(onMouse.isPickedUp || cursor == null)
+            return;
+        
+        // Not this player's turn
+        if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
+            return;
+        
+        // Previewing an old move, don't make the player think they can play a move by giving hand cursor
+        if(historyPanel.panelPointer != historyPanel.currentTurnPointer)
+            return;
+
+        if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
+        {
+            if(hit.collider == null)
+                return;
+
+            BoardState currentBoardState = board.GetCurrentBoardState();
+            if(hit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
+            {
+                // IPiece pieceOnHex = currentBoardState.allPiecePositions[clickedHex.index];
+                if(currentBoardState.TryGetPiece(clickedHex.index, out (Team team, Piece piece) teamedPiece) && teamedPiece.team == currentBoardState.currentMove)
+                    cursor.SetCursor(CursorType.Hand);
+                else
+                    cursor.SetCursor(CursorType.Default);
+            }
+            else
+                cursor.SetCursor(CursorType.Default);
+        }
+        else
+            cursor.SetCursor(CursorType.Default);
     }
 
     private void HighlightHexOnHoverKey()
@@ -115,6 +154,7 @@ public class SelectPiece : MonoBehaviour
         else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
             return;
 
+
         if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, keysMask))
         {
             if(hit.collider.TryGetComponent<TextMeshPro>(out TextMeshPro hitKey))
@@ -124,7 +164,6 @@ public class SelectPiece : MonoBehaviour
                 
                 keyHighlightedHexes = Enumerable.Empty<Hex>();
                 lastHoveredKey = null;
-                return;
             }
             
             if(lastHoveredKey == hitKey)
@@ -361,7 +400,8 @@ public class SelectPiece : MonoBehaviour
 
         if(selectedPiece == null)
         {
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
+            bool cursorVisability = cursor != null ? cursor.visible : true;
+            if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100, hexMask))
             {
                 BoardState currentBoardState = board.GetCurrentBoardState();
                 IPiece hoveredPiece = null;
@@ -474,7 +514,7 @@ public class SelectPiece : MonoBehaviour
 
     public void LeftClick(CallbackContext context)
     {
-        if(promotionDialogue.gameObject.activeSelf)
+        if(promotionDialogue != null && promotionDialogue.gameObject.activeSelf)
             return;
         
         if(context.started)
@@ -499,8 +539,14 @@ public class SelectPiece : MonoBehaviour
         if(multiplayer != null && multiplayer.gameParams.localTeam != board.GetCurrentTurn())
             return;
 
+        // If the game is over, prevent any further moves
+        if(board.game.endType != GameEndType.Pending)
+            return;
+
+        bool cursorVisability = cursor != null ? cursor.visible : true;
+
         // When moveing pieces on the board, we determine what piece is being moved by the hex the player is hovering
-        if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
+        if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hexHit, 100, hexMask))
         {
             if(hexHit.collider == null)
                 return;
@@ -511,7 +557,7 @@ public class SelectPiece : MonoBehaviour
                 if(pieceOnHex.team == currentBoardState.currentMove)
                 {
                     Select(currentBoardState, pieceOnHex);
-                    audioSource.PlayOneShot(pickupNoise);
+                    PlayPickupNoise();
                     return;
                 }
             }
@@ -520,7 +566,8 @@ public class SelectPiece : MonoBehaviour
         // But pulling pieces ouf of jail in free place mode doesn't have a hex for us to check, so let's cast a ray and check that instead.
         if(!multiplayer && freePlaceMode.toggle.isOn)
         {
-            if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
+            // if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
+            if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
             {
                 if(pieceHit.collider == null)
                     return;
@@ -528,7 +575,7 @@ public class SelectPiece : MonoBehaviour
                 if(pieceHit.collider.TryGetComponent<IPiece>(out IPiece clickedPiece) && clickedPiece.team == currentBoardState.currentMove && clickedPiece.captured)
                 {
                     Select(currentBoardState, clickedPiece, true);
-                    audioSource.PlayOneShot(pickupNoise);
+                    PlayPickupNoise();
                     return;
                 }
             }
@@ -539,8 +586,11 @@ public class SelectPiece : MonoBehaviour
     {
         if(lastChangedRenderer != null)
             ResetLastChangedRenderer();
+        
+        bool cursorVisability = cursor != null ? cursor.visible : true;
 
-        if(Cursor.visible && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
+        // if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
+        if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
         {
             if(hit.collider.TryGetComponent<IPiece>(out IPiece hoveredPiece) && selectedPiece != null)
             {
@@ -649,15 +699,20 @@ public class SelectPiece : MonoBehaviour
         }
         if(selectedPiece != null)
         {
-            audioSource.PlayOneShot(cancelNoise);
+            PlayCancelNoise();
             DeselectPiece(selectedPiece.location, selectedPiece.captured);
         }
     }
+
+    public void PlayCancelNoise() => audioSource.PlayOneShot(cancelNoise);
+    public void PlayPickupNoise() => audioSource.PlayOneShot(pickupNoise);
 
     private void Select(BoardState currentBoardState, IPiece clickedPiece, bool fromJail = false)
     {
         if(selectedPiece != null)
             DeselectPiece(selectedPiece.location);
+
+        cursor?.SetCursor(CursorType.Grab);
 
         // Select new piece and highlight all of the places it can move to on the current board state
         selectedPiece = clickedPiece;
@@ -749,9 +804,11 @@ public class SelectPiece : MonoBehaviour
 
     public void DeselectPiece(Index fromIndex, bool fromJail = false)
     {
+        cursor?.SetCursor(CursorType.Default);
+
         if(selectedPiece == null)
             return;
-        
+
         // Debug.Log($"Desllecting: {selectedPiece.obj.name}");
 
         foreach((Hex hex, MoveType moveType) in pieceMoves)

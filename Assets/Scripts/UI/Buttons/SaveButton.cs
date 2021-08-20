@@ -8,11 +8,14 @@ public class SaveButton : MonoBehaviour
 {
     [SerializeField] private Board board;
     [SerializeField] private Timers timers;
+    VirtualCursor cursor;
 
     private void Awake() 
     {
         if(board == null)
             board = GameObject.FindObjectOfType<Board>();
+        
+        cursor = GameObject.FindObjectOfType<VirtualCursor>();
     }
 
     public void Save()
@@ -22,6 +25,8 @@ public class SaveButton : MonoBehaviour
 
         string path = Application.persistentDataPath + $"/saves";
         Directory.CreateDirectory(path);
+        
+        cursor?.SetCursor(CursorType.None);
 
         string file = StandaloneFileBrowser.SaveFilePanel(
             title: "Save File", 
@@ -32,6 +37,8 @@ public class SaveButton : MonoBehaviour
                 new ExtensionFilter("All FIles", "*")
             }
         );
+
+        cursor?.SetCursor(CursorType.Default);
 
         if(string.IsNullOrEmpty(file))
         {

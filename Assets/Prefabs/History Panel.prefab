@@ -1292,7 +1292,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6802989489192433809}
   m_HandleRect: {fileID: 6802989489192433808}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2207,6 +2207,8 @@ MonoBehaviour:
   collectionContainer: {fileID: 6802989491032145490}
   board: {fileID: 0}
   selectPiece: {fileID: 0}
+  lastMoveTracker: {fileID: 0}
+  turnPanel: {fileID: 0}
   traverseDelay: 0.15
 --- !u!114 &4639235608228260671
 MonoBehaviour:
@@ -3047,7 +3049,7 @@ MonoBehaviour:
   button: {fileID: 8140623464537815372}
   triangleImage: {fileID: 8222806053501422715}
   openY: 5
-  closeY: -498.5
+  closeY: -497.5
   transitionTime: 0.25
 --- !u!1001 &6802989489101507935
 PrefabInstance:

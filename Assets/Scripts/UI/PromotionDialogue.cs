@@ -10,11 +10,13 @@ public class PromotionDialogue : MonoBehaviour
     [SerializeField] private Button knightButton;
     [SerializeField] private Button squireButton;
     [SerializeField] private Button queenButton;
+    [SerializeField] private Button bishopButton;
     IEnumerable<(Button, Piece)> GetButtons()
     {
         yield return (rookButton, Piece.QueensRook);
         yield return (knightButton, Piece.QueensKnight);
         yield return (squireButton, Piece.BlackSquire);
+        yield return (bishopButton, Piece.QueensBishop);
         yield return (queenButton, Piece.Queen);
     }
 

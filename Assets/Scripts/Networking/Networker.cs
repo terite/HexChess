@@ -33,7 +33,7 @@ public class Networker : MonoBehaviour
     TcpClient client;
     NetworkStream stream;
 
-    const int messageMaxSize = 2048;
+    const int messageMaxSize = 4096;
     public float pingDelay = 2f;
     float pingAtTime;
     float pingedAtTime;

@@ -30,6 +30,10 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     public bool IsSandboxMode { get; private set; }
 
+    private VirtualCursor cursor;
+
+    bool needsReset = false;
+
     private void OnValidate()
     {
         selectPiece = FindObjectOfType<SelectPiece>();
@@ -39,6 +43,10 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         ResetRotation();
         LookTowardsOrigin();
         SetDefaultTeam(team);
+    }
+
+    private void Awake() {
+        cursor = GameObject.FindObjectOfType<VirtualCursor>();    
     }
 
     private void Start()
@@ -67,6 +75,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         if(rotating)
             return;
 
+        needsReset = true;
         this.team = team;
         keys.SetKeys(team);
         SetDefaultTeam(team);
@@ -85,6 +94,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Team.Black => Team.White,
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
+        needsReset = true;
         keys.SetKeys(team);
         SetDefaultTeam(team);
         StopRotating();
@@ -114,15 +124,15 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     void StartRotating()
     {
         rotating = true;
-        Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        cursor?.Hide();
+        needsReset = true;
     }
 
     void StopRotating()
     {
         rotating = false;
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        
         release_rotation = temp_rotation;
         nomalizedElaspedTime = 0;
         float delta = (defaultRotation - release_rotation).magnitude / minimumRotationMagnitude;
@@ -169,8 +179,16 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             }
             else
             {
-                temp_rotation = defaultRotation;
-                scroll = defaultScroll;
+                // This shouldn't run every frame, but only once when the camera returns to default position
+                if(needsReset)
+                {
+                    if(Cursor.lockState != CursorLockMode.None)
+                        Cursor.lockState = CursorLockMode.None;
+                    cursor?.Show();
+                    needsReset = false;
+                    temp_rotation = defaultRotation;
+                    scroll = defaultScroll;
+                }
             }
 
             LookTowardsOrigin();

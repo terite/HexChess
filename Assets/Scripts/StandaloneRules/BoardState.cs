@@ -87,7 +87,7 @@ public struct BoardState
     }
     public readonly bool IsOccupiedBy(Index index, (Team expectedTeam, Piece expectedPiece) expected)
     {
-        if (!TryGetPiece(index, out (Team actualTeam, Piece actualPiece) actual))
+        if(!TryGetPiece(index, out (Team actualTeam, Piece actualPiece) actual))
             return false;
 
         return expected == actual;
@@ -161,9 +161,8 @@ public struct BoardState
             }
         }
 
-        foreach ((Index target, MoveType moveType) move in MoveGenerator.GetAllPossibleSquireMoves(enemyKingLoc, enemy, this))
-        {
-            if (move.moveType == MoveType.Attack && TryGetPiece(move.target, out var occupier))
+            IEnumerable<(Index, MoveType)> moves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, checkForTeam, this, promotions);
+            foreach((Index hex, MoveType moveType) in moves)
             {
                 Piece realPiece = GetRealPiece(occupier, promotions);
                 if (realPiece.IsSquire())
@@ -253,23 +252,13 @@ public struct BoardState
 
                 }
 
-                // What we promote to doesn't matter for the purpose of determining enemy checks
-                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions, Piece.Pawn1);
-                if (newState.IsChecking(enemyTeam, newPromotions))
-                    continue;
-
-                if (realPiece.IsPawn() && MoveGenerator.IsPromotionRank(checkForTeam, potentialMove.target))
-                {
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Queen);
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensBishop);
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensRook);
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensKnight);
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.BlackSquire);
-                }
-                else
-                {
-                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Pawn1);
-                }
+            Team enemyTeam = kvp.Key.team == Team.White ? Team.Black : Team.White;
+            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, this, promotions);
+            foreach (var potentialMove in pieceMoves)
+            {
+                (BoardState newState, List<Promotion> newPromotions) = ApplyMove(kvp.Key, kvp.Value, potentialMove, promotions);
+                if (!newState.IsChecking(enemyTeam, newPromotions))
+                    return true;
             }
         }
     }

@@ -20,7 +20,15 @@ public class TurnPanel : MonoBehaviour
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
     }
 
-    private void GameOver(Game game)
+    public void GameOver(Game game)
+    {
+        SetGameEndText(game);
+        
+        if(mainMenuButton == null)
+            mainMenuButton = Instantiate(mainMenuButtonPrefab, buttonContainer);
+    }
+
+    public void SetGameEndText(Game game)
     {
         turnText.color = game.winner switch {
             Winner.White => Color.white,
@@ -47,9 +55,6 @@ public class TurnPanel : MonoBehaviour
             GameEndType.Stalemate => $"{durationString} a stalemate has occured.",
             _ => $"{durationString} {game.winner} is victorius!"
         };
-        
-        if(mainMenuButton == null)
-            mainMenuButton = Instantiate(mainMenuButtonPrefab, buttonContainer);
     }
 
     private string SupportOldSaves(Game game)

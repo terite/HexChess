@@ -23,7 +23,7 @@ public class ToggleHistoryPanel : MonoBehaviour
         button.onClick.AddListener(() => {
             mode = mode == TransitionMode.In ? TransitionMode.Out : TransitionMode.In;
             transitioning = true;
-            triangleImage.rotation = mode == TransitionMode.In ? Quaternion.Euler(0,0,0) : Quaternion.Euler(180,0,0);
+            triangleImage.localRotation = mode == TransitionMode.In ? Quaternion.Euler(0,0,0) : Quaternion.Euler(180,0,0);
         });
     }
 
@@ -34,9 +34,13 @@ public class ToggleHistoryPanel : MonoBehaviour
             ellapsedTime += Time.deltaTime;
             float startPos = mode == TransitionMode.In ? closeY : openY;
             float endPos = mode == TransitionMode.In ? openY : closeY;
-            panel.position = new Vector3(panel.position.x, Mathf.Lerp(startPos, endPos, Mathf.Clamp01(ellapsedTime/transitionTime)), panel.position.z);
+            
+            panel.anchoredPosition = new Vector2(
+                x: panel.anchoredPosition.x, 
+                y: Mathf.Lerp(startPos, endPos, Mathf.Clamp01(ellapsedTime/transitionTime))
+            );
 
-            if(panel.position.y == endPos)
+            if(panel.anchoredPosition.y == endPos)
             {
                 ellapsedTime = 0;
                 transitioning = false;

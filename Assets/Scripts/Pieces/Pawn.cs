@@ -31,11 +31,6 @@ public class Pawn : MonoBehaviour, IPiece
         startLoc = startingLocation;
     }
 
-    public IEnumerable<(Index, MoveType)> GetAllPossibleMoves(BoardState boardState, bool includeBlocking = false)
-    {
-        return MoveGenerator.GetAllPossiblePawnMoves(location, team, boardState, includeBlocking);
-    }
-
     public void MoveTo(Hex hex, Action action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
@@ -43,7 +38,7 @@ public class Pawn : MonoBehaviour, IPiece
         
         // If the pawn reaches the other side of the board, it can Promote
         if(location.row == goal)
-            hex.board.QueryPromote(this, action);
+            hex.board?.QueryPromote(this, action);
     }
 
     private void Update() => MoveOverTime();

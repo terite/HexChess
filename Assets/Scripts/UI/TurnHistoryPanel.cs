@@ -26,8 +26,12 @@ public class TurnHistoryPanel : MonoBehaviour
     int? traverseDir = null;
     public float traverseDelay = 0.25f;
     private float traverseAtTime;
-
-    private void Awake() => board.newTurn += NewTurn;
+    VirtualCursor cursor;
+    private void Awake() 
+    {
+        board.newTurn += NewTurn;
+        cursor = GameObject.FindObjectOfType<VirtualCursor>();
+    }
     private void Start() 
     {
         startPanel = Instantiate(startPanelPrefab, collectionContainer);
@@ -204,6 +208,13 @@ public class TurnHistoryPanel : MonoBehaviour
         if(panels.Count == 0)
             return;
         
+        cursor?.SetCursor(CursorType.Default);
+        if(selectPiece.selectedPiece != null)
+        {
+            selectPiece.PlayCancelNoise();
+            selectPiece.DeselectPiece(selectPiece.selectedPiece.location, selectPiece.selectedPiece.captured);
+        }
+        
         if(scrollBarVal.HasValue)
             scrollBar.value = scrollBarVal.Value;
             
@@ -224,7 +235,12 @@ public class TurnHistoryPanel : MonoBehaviour
             board.HighlightMove(move);
             selectPiece.HighlightPotentialCheckOrMate(state);
             lastMoveTracker.UpdateText(move);
-            turnPanel.NewTurn(state, move.turn);
+
+            // Determine if it's game over or not. If so, call turnPanel.GameOver
+            if(board.game.endType == GameEndType.Pending || panelPointer != currentTurnPointer)
+                turnPanel.NewTurn(state, move.lastTeam == Team.Black ? move.turn + 1 : move.turn);
+            else
+                turnPanel.SetGameEndText(board.game);
         }
     }
 

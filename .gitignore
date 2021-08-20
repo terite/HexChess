@@ -60,3 +60,8 @@ crashlytics-build.properties
 
 /Assets/Meshes/Chess_Pieces.blend1
 /Assets/Meshes/Chess_Pieces.blend1.meta
+
+# ML-Agents run logs
+[Aa]ssets/results/**/run_logs
+[Aa]seets/results/**/**/*.pt
+*.pt
