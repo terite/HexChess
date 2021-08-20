@@ -32,6 +32,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     private VirtualCursor cursor;
 
+    bool needsReset = false;
+
     private void OnValidate()
     {
         selectPiece = FindObjectOfType<SelectPiece>();
@@ -73,6 +75,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         if(rotating)
             return;
 
+        needsReset = true;
         this.team = team;
         keys.SetKeys(team);
         SetDefaultTeam(team);
@@ -91,6 +94,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             Team.Black => Team.White,
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
+        needsReset = true;
         keys.SetKeys(team);
         SetDefaultTeam(team);
         StopRotating();
@@ -120,8 +124,9 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     void StartRotating()
     {
         rotating = true;
-        cursor?.Hide();
         Cursor.lockState = CursorLockMode.Locked;
+        cursor?.Hide();
+        needsReset = true;
     }
 
     void StopRotating()
@@ -175,10 +180,12 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             else
             {
                 // This shouldn't run every frame, but only once when the camera returns to default position
-                if(Cursor.lockState != CursorLockMode.None)
+                if(needsReset)
                 {
+                    if(Cursor.lockState != CursorLockMode.None)
+                        Cursor.lockState = CursorLockMode.None;
                     cursor?.Show();
-                    Cursor.lockState = CursorLockMode.None;
+                    needsReset = false;
                     temp_rotation = defaultRotation;
                     scroll = defaultScroll;
                 }

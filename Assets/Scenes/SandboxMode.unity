@@ -19686,7 +19686,7 @@ PrefabInstance:
     - target: {fileID: 5788999037492403228, guid: bec4ceee2eeb09e458448a1a1553d5ac,
         type: 3}
       propertyPath: whiteAI
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5788999037492403228, guid: bec4ceee2eeb09e458448a1a1553d5ac,
         type: 3}
