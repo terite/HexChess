@@ -8,20 +8,18 @@ namespace Dretch
 {
     public class DretchEngine : IHexAI
     {
-        public readonly DiagnosticInfo diagnostics = new DiagnosticInfo();
+        public bool quiescenceSearchEnabled = false;
+        public bool iterativeDeepeningEnabled = false;
+        public bool previousOrderingEnabled = false;
+        public bool pawnValueMapEnabled = false;
 
+        FastMove bestMove;
         readonly int maxSearchDepth;
-        readonly bool quiescenceSearchEnabled = true;
-        public bool iterativeDeepeningEnabled = true;
-        public bool previousOrderingEnabled = true;
-        public bool pawnValueMapEnabled = true;
-
         readonly Dictionary<FastMove, int> previousScores = new Dictionary<FastMove, int>();
         readonly List<FastMove>[] moveCache;
         volatile bool cancellationRequested;
         readonly EvaluationData evaluationData = new EvaluationData();
-
-        FastMove bestMove;
+        public readonly DiagnosticInfo diagnostics = new DiagnosticInfo();
 
         public DretchEngine() : this(4) { }
 
@@ -33,6 +31,7 @@ namespace Dretch
             for (int i = 0; i < moveCache.Length; i++)
                 moveCache[i] = new List<FastMove>(100);
         }
+
         public Task<HexAIMove> GetMove(Board board)
         {
             cancellationRequested = false;
@@ -84,11 +83,11 @@ namespace Dretch
                 if (moveValue >= (CheckmateValue - currentDepth))
                 {
                     int mateDistance = ((CheckmateValue - moveValue) / 2) + 1;
-                    // UnityEngine.Debug.Log($"{root.currentMove} found mate in {mateDistance} by doing {bestMove} -- {moveValue}");
+                    UnityEngine.Debug.Log($"{root.currentMove} found mate in {mateDistance} by doing {bestMove} -- {moveValue}");
                     return bestMove;
                 }
 
-                // UnityEngine.Debug.Log($"Depth [{searchDepth}/{maxSearchDepth}] Move {bestMove} worth {bestMoveValue}");
+                UnityEngine.Debug.Log($"Depth [{currentDepth}/{maxSearchDepth}] Move {bestMove} worth {bestMoveValue}");
             }
 
             return bestMove;
@@ -99,7 +98,19 @@ namespace Dretch
         (int value, FastMove move) Search(FastBoardNode node, int searchDepth, int plyFromRoot, int alpha, int beta, int color)
         {
             if (searchDepth == 0)
-                return (QuiescenceSearch(node, plyFromRoot, alpha, beta, color), FastMove.Invalid);
+            {
+                if (quiescenceSearchEnabled)
+                {
+                    using (diagnostics.MeasureEval())
+                    {
+                        return (color * EvaluateBoard(node, plyFromRoot), FastMove.Invalid);
+                    }
+                }
+                else
+                {
+                    return (QuiescenceSearch(node, plyFromRoot, alpha, beta, color), FastMove.Invalid);
+                }
+            }
 
             List<FastMove> moves;
             using (diagnostics.MeasureMoveGen())
@@ -168,9 +179,6 @@ namespace Dretch
 
         int QuiescenceSearch(FastBoardNode node, int plyFromRoot, int alpha, int beta, int color)
         {
-            if (!quiescenceSearchEnabled)
-                return color * EvaluateMaybeTerminalBoard(node, plyFromRoot);
-
             var moves = new List<FastMove>(10);
             using (diagnostics.MeasureMoveGen())
                 node.AddAllPossibleMoves(moves, node.currentMove, generateQuiet: false);
@@ -218,7 +226,10 @@ namespace Dretch
 
             if (isTerminal)
             {
-                return color * EvaluateMaybeTerminalBoard(node, plyFromRoot);
+                using (diagnostics.MeasureEval())
+                {
+                    return color * EvaluateBoard(node, plyFromRoot);
+                }
             }
 
             return value;
@@ -237,7 +248,7 @@ namespace Dretch
                     previousScores.TryGetValue(a, out int aValue);
                     previousScores.TryGetValue(b, out int bValue);
                     return bValue - aValue; // descending
-            });
+                });
             }
             else
             {
@@ -245,9 +256,8 @@ namespace Dretch
                 {
                     int valueA = MoveValuer(node, a);
                     int valueB = MoveValuer(node, b);
-
                     return (valueB - valueA); // descending
-            });
+                });
             }
         }
 
@@ -270,9 +280,7 @@ namespace Dretch
             else if (move.moveType == MoveType.Attack)
             {
                 var victim = node[move.target];
-
                 int attackValue = GetPieceValue(victim.piece) - attackerValue;
-
                 value += attackValue;
             }
             else if (move.moveType == MoveType.EnPassant)
@@ -317,70 +325,62 @@ namespace Dretch
         }
         public int EvaluateBoard(FastBoardNode node, int plyFromRoot)
         {
-            return EvaluateMaybeTerminalBoard(node, plyFromRoot);
-        }
-
-        public int EvaluateMaybeTerminalBoard(FastBoardNode node, int plyFromRoot)
-        {
             diagnostics.boardEvaluations++;
 
-            using (diagnostics.MeasureEval())
+            if (node.plySincePawnMovedOrPieceTaken >= 100)
+                return 0; // automatic draw due to 50 move rule.
+
+            int boardValue = 0;
+            bool whiteIsChecking = node.currentMove != Team.White && node.IsChecking(Team.White);
+            if (whiteIsChecking)
             {
-                if (node.plySincePawnMovedOrPieceTaken >= 100)
-                    return 0; // automatic draw due to 50 move rule.
-
-                int boardValue = 0;
-                bool whiteIsChecking = node.currentMove != Team.White && node.IsChecking(Team.White);
-                if (whiteIsChecking)
-                {
-                    boardValue += CheckBonusValue;
-                }
-
-                bool blackIsChecking = node.currentMove != Team.Black && node.IsChecking(Team.Black);
-                if (blackIsChecking)
-                {
-                    boardValue -= CheckBonusValue;
-                }
-
-                if (!node.HasAnyValidMoves(node.currentMove))
-                {
-                    if (whiteIsChecking)
-                        return CheckmateValue - plyFromRoot;
-                    else if (blackIsChecking)
-                        return -CheckmateValue + plyFromRoot;
-                    else
-                        return DrawValue;
-                }
-
-                for (byte i = 0; i < node.positions.Length; i++)
-                {
-                    var piece = node.positions[i];
-                    if (piece.team == Team.None)
-                        continue;
-
-                    var valuedPosition = FastIndex.FromByte(i);
-                    if (piece.team == Team.Black)
-                        valuedPosition = valuedPosition.Mirror();
-
-                    int pieceValue = GetPieceValue(piece.piece);
-
-                    if (pawnValueMapEnabled && piece.piece == FastPiece.Pawn)
-                    {
-                        pieceValue += pawnValueMap[valuedPosition.HexId];
-                    }
-
-                    boardValue += TeamMults[(byte)piece.team] * pieceValue;
-                }
-
-                using (diagnostics.MeasureEvalThreats())
-                {
-                    evaluationData.Prepare(node);
-                    boardValue += evaluationData.WhiteThreats.Count - evaluationData.BlackThreats.Count;
-                    boardValue += (evaluationData.WhitePawnThreats.Count * 2) - (evaluationData.BlackPawnThreats.Count * 2);
-                }
-
-                return boardValue;
+                boardValue += CheckBonusValue;
             }
+
+            bool blackIsChecking = node.currentMove != Team.Black && node.IsChecking(Team.Black);
+            if (blackIsChecking)
+            {
+                boardValue -= CheckBonusValue;
+            }
+
+            if (!node.HasAnyValidMoves(node.currentMove))
+            {
+                if (whiteIsChecking)
+                    return CheckmateValue - plyFromRoot;
+                else if (blackIsChecking)
+                    return -CheckmateValue + plyFromRoot;
+                else
+                    return DrawValue;
+            }
+
+            for (byte i = 0; i < node.positions.Length; i++)
+            {
+                var piece = node.positions[i];
+                if (piece.team == Team.None)
+                    continue;
+
+                var valuedPosition = FastIndex.FromByte(i);
+                if (piece.team == Team.Black)
+                    valuedPosition = valuedPosition.Mirror();
+
+                int pieceValue = GetPieceValue(piece.piece);
+
+                if (pawnValueMapEnabled && piece.piece == FastPiece.Pawn)
+                {
+                    pieceValue += pawnValueMap[valuedPosition.HexId];
+                }
+
+                boardValue += TeamMults[(byte)piece.team] * pieceValue;
+            }
+
+            using (diagnostics.MeasureEvalThreats())
+            {
+                evaluationData.Prepare(node);
+                boardValue += evaluationData.WhiteThreats.Count - evaluationData.BlackThreats.Count;
+                boardValue += (evaluationData.WhitePawnThreats.Count * 2) - (evaluationData.BlackPawnThreats.Count * 2);
+            }
+
+            return boardValue;
         }
 
         static int GetPieceValue(FastPiece piece)
@@ -430,18 +430,18 @@ namespace Dretch
         static readonly int[] pawnValueMap;
         static readonly int[][] pawnValueMapSource = new int[][]
         {
-        //            A    B    C    D    E    F    G    H    I
-        new int[] {      100,      100,      100,      100 },      // 10
-        new int[] { 100,  50, 100,  50, 100,  50, 100,  50, 100 }, // 9
-        new int[] {  50,  10,  50,  10,  50,  10,  50,  10,  10 }, // 8
-        new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 7
-        new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 6
-        new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 5
-        new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 4
-        new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 3
-        new int[] {  10,   0,  10,   0,  10,   0,  10,   0,  10 }, // 2
-        new int[] {   0,   0,   0,   0,   0,   0,   0,   0,   0 }, // 1
-                                                                   //            A    B    C    D    E    F    G    H    I
+            //            A    B    C    D    E    F    G    H    I
+            new int[] {      100,      100,      100,      100      }, // 10
+            new int[] { 100,  50, 100,  50, 100,  50, 100,  50, 100 }, // 9
+            new int[] {  50,  10,  50,  10,  50,  10,  50,  10,  10 }, // 8
+            new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 7
+            new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 6
+            new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 5
+            new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 4
+            new int[] {  10,  10,  10,  10,  10,  10,  10,  10,  10 }, // 3
+            new int[] {  10,   0,  10,   0,  10,   0,  10,   0,  10 }, // 2
+            new int[] {   0,   0,   0,   0,   0,   0,   0,   0,   0 }, // 1
+            //            A    B    C    D    E    F    G    H    I
         };
         static DretchEngine()
         {

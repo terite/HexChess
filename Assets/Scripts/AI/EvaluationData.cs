@@ -1,92 +1,132 @@
 ﻿using System;
 using System.Collections.Generic;
 
-public class EvaluationData
+namespace Dretch
 {
-    public BitsBoard WhitePieces;
-    public BitsBoard BlackPieces;
-    public BitsBoard WhitePawns;
-    public BitsBoard BlackPawns;
-    public BitsBoard WhiteThreats;
-    public BitsBoard BlackThreats;
-    public BitsBoard WhitePawnThreats;
-    public BitsBoard BlackPawnThreats;
-    public BitsBoard WhitePawnDefends;
-    public BitsBoard BlackPawnDefends;
-
-    readonly List<FastMove> threatMoveCache = new List<FastMove>();
-    public void Prepare(FastBoardNode node)
+    public class EvaluationData
     {
-        var whitePieces = new BitsBoard();
-        var blackPieces = new BitsBoard();
+        /*
+        Terminology:
+        Piece: Anything from king to pawn
+        Threat: A hex that could be captured of occupied
+        Attacks: A hex that can be attacked right now
+        Defends: A hex that we occupy but also threaten
+        */
+        public BitsBoard WhitePieces;
+        public BitsBoard BlackPieces;
 
-        var whitePawns = new BitsBoard();
-        var blackPawns = new BitsBoard();
+        public BitsBoard WhitePawns;
+        public BitsBoard BlackPawns;
 
-        var whiteThreats = new BitsBoard();
-        var blackThreats = new BitsBoard();
+        public BitsBoard WhiteThreats;
+        public BitsBoard BlackThreats;
+        public BitsBoard WhitePawnThreats;
+        public BitsBoard BlackPawnThreats;
 
-        var moves = threatMoveCache;
-        moves.Clear();
-        for (byte b = 0; b < node.positions.Length; ++b)
+        public void Prepare(FastBoardNode node)
         {
-            var piece = node.positions[b];
-            if (piece.team == Team.None)
-                continue;
-            else if (piece.team == Team.White)
-                whitePieces[b] = true;
-            else
-                blackPieces[b] = true;
+            var whitePieces = new BitsBoard();
+            var blackPieces = new BitsBoard();
 
-            if (piece.piece == FastPiece.Pawn)
+            var whitePawns = new BitsBoard();
+            var blackPawns = new BitsBoard();
+
+            var whiteThreats = new BitsBoard();
+            var blackThreats = new BitsBoard();
+
+            for (byte b = 0; b < node.positions.Length; ++b)
             {
-                if (piece.team == Team.White)
-                    whitePawns[b] = true;
+                var piece = node.positions[b];
+                if (piece.team == Team.None)
+                    continue;
+
+                else if (piece.team == Team.White)
+                    whitePieces[b] = true;
                 else
-                    blackPawns[b] = true;
+                    blackPieces[b] = true;
+
+                if (piece.piece == FastPiece.Pawn)
+                {
+                    if (piece.team == Team.White)
+                        whitePawns[b] = true;
+                    else
+                        blackPawns[b] = true;
+                }
+                else
+                {
+                    var threats = CalculateThreats(node, b);
+                    if (piece.team == Team.White)
+                        whiteThreats |= threats;
+                    else
+                        blackThreats |= threats;
+                }
             }
-            else
+
+            var whitePawnThreats = whitePawns.Shift(HexNeighborDirection.UpLeft) | whitePawns.Shift(HexNeighborDirection.UpRight);
+            var blackPawnThreats = blackPawns.Shift(HexNeighborDirection.DownLeft) | blackPawns.Shift(HexNeighborDirection.DownRight);
+
+            WhitePawns = whitePawns;
+            BlackPawns = blackPawns;
+
+            WhitePieces = whitePieces;
+            BlackPieces = blackPieces;
+
+            WhiteThreats = whiteThreats | whitePawnThreats;
+            BlackThreats = blackThreats | blackPawnThreats;
+
+            WhitePawnThreats = whitePawnThreats;
+            BlackPawnThreats = blackPawnThreats;
+        }
+
+        static BitsBoard CalculateThreats(FastBoardNode node, byte index)
+        {
+            var piece = node[index];
+            BitsBoard threats;
+            switch (piece.piece)
             {
-                var index = FastIndex.FromByte(b);
-                FastPossibleMoveGenerator.AddAllPossibleMoves(moves, index, piece.piece, piece.team, node, generateQuiet: false);
+                case FastPiece.King:
+                    return PrecomputedMoveData.kingThreats[index];
 
-                BitsBoard threats = default;
-                foreach (var move in moves)
-                {
-                    if (move.moveType == MoveType.Attack)
-                        threats[move.target.ToByte()] = true;
-                }
+                case FastPiece.Knight:
+                    return PrecomputedMoveData.knightThreats[index];
 
-                if (piece.team == Team.White)
+                case FastPiece.Squire:
+                    return PrecomputedMoveData.squireThreats[index];
+
+                case FastPiece.Bishop:
+                    threats = default;
+                    AddThreatRays(ref threats, node, PrecomputedMoveData.bishopRays[index]);
+                    return threats;
+                case FastPiece.Rook:
+                    threats = default;
+                    AddThreatRays(ref threats, node, PrecomputedMoveData.rookRays[index]);
+                    return threats;
+
+                case FastPiece.Queen:
+                    threats = default;
+                    AddThreatRays(ref threats, node, PrecomputedMoveData.bishopRays[index]);
+                    AddThreatRays(ref threats, node, PrecomputedMoveData.rookRays[index]);
+                    return threats;
+
+                case FastPiece.None:
+                case FastPiece.Pawn: // Pawn handled by caller
+                default:
+                    return default;
+            }
+        }
+
+        static void AddThreatRays(ref BitsBoard threats, FastBoardNode node, FastIndex[][] rays)
+        {
+            foreach (var ray in rays)
+            {
+                foreach (var move in ray)
                 {
-                    whiteThreats |= threats;
-                }
-                else if (piece.team == Team.Black)
-                {
-                    blackThreats |= threats;
+                    threats[move] = true;
+                    if (node[move].team != Team.None)
+                        break;
                 }
             }
         }
 
-        var whitePawnAttacks = whitePawns.Shift(HexNeighborDirection.UpLeft) | whitePawns.Shift(HexNeighborDirection.UpRight);
-        var blackPawnAttacks = blackPawns.Shift(HexNeighborDirection.DownLeft) | blackPawns.Shift(HexNeighborDirection.DownRight);
-
-        var whitePawnThreats = whitePawnAttacks & blackPieces;
-        var blackPawnThreats = blackPawnAttacks & whitePieces;
-
-        WhitePawnDefends = whitePawnAttacks & whitePieces;
-        BlackPawnDefends = blackPawnAttacks & blackPieces;
-
-        WhitePawns = whitePawns;
-        BlackPawns = blackPawns;
-
-        WhitePieces = whitePieces;
-        BlackPieces = blackPieces;
-
-        WhiteThreats = whiteThreats | whitePawnThreats;
-        BlackThreats = blackThreats | blackPawnThreats;
-
-        WhitePawnThreats = whitePawnThreats;
-        BlackPawnThreats = blackPawnThreats;
     }
 }
