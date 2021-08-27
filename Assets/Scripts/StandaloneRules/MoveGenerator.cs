@@ -24,6 +24,20 @@ public static class MoveGenerator
         Piece.BlackSquire,
     };
 
+    public static IEnumerable<(Index target, MoveType moveType)> GetAllTheoreticalAttacks(Index location, Piece piece, Team team, BoardState boardState, IEnumerable<Promotion> promos, bool includeBlocking = false) =>
+        SkipInvalidMoves(GetTheroreticalAttacksIncludingInvalid(location, piece, team, boardState, promos, includeBlocking));
+
+    public static IEnumerable<(Index target, MoveType moveType)> GetTheroreticalAttacksIncludingInvalid(Index location, Piece piece, Team team, BoardState boardState, IEnumerable<Promotion> promos, bool includeBlocking = false) => piece switch {
+        Piece.King => GetAllKingMovesIncludingInvalid(location, team, boardState, includeBlocking),
+        Piece.Queen => GetAllQueenMovesIncludingInvalid(location, team, boardState, includeBlocking),
+        Piece p when (p == Piece.KingsRook || p == Piece.QueensRook) => GetAllRookMovesIncludingInvalid(location, team, boardState, promos, includeBlocking),
+        Piece p when (p == Piece.KingsKnight || p == Piece.QueensKnight) => GetAllKnightMovesIncludingInvalid(location, team, boardState, includeBlocking),
+        Piece p when (p == Piece.KingsBishop || p == Piece. QueensBishop) => GetAllBishopMovesIncludingInvalid(location, team, boardState, includeBlocking),
+        Piece p when (p == Piece.BlackSquire || p == Piece.GraySquire || p == Piece.WhiteSquire) => GetAllSquireMovesIncludingInvalid(location, team, boardState, includeBlocking),
+        Piece p when (p >= Piece.Pawn1) => GetAllPawnTheoreticalAttacksIncludingInvalid(location, team, boardState, includeBlocking),
+        _ => throw new ArgumentException($"Unhandled piece type: {piece}", nameof(piece))
+    };
+
     public static IEnumerable<(Index target, MoveType moveType)> GetAllPossibleMoves(Index location, Piece piece, Team team, BoardState boardState, IEnumerable<Promotion> promos, bool includeBlocking = false) => 
         SkipInvalidMoves(GetAllMovesIncludingInvalid(location, piece, team, boardState, promos, includeBlocking));
 
@@ -505,6 +519,56 @@ public static class MoveGenerator
     private static bool PawnIsAtStart(Team team, Index location) => team == Team.White 
         ? location.row == 3 || location.row == 4 
         : location.row == 14 || location.row == 15;
+
+    public static IEnumerable<(Index, MoveType)> GetAllPawnTheoreticalAttacksIncludingInvalid(Index location, Team team, BoardState boardState, bool includeBlocking = false)
+    {
+        bool isWhite = team == Team.White;
+        Index? leftAttack = location.GetNeighborAt(isWhite ? HexNeighborDirection.UpLeft : HexNeighborDirection.DownLeft);
+        Index? rightAttack = location.GetNeighborAt(isWhite ? HexNeighborDirection.UpRight : HexNeighborDirection.DownRight);
+
+        // Check takes
+        bool canTakeLeft = leftAttack.HasValue;
+        bool canTakeRight = rightAttack.HasValue;
+
+        // Check en passant
+        Index? leftPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownLeft : HexNeighborDirection.UpLeft);
+        Index? rightPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownRight : HexNeighborDirection.UpRight);
+        bool canPassantLeft = leftAttack.HasValue && leftPassant.HasValue;
+        bool canPassantRight = rightAttack.HasValue && rightPassant.HasValue;
+
+        if(canTakeLeft)
+            yield return (leftAttack.Value, MoveType.Attack);
+        else if(canPassantLeft)
+            yield return (leftAttack.Value, MoveType.EnPassant);
+        else
+            yield return (Index.invalid, MoveType.None);
+        
+        if(canTakeRight)
+            yield return (rightAttack.Value, MoveType.Attack);
+        else if(canPassantRight)
+            yield return (rightAttack.Value, MoveType.EnPassant);
+        else
+            yield return (Index.invalid, MoveType.None);
+
+        // One forward
+        // Index? forward = location.GetNeighborAt(isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+        // if(forward.HasValue && !boardState.IsOccupied(forward.Value))
+        // {
+        //     yield return (forward.Value, MoveType.Move);
+
+        //     // Two forward on 1st move
+        //     Index? twoForward = forward.Value.GetNeighborAt(isWhite ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+        //     if(twoForward.HasValue && PawnIsAtStart(team, location) && !boardState.IsOccupied(twoForward.Value))
+        //         yield return (twoForward.Value, MoveType.Move);
+        //     else
+        //         yield return (Index.invalid, MoveType.None);
+        // }
+        // else
+        // {
+        //     yield return (Index.invalid, MoveType.None);
+        //     yield return (Index.invalid, MoveType.None);
+        // }
+    }
     #endregion
 
     private static bool RayCanMove(Team team, BoardState boardState, int row, int col, List<(Index, MoveType)> possible, bool includeBlocking = false)

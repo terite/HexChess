@@ -61,6 +61,7 @@ public class Board : SerializedMonoBehaviour
     private void Awake() => ResetPieces();
     private void Start() => newTurn?.Invoke(turnHistory[turnHistory.Count - 1]);
     public void LoadDefaultBoard() => LoadGame(GetGame(defaultBoardStateFileLoc));
+    public BoardState GetDefaultBoardState() => GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
 
     public bool CheckFiveFoldProgress(BoardState toCheck) => turnHistory.Any(state => state == toCheck);
     public int GetFiveFoldProgress(BoardState toCheck) => turnHistory.Count(state => state == toCheck);
@@ -663,24 +664,25 @@ public class Board : SerializedMonoBehaviour
 
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
     }
-    public IEnumerable<Index> GetAllValidMovesForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
-    {
-        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking)
-            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
-            .Where(kvp => kvp.moveType != MoveType.Defend);
-
-        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
-    }
 
     public IEnumerable<IPiece> GetValidAttacksConcerningHex(Hex hex) => activePieces
         .Where(kvp => GetAllValidAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
             .Any(targetIndex => targetIndex == hex.index)
         ).Select(kvp => kvp.Value);
     
-    public IEnumerable<IPiece> GetAllValidMovesFromTeamConcerningHex(Team team, Hex hex) => activePieces
-        .Where(kvp => GetAllValidMovesForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
+    public IEnumerable<IPiece> GetAllValidTheoreticalAttacksFromTeamConcerningHex(Team team, Hex hex) => activePieces
+        .Where(kvp => GetAllTheoreticalAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
             .Any(targetIndex => targetIndex == hex.index) && kvp.Key.Item1 == team
         ).Select(kvp => kvp.Value);
+
+    public IEnumerable<Index> GetAllTheoreticalAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
+    {
+        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllTheoreticalAttacks(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking)
+            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
+            .Where(kvp => kvp.moveType != MoveType.Defend);
+
+        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
+    }
 
     // public IEnumerable<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
     // {
