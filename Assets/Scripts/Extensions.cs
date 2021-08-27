@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Extensions
@@ -38,5 +36,6 @@ namespace Extensions
             component = parent.GetComponentInChildren<T>();
             return component != null;
         }
+        public static readonly Vector3 invalidMove = new Vector3(-1, -1, (int)MoveType.None);
     }
 }

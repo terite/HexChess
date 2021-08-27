@@ -106,7 +106,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             ToggleTeam();
     }
 
-    public void RightClick(InputAction.CallbackContext context)
+    public void MiddleClick(InputAction.CallbackContext context)
     {
         if(selectPiece.selectedPiece != null)
             return;

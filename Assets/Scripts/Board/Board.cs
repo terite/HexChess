@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 using System.IO;
 using System;
+using Extensions;
 
 public class Board : SerializedMonoBehaviour
 {
@@ -82,6 +83,9 @@ public class Board : SerializedMonoBehaviour
                 // Reset promoted pawn if needed
                 if(prefab.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
                 {
+                    var teamedPiece = prefab.Key;
+                    GameObject prefabGO = prefab.Value;
+
                     if(turn.HasValue)
                     {
                         IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.turnNumber <= turn.Value);
@@ -91,38 +95,20 @@ public class Board : SerializedMonoBehaviour
                             GameObject properPromotedPrefab = piecePrefabs[(promotion.team, promotion.to)];
                             if(properPromotedPrefab.GetComponent<IPiece>().GetType() != piece.GetType())
                             {
-                                // Piece is promoted wrong, change type
-                                IPiece old = activePieces[prefab.Key];
-                                activePieces.Remove(prefab.Key);
                                 Debug.Log("Pawn is promoted to the wrong piece.");
-                                Destroy(old.obj);
-                                piece = Instantiate(properPromotedPrefab, loc, Quaternion.identity).GetComponent<IPiece>();
-                                piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
-                                activePieces.Add(prefab.Key, piece);
+                                piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
                             }   
                         }
                         else
                         {
-                            // No applicable promo, return to pawn
-                            IPiece old = activePieces[prefab.Key];
-                            activePieces.Remove(prefab.Key);
                             Debug.Log("No applicable promo found, resetting promoted piece to pawn.");
-                            Destroy(old.obj);
-                            piece = Instantiate(prefab.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                            piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
-                            activePieces.Add(prefab.Key, piece);
+                            piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
                         }
                     }
                     else
                     {
-                        // No turn was provided to check promo status, revert to pawn
-                        IPiece old = activePieces[prefab.Key];
-                        activePieces.Remove(prefab.Key);
-                        Debug.Log("Revert to pawn.");
-                        Destroy(old.obj);
-                        piece = Instantiate(prefab.Value, loc, Quaternion.identity).GetComponent<IPiece>();
-                        piece.Init(prefab.Key.team, prefab.Key.piece, startLoc);
-                        activePieces.Add(prefab.Key, piece);
+                        Debug.Log("No turn provided to check promo status, revert to pawn.");
+                        piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
                     }
 
                 }
@@ -180,6 +166,18 @@ public class Board : SerializedMonoBehaviour
             ClearMoveHighlight();
 
         lastSetState = newState; 
+    }
+
+    private IPiece ResetPieceToPrefab(Index startLoc, Vector3 loc, (Team team, Piece piece) teamedPiece, GameObject prefabGO)
+    {
+        IPiece piece;
+        IPiece old = activePieces[teamedPiece];
+        activePieces.Remove(teamedPiece);
+        Destroy(old.obj);
+        piece = Instantiate(prefabGO, loc, Quaternion.identity).GetComponent<IPiece>();
+        piece.Init(teamedPiece.team, teamedPiece.piece, startLoc);
+        activePieces.Add(teamedPiece, piece);
+        return piece;
     }
 
     public void LoadGame(Game game)
@@ -285,14 +283,11 @@ public class Board : SerializedMonoBehaviour
         return startState;
     }
 
-    public BoardState QueryMove((IPiece piece, Index target, MoveType type) move, BoardState startState) => ExecuteMove(move, startState, true);
-
     public void AdvanceTurn(BoardState newState, bool updateTime = true, bool surpressAudio = false)
     {
         if(!surpressAudio)
             audioSource.PlayOneShot(moveClip);
 
-        // IEnumerable<IPiece> checkingPieces = GetCheckingPieces(newState, newState.currentMove);
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         float timestamp = Time.timeSinceLevelLoad + timeOffset;
         Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
@@ -415,8 +410,7 @@ public class Board : SerializedMonoBehaviour
 
         // Check for 5 fold repetition
         // When the same board state occurs 5 times in a game, the game ends in a draw
-        IEnumerable<BoardState> repetition = turnHistory.Where(state => state == newState);
-        if(repetition.Count() >= 5)
+        if(GetFiveFoldProgress(newState) >= 5)
         {
             turnHistory.Add(newState);
 
@@ -496,7 +490,7 @@ public class Board : SerializedMonoBehaviour
 
     private BoardState CheckForCheckAndMate(BoardState newState, Team otherTeam, Team t)
     {
-        if(IsChecking(newState, t))
+        if(newState.IsChecking(t, promotions))
         {
             List<(Index, MoveType)> validMoves = new List<(Index, MoveType)>();
             // Check for mate
@@ -582,9 +576,7 @@ public class Board : SerializedMonoBehaviour
                 continue;
             }
 
-            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
-
-            if(IsChecking(newState, otherTeam))
+            if(newState.IsChecking(piece.team.Enemy(), promotions))
             {
                 yield return (Index.invalid, MoveType.None);
                 continue;
@@ -609,16 +601,11 @@ public class Board : SerializedMonoBehaviour
             {
                 Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
                 Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
+
                 if(!enemyLoc.HasValue || !enemyStartLoc.HasValue)
-                {
-                    // Debug.LogError($"Invalid hex for EnPassant on {possibleHex}");
                     continue;
-                }
                 if(!boardState.allPiecePositions.TryGetValue(enemyLoc.Value, out (Team team, Piece piece) enemy))
-                {
-                    // Debug.LogError($"Could not find enemy to capture for EnPassant on {possibleHex}");
                     continue;
-                }
                 if(turnHistory.Count - 2 >= 0)
                 {
                     BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
@@ -628,9 +615,7 @@ public class Board : SerializedMonoBehaviour
                         newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
                 }
                 else
-                {
                     continue;
-                }
             }
             else
             {
@@ -638,9 +623,8 @@ public class Board : SerializedMonoBehaviour
                 continue;
             }
 
-            Team otherTeam = piece.team == Team.White ? Team.Black : Team.White;
             // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(!IsChecking(newState, otherTeam))
+            if(!newState.IsChecking(piece.team.Enemy(), promotions))
                 yield return (possibleMove.target, possibleMove.moveType);
         }
     }
@@ -679,31 +663,41 @@ public class Board : SerializedMonoBehaviour
 
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
     }
+    public IEnumerable<Index> GetAllValidMovesForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
+    {
+        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking)
+            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
+            .Where(kvp => kvp.moveType != MoveType.Defend);
+
+        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
+    }
 
     public IEnumerable<IPiece> GetValidAttacksConcerningHex(Hex hex) => activePieces
         .Where(kvp => GetAllValidAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
             .Any(targetIndex => targetIndex == hex.index)
         ).Select(kvp => kvp.Value);
-
-    public IEnumerable<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
-    {
-        Team otherTeam = checkForTeam == Team.White ? Team.Black : Team.White;
-
-        return activePieces
-        .Where(kvp => kvp.Key.Item1 == checkForTeam
-            && boardState.allPiecePositions.ContainsKey(kvp.Key)
-            && MoveGenerator.GetAllPossibleMoves(kvp.Value.location, kvp.Value.piece, kvp.Value.team, boardState, promotions)
-                .Any(move =>
-                    move.Item2 == MoveType.Attack
-                    && boardState.allPiecePositions.ContainsKey(move.Item1)
-                    && boardState.allPiecePositions[move.Item1] == (otherTeam, Piece.King)
-                )
+    
+    public IEnumerable<IPiece> GetAllValidMovesFromTeamConcerningHex(Team team, Hex hex) => activePieces
+        .Where(kvp => GetAllValidMovesForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
+            .Any(targetIndex => targetIndex == hex.index) && kvp.Key.Item1 == team
         ).Select(kvp => kvp.Value);
-    }
 
-    public bool IsChecking(BoardState boardState, Team checkForTeam) => 
-        boardState.IsChecking(checkForTeam, promotions);
+    // public IEnumerable<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
+    // {
+    //     Team otherTeam = checkForTeam.Enemy();
 
+    //     return activePieces
+    //     .Where(kvp => kvp.Key.Item1 == checkForTeam
+    //         && boardState.allPiecePositions.ContainsKey(kvp.Key)
+    //         && MoveGenerator.GetAllPossibleMoves(kvp.Value.location, kvp.Value.piece, kvp.Value.team, boardState, promotions)
+    //             .Any(move =>
+    //                 move.Item2 == MoveType.Attack
+    //                 && boardState.allPiecePositions.ContainsKey(move.Item1)
+    //                 && boardState.allPiecePositions[move.Item1] == (otherTeam, Piece.King)
+    //             )
+    //     ).Select(kvp => kvp.Value);
+    // }
+    
     public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
         // Copy the existing board state
@@ -834,6 +828,7 @@ public class Board : SerializedMonoBehaviour
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn,
         // we still use the PieceType.Pawn# (read from the pawn) to store it's position in the game state to maintain it's unique key
+        // This means that anytime you might care about promotions, you need to cross reference the list of promotions to see if any are applicable
         Hex hex = GetHexIfInBounds(pawn.location);
 
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();

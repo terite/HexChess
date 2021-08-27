@@ -1,4 +1,4 @@
-using UnityEngine;
+using System;
 
 namespace Extensions
 {
@@ -56,6 +56,17 @@ namespace Extensions
             _ => 0
         };
 
-        public static readonly Vector3 invalidMove = new Vector3(-1, -1, (int)MoveType.None);
+        public static Piece[] GetAlternates(this Piece piece) => piece switch{
+            Piece.BlackSquire => new Piece[2]{Piece.WhiteSquire, Piece.GraySquire},
+            Piece.WhiteSquire => new Piece[2]{Piece.BlackSquire, Piece.GraySquire},
+            Piece.GraySquire => new Piece[2]{Piece.BlackSquire, Piece.WhiteSquire},
+            Piece.KingsBishop => new Piece[1]{Piece.QueensBishop},
+            Piece.QueensBishop => new Piece[1]{Piece.KingsBishop},
+            Piece.KingsRook => new Piece[1]{Piece.QueensRook},
+            Piece.QueensRook => new Piece[1]{Piece.KingsRook},
+            Piece.KingsKnight => new Piece[1]{Piece.QueensKnight},
+            Piece.QueensKnight => new Piece[1]{Piece.KingsKnight},
+            _ => Array.Empty<Piece>()
+        };
     }
 }

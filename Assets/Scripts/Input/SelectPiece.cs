@@ -22,6 +22,7 @@ public class SelectPiece : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private PromotionDialogue promotionDialogue;
     [SerializeField] private TurnHistoryPanel historyPanel;
+    [SerializeField] public ArrowTool arrowTool;
     public AudioClip cancelNoise;
     public AudioClip pickupNoise;
     public IPiece selectedPiece {get; private set;}
@@ -519,6 +520,9 @@ public class SelectPiece : MonoBehaviour
         
         if(context.started)
         {
+            if(arrowTool.arrowsVisible)
+                arrowTool.ClearArrows();
+                
             BoardState currentBoardState = board.GetCurrentBoardState();
             if(historyPanel.panelPointer == historyPanel.currentTurnPointer)
                 MouseDown(currentBoardState);
@@ -738,6 +742,27 @@ public class SelectPiece : MonoBehaviour
         }
     }
 
+    public void DeselectPiece(Index fromIndex, bool fromJail = false)
+    {
+        cursor?.SetCursor(CursorType.Default);
+
+        if(selectedPiece == null)
+            return;
+
+        foreach((Hex hex, MoveType moveType) in pieceMoves)
+            hex.ToggleSelect();
+        pieceMoves.Clear();
+
+        if(!fromJail)
+            board.GetHexIfInBounds(fromIndex).ToggleSelect();
+
+        onMouse.PutDown();
+        hoverExitedInitialHex = false;
+        lastHoveredHex = null;
+        
+        selectedPiece = null;
+    }
+
     private void MoveOrAttack(Hex hitHex)
     {
         Index pieceStartLoc = selectedPiece.location;
@@ -801,27 +826,4 @@ public class SelectPiece : MonoBehaviour
     }
 
     private int GetGoal(Team team, int row) => team == Team.White ? 18 - (row % 2) : row % 2;
-
-    public void DeselectPiece(Index fromIndex, bool fromJail = false)
-    {
-        cursor?.SetCursor(CursorType.Default);
-
-        if(selectedPiece == null)
-            return;
-
-        // Debug.Log($"Desllecting: {selectedPiece.obj.name}");
-
-        foreach((Hex hex, MoveType moveType) in pieceMoves)
-            hex.ToggleSelect();
-        pieceMoves.Clear();
-
-        if(!fromJail)
-            board.GetHexIfInBounds(fromIndex).ToggleSelect();
-
-        onMouse.PutDown();
-        hoverExitedInitialHex = false;
-        lastHoveredHex = null;
-        
-        selectedPiece = null;
-    }
 }

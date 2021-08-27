@@ -67,8 +67,10 @@ public class BoardTests
         board.turnHistory.Add(newState);
         // board.AdvanceTurn(newState, false);
 
-        Assert.True(board.IsChecking(board.GetCurrentBoardState(), Team.White));
-        Assert.False(board.IsChecking(board.GetCurrentBoardState(), Team.Black));
+        // Assert.True(board.IsChecking(board.GetCurrentBoardState(), Team.White));
+        BoardState currentState = board.GetCurrentBoardState();
+        Assert.True(currentState.IsChecking(Team.White, board.promotions));
+        Assert.False(currentState.IsChecking(Team.Black, board.promotions));
     }
 
     [Test]

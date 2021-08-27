@@ -6,7 +6,7 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 using Unity.MLAgents.Actuators;
 using Extensions;
-using static Extensions.StandaloneRulesExtensions;
+using static Extensions.Extensions;
 using System;
 
 public class Hexmachina : Agent

@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 748795983797158534}
   - component: {fileID: 748795983797158535}
   - component: {fileID: 6983169283407362394}
+  - component: {fileID: 2408701817025037731}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -71,7 +72,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 503
+    m_Bits: 1015
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -203,6 +204,7 @@ MonoBehaviour:
   audioSource: {fileID: 6983169283407362394}
   promotionDialogue: {fileID: 0}
   historyPanel: {fileID: 0}
+  arrowTool: {fileID: 2408701817025037731}
   cancelNoise: {fileID: 8300000, guid: ba2a0d48902eea04ead3e58e073a88b7, type: 3}
   pickupNoise: {fileID: 8300000, guid: 9c7f611590e186b4a84a7d71a7e9260e, type: 3}
   onMouse: {fileID: 0}
@@ -263,9 +265,9 @@ MonoBehaviour:
     m_ActionName: Keyboard/Mouse/MouseClick[/Mouse/leftButton]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 748795983797158535}
-        m_TargetAssemblyTypeName: OrbitalCamera, Assembly-CSharp
-        m_MethodName: RightClick
+      - m_Target: {fileID: 2408701817025037731}
+        m_TargetAssemblyTypeName: ArrowTool, GameAssembly
+        m_MethodName: Input
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -301,6 +303,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 5f688f4d-9a7d-4b7b-90e5-c787d6227ddd
     m_ActionName: Keyboard/Mouse/HistoryJump[/Keyboard/downArrow,/Keyboard/upArrow]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 748795983797158535}
+        m_TargetAssemblyTypeName: SmoothHalfOrbitalCamera, GameAssembly
+        m_MethodName: MiddleClick
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: b753ab68-f803-474e-bfc8-a4ae15dde429
+    m_ActionName: Keyboard/Mouse/MiddleClick[/Mouse/middleButton]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Keyboard/Mouse
@@ -426,6 +444,30 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2408701817025037731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 748795983797158781}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4088249f952c873418e78ea569ac4ad9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arrowPrefab: {fileID: 3834063854577693783, guid: 2447d204a14bc8d49b5a7a8d77e3850b,
+    type: 3}
+  promotionDialogue: {fileID: 0}
+  selectPiece: {fileID: 748795983797158538}
+  hexMask:
+    serializedVersion: 2
+    m_Bits: 64
+  arrowYOffset: 1.01
+  captureColor: {r: 0.6603774, g: 0.109024554, b: 0.109024554, a: 1}
+  threatenedColor: {r: 0.8773585, g: 0.42442012, b: 0.086908154, a: 1}
+  defendColor: {r: 0.14231041, g: 0.735849, b: 0.14849316, a: 1}
+  defaultArrowColor: {r: 0.18974723, g: 0.6724855, b: 0.9811321, a: 1}
 --- !u!1 &8193025844278681256
 GameObject:
   m_ObjectHideFlags: 0

@@ -37,7 +37,7 @@ public struct Move
         string type = capturedPiece.HasValue ? "x" : defendedPiece.HasValue ? "d" : "m";
         
         string otherPiece = type switch{
-            "x" => GetStringForPiece(capturedPiece.Value, lastTeam == Team.White ? Team.Black : Team.White, promotions),
+            "x" => GetStringForPiece(capturedPiece.Value, lastTeam.Enemy(), promotions),
             "d" => GetStringForPiece(defendedPiece.Value, lastTeam, promotions),
             _ => ""
         };
@@ -65,8 +65,36 @@ public struct Move
             if(piece == "p")
             {
                 piece = "";
-                fromIndex = "";
-                type = type == "m" ? "" : type;
+                otherPiece = "";
+                type = type == "x" ? type : "";
+                fromIndex = type == "x" ? $"{fromIndex.First()}" : "";
+            }
+            else
+            {
+                Piece[] alternatePieces = lp.GetAlternates();
+                if(alternatePieces.Length > 0)
+                {
+                    // Check for the need for disambiguaty, if not needed, do the same as if there was no alternate pieces
+                    // If alternatePieces exist on same team, and threaten toIndex, then there is ambiguaty between moves
+                    // If the fromInxex file differs, use only file, else if the fromIndex rank differs, use only rank, else if neither differ (in the case of a promotion), use both rank and file
+                    // AlternatePieces doesn't account for promoted pawns. Check for any promotions of the same type as lastPiece or as either of the alternatePieces
+                    // For example, a pawn promoted to a KingsKnight while the KingsKnight is still on the board may create ambiguaty
+                    bool fileAmbiguaty = false;
+                    bool rankAmbiguaty = false;
+                    foreach(Piece alternate in alternatePieces)
+                    {
+                        if(boardState.TryGetIndex((lt, lp), out Index index))
+                        {
+                            // Need a solution here, getting all valid moves would build in a board (and thus unity) dependency to Move, which is supposed to be standalone
+                            // MoveGenerator.GetAllPossibleMoves()
+                        }
+                    }
+                }
+                else
+                {
+                    fromIndex = "";
+                    type = type == "m" ? "" : type;
+                }
             }
         }
 

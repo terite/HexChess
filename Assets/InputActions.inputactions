@@ -22,6 +22,14 @@
                     "interactions": ""
                 },
                 {
+                    "name": "MiddleClick",
+                    "type": "Button",
+                    "id": "b753ab68-f803-474e-bfc8-a4ae15dde429",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
                     "name": "ResetCamera",
                     "type": "Button",
                     "id": "8a08cc5c-fa67-41a4-83cd-80f1eeda22b1",
@@ -145,6 +153,17 @@
                     "action": "HistoryJump",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "0d58efa0-2bbb-4000-be6f-0491b713f69d",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MiddleClick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }
