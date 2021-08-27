@@ -37,5 +37,12 @@ namespace Extensions
             return component != null;
         }
         public static readonly Vector3 invalidMove = new Vector3(-1, -1, (int)MoveType.None);
+
+        public static float PercentInRange(this float from, float toLimit1, float toLimit2) => toLimit1 + ((toLimit2 - toLimit1) * Mathf.Clamp(from, 0, 1));
+        public static float Remap(this float from, float fromLimit1, float fromLimit2, float toLimit1, float toLimit2) =>
+            PercentInRange(
+                (Mathf.Clamp(from, fromLimit1, fromLimit2) - fromLimit1)/(fromLimit2 - fromLimit1), 
+                toLimit1, toLimit2
+            );
     }
 }

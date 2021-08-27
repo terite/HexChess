@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Extensions;
 
 public class Arrow : MonoBehaviour
 {
@@ -17,9 +18,20 @@ public class Arrow : MonoBehaviour
         head.forward = forwardDir;
         transform.position = to;
 
+        // The first 2 nodes must always be the same distance apart. This ensures a perfect match between the head and the tail of the arrow. 
+        // Moving the 2nd node would create gaps near the arrow head/tail joint`
         tail.SetPosition(0, backwardsVec.normalized * pos0Offset);
         tail.SetPosition(1, backwardsVec.normalized * pos1Offset);
-        tail.SetPosition(tail.positionCount - 1, backwardsVec);
+
+        // adjust the position of the remaining nodes
+        for(int i = 0; i < tail.positionCount; i++)
+        {
+            Vector3 pos = tail.GetPosition(i);
+            float percent = (float)i / (float)(tail.positionCount - 1);
+            if(i != 0 && i != 1)
+                pos = backwardsVec * percent;
+            tail.SetPosition(i, pos);
+        }
 
         foreach(LineRenderer renderer in lineRenderers)
         {

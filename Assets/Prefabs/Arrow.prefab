@@ -50,6 +50,39 @@ MonoBehaviour:
   - {fileID: 4711098009797188751}
   tail: {fileID: 6026354058906610140}
   head: {fileID: 6138309132537378432}
+  curve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 4.0904694
+      outSlope: 4.0904694
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.046126552
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3.4342914
+      outSlope: -3.4342914
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.04257834
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &2383745586279159846
 GameObject:
   m_ObjectHideFlags: 0
@@ -272,6 +305,13 @@ LineRenderer:
   m_Positions:
   - {x: 0, y: 0, z: -0.09936373}
   - {x: 0, y: 0, z: -0.11934293}
+  - {x: 0, y: 0, z: -0.22942504}
+  - {x: 0, y: 0, z: -0.3395072}
+  - {x: 0, y: 0, z: -0.44958934}
+  - {x: 0, y: 0, z: -0.5596715}
+  - {x: 0, y: 0, z: -0.6697535}
+  - {x: 0, y: 0, z: -0.779836}
+  - {x: 0, y: 0, z: -0.889918}
   - {x: 0, y: 0, z: -1}
   m_Parameters:
     serializedVersion: 3

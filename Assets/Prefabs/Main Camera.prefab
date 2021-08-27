@@ -463,6 +463,7 @@ MonoBehaviour:
   hexMask:
     serializedVersion: 2
     m_Bits: 64
+  arcHeight: 1
   arrowYOffset: 1.01
   captureColor: {r: 0.6603774, g: 0.109024554, b: 0.109024554, a: 1}
   threatenedColor: {r: 0.8773585, g: 0.42442012, b: 0.086908154, a: 1}
