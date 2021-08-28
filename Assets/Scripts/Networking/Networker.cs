@@ -399,8 +399,8 @@ public class Networker : MonoBehaviour
             MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(SwapTeams),
             MessageType.Ready when isHost => Ready,
             MessageType.Unready when isHost => Unready,
-            MessageType.PreviewMovesOn when lobby => PreviewOn,
-            MessageType.PreviewMovesOff when lobby => PreviewOff,
+            MessageType.HandicapOverlayOn when lobby => HandicapOverlayOn,
+            MessageType.HandicapOverlayOff when lobby => HandicapOverlayOff,
             MessageType.StartMatch when !isHost => () => StartMatch(GameParams.Deserialize(completeMessage.data)),
             MessageType.Surrender when multiplayer => () => multiplayer.Surrender(
                 surrenderingTeam: isHost ? player.Value.team : host.team,
@@ -465,17 +465,17 @@ public class Networker : MonoBehaviour
         lobby.UpdateName(p);
     }
 
-    private void PreviewOn()
+    private void HandicapOverlayOn()
     {
-        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        if(previewToggle != null)
-            previewToggle.toggle.isOn = true;
+        HandicapOverlayToggle handicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
+        if(handicapOverlayToggle != null)
+            handicapOverlayToggle.toggle.isOn = true;
     }
-    private void PreviewOff()
+    private void HandicapOverlayOff()
     {
-        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
-        if(previewToggle != null)
-            previewToggle.toggle.isOn = false;
+        HandicapOverlayToggle handicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
+        if(handicapOverlayToggle != null)
+            handicapOverlayToggle.toggle.isOn = false;
     }
 
     private void PlayerDisconnected()
@@ -592,7 +592,7 @@ public class Networker : MonoBehaviour
         if(!isHost)
             return;
 
-        PreviewMovesToggle previewToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+        HandicapOverlayToggle previewToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
         bool previewOn = previewToggle == null ? false : previewToggle.toggle.isOn;
         
         if(lobby.noneToggle.isOn)

@@ -12,13 +12,13 @@ public class ArrowTool : MonoBehaviour
     private Mouse mouse => Mouse.current;
     private Board board;
     private Multiplayer multiplayer;
-    private PreviewMovesToggle singlePlayerMovesToggle;
+    private HandicapOverlayToggle singlePlayerHandicapOverlayToggle;
 
     [SerializeField] private Arrow arrowPrefab;
     [SerializeField] private PromotionDialogue promotionDialogue;
     [SerializeField] private SelectPiece selectPiece;
     [ShowInInspector, ReadOnly] public bool arrowsVisible {get; private set;} = false;
-    [ShowInInspector, ReadOnly] public List<Arrow> arrows {get; private set;} = new List<Arrow>();
+    [ShowInInspector, ReadOnly] public Dictionary<(Index, Index), Arrow> arrows {get; private set;} = new Dictionary<(Index, Index), Arrow>();
 
     public LayerMask hexMask;
     public float arrowYOffset;
@@ -30,7 +30,7 @@ public class ArrowTool : MonoBehaviour
     private Hex startHex;
 
     private bool promoDialogueEnabled => promotionDialogue != null && promotionDialogue.gameObject.activeSelf;
-    private bool handicapOverlayEnabled => (multiplayer != null && multiplayer.gameParams.showMovePreviews) || (singlePlayerMovesToggle != null && singlePlayerMovesToggle.toggle.isOn);
+    private bool handicapOverlayEnabled => (multiplayer != null && multiplayer.gameParams.showMovePreviews) || (singlePlayerHandicapOverlayToggle != null && singlePlayerHandicapOverlayToggle.toggle.isOn);
 
     private void Awake() 
     {
@@ -38,7 +38,7 @@ public class ArrowTool : MonoBehaviour
         board = GameObject.FindObjectOfType<Board>();
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
-            singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+            singlePlayerHandicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
     }
 
     public void Input(CallbackContext context)
@@ -89,6 +89,16 @@ public class ArrowTool : MonoBehaviour
             
             if(hit.collider.TryGetComponent(out Hex endHex) && endHex != startHex)
             {
+                if(arrows.ContainsKey((startHex.index, endHex.index)))
+                {
+                    // Remove Arrow if it's drawn a second time
+                    Arrow toRemove = arrows[(startHex.index, endHex.index)];
+                    arrows.Remove((startHex.index, endHex.index));
+                    Destroy(toRemove.gameObject);
+                    startHex = null;
+                    return;
+                }
+
                 // When handicap overlay is turned off, we don't want to color the arrows, just draw blue ones
                 if(!handicapOverlayEnabled)
                     DrawArrow(startHex, endHex);
@@ -155,7 +165,7 @@ public class ArrowTool : MonoBehaviour
             arrowsVisible = true;
     
         Arrow newArrow = Instantiate(arrowPrefab);
-        arrows.Add(newArrow);
+        arrows.Add((from.index, to.index), newArrow);
 
         Vector3 offset = (Vector3.up * arrowYOffset);
         newArrow.Init(
@@ -168,7 +178,7 @@ public class ArrowTool : MonoBehaviour
     public void ClearArrows()
     {
         arrowsVisible = false;
-        arrows.ForEach(arrow => Destroy(arrow.gameObject));
+        arrows.ForEach(arrow => Destroy(arrow.Value.gameObject));
         arrows.Clear();
     }
 }

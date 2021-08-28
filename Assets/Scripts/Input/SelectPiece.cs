@@ -12,7 +12,7 @@ public class SelectPiece : MonoBehaviour
 {
     Mouse mouse => Mouse.current;
     Multiplayer multiplayer;
-    PreviewMovesToggle singlePlayerMovesToggle;
+    HandicapOverlayToggle singlePlayerHandicapOverlayToggle;
     Camera cam;
     [SerializeField] private Board board;
     [SerializeField] private LayerMask layerMask;
@@ -61,7 +61,7 @@ public class SelectPiece : MonoBehaviour
         cam = Camera.main;
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
-            singlePlayerMovesToggle = GameObject.FindObjectOfType<PreviewMovesToggle>();
+            singlePlayerHandicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
         keys = GameObject.FindObjectOfType<Keys>();
         cursor = GameObject.FindObjectOfType<VirtualCursor>();
         board.newTurn += NewTurn;
@@ -104,7 +104,7 @@ public class SelectPiece : MonoBehaviour
 
     private void Update()
     {
-        MovePreviewsOnHover();
+        HandicapOverlayOnHover();
         ColorizeBasedOnMove();
         HighlightKeysOnHoverHex();
         HighlightHexOnHoverKey();
@@ -152,7 +152,7 @@ public class SelectPiece : MonoBehaviour
             return;
         else if(multiplayer != null && !multiplayer.gameParams.showMovePreviews)
             return;
-        else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
+        else if(singlePlayerHandicapOverlayToggle != null && !singlePlayerHandicapOverlayToggle.toggle.isOn) 
             return;
 
 
@@ -390,11 +390,11 @@ public class SelectPiece : MonoBehaviour
         lastChangedRenderer = null;
     }
 
-    private void MovePreviewsOnHover()
+    private void HandicapOverlayOnHover()
     {
         if(multiplayer != null && !multiplayer.gameParams.showMovePreviews)
             return;
-        else if(singlePlayerMovesToggle != null && !singlePlayerMovesToggle.toggle.isOn) 
+        else if(singlePlayerHandicapOverlayToggle != null && !singlePlayerHandicapOverlayToggle.toggle.isOn) 
             return;
         else if(promotionDialogue.gameObject.activeSelf)
             return;

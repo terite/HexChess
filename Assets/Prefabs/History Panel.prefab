@@ -1292,7 +1292,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6802989489192433809}
   m_HandleRect: {fileID: 6802989489192433808}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1760,7 +1760,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 145, y: 30}
+  m_CellSize: {x: 165, y: 30}
   m_Spacing: {x: 5, y: 5}
   m_Constraint: 1
   m_ConstraintCount: 2
@@ -3201,7 +3201,7 @@ PrefabInstance:
     - target: {fileID: 4337036038946868934, guid: bcc9de67fe11bcb4c933613cd424061f,
         type: 3}
       propertyPath: m_Name
-      value: PreviewMovesToggle
+      value: HandicapOverlayToggle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bcc9de67fe11bcb4c933613cd424061f, type: 3}

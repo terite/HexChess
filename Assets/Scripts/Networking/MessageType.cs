@@ -9,7 +9,7 @@ public enum MessageType : byte {
     Surrender = 10,
     BoardState = 11,
     Promotion = 12,
-    PreviewMovesOn = 13, PreviewMovesOff = 14,
+    HandicapOverlayOn = 13, HandicapOverlayOff = 14,
     OfferDraw = 15, AcceptDraw = 16, DenyDraw = 17,
     UpdateName = 18,
     FlagFall = 19,
