@@ -3727,6 +3727,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 5f688f4d-9a7d-4b7b-90e5-c787d6227ddd
     m_ActionName: Keyboard/Mouse/HistoryJump[/Keyboard/downArrow,/Keyboard/upArrow]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: b753ab68-f803-474e-bfc8-a4ae15dde429
+    m_ActionName: Keyboard/Mouse/MiddleClick[/Mouse/middleButton]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Keyboard/Mouse
@@ -9972,6 +9976,8 @@ MonoBehaviour:
     hotspotOffset: {x: 19, y: -29}
   - cursor: {fileID: 21300000, guid: 7009cad044734a64eb29766eaba82396, type: 3}
     hotspotOffset: {x: 21, y: -42.5}
+  - cursor: {fileID: 21300000, guid: 279c85dcb4091234b9a079aa597652c0, type: 3}
+    hotspotOffset: {x: 19, y: -29}
   spriteRenderer: {fileID: 1927575334}
 --- !u!212 &1927575334
 SpriteRenderer:

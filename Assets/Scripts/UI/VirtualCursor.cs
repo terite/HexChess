@@ -12,7 +12,7 @@ public class VirtualCursor : MonoBehaviour
     public bool visible {get; private set;} = true;
 
     Camera cam;
-    CursorType currentType;
+    public CursorType currentType {get; private set;}
 
     private void Awake()
     {
@@ -89,4 +89,4 @@ public class VirtualCursor : MonoBehaviour
     }
 }
 
-public enum CursorType {None, Default, Hand, Grab}
+public enum CursorType {None, Default, Hand, Grab, Pencil}

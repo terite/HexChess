@@ -35,13 +35,28 @@ public struct Move
         string toIndex = to.GetKey();
         string piece = GetStringForPiece(lastPiece, lastTeam, promotions);
         string type = capturedPiece.HasValue ? "x" : defendedPiece.HasValue ? "d" : "m";
-        
         string otherPiece = type switch{
             "x" => GetStringForPiece(capturedPiece.Value, lastTeam.Enemy(), promotions),
             "d" => GetStringForPiece(defendedPiece.Value, lastTeam, promotions),
             _ => ""
         };
 
+        if(from == Index.invalid)
+        {   
+            // No piece moved - skipped move with free place mode
+            fromIndex = "";
+            toIndex = "";
+            piece = "";
+            type = "";
+            otherPiece = "";
+        }
+        else if(to == Index.invalid)
+        {
+            otherPiece = " ";
+            type = "";
+            toIndex = "jailed";
+        }
+        
         string promo = "";
         Team lt = lastTeam;
         Piece lp = lastPiece;

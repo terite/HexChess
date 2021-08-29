@@ -31,13 +31,32 @@ public struct BoardState
             BoardState nowState = history[history.Count - 1];
             foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions)
             {
+                Piece piece = kvp.Key.piece;
+
                 if(!nowState.TryGetIndex(kvp.Key, out Index nowPos))
-                    continue;
+                {
+                    // This case happens when using free place mode and removing a piece from the board into the jail
+                    
+                    // UnityEngine.Debug.Log($"{kvp.Key} does not exist on board, likely in jail.");
+
+                    return new Move(
+                        turn: history.Count / 2,
+                        lastTeam: kvp.Key.team,
+                        lastPiece: piece,
+                        from: kvp.Value,
+                        to: Index.invalid,
+                        capturedPiece: piece,
+                        defendedPiece: null,
+                        duration: nowState.executedAtTime - lastState.executedAtTime
+                    );
+                }
 
                 if(kvp.Value == nowPos)
+                {
+                    // UnityEngine.Debug.Log($"{kvp.Key} in the same location.");
                     continue;
+                }
 
-                Piece piece = kvp.Key.piece;
 
                 (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
                     ? lastState.allPiecePositions[nowPos]
@@ -76,6 +95,18 @@ public struct BoardState
                     duration: nowState.executedAtTime - lastState.executedAtTime
                 );
             }
+
+            // No piece moved. Most likely turn was passed with free place mode.
+            return new Move(
+                turn: history.Count / 2,
+                lastTeam: lastState.currentMove,
+                lastPiece: Piece.King,
+                from: Index.invalid,
+                to: Index.invalid,
+                capturedPiece: null,
+                defendedPiece: null,
+                duration: nowState.executedAtTime - lastState.executedAtTime
+                );
         }
         return new Move(0, Team.None, Piece.King, default(Index), default(Index));
     }

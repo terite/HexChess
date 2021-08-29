@@ -91,6 +91,8 @@ public class MovePanel : MonoBehaviour
 
     public void ClearHighlight()
     {
+        if(whiteBG == null || blackBG == null)
+            return;
         whiteBG.enabled = false;
         blackBG.enabled = false;
     }

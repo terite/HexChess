@@ -135,14 +135,20 @@ public class SelectPiece : MonoBehaviour
             {
                 // IPiece pieceOnHex = currentBoardState.allPiecePositions[clickedHex.index];
                 if(currentBoardState.TryGetPiece(clickedHex.index, out (Team team, Piece piece) teamedPiece) && teamedPiece.team == currentBoardState.currentMove)
-                    cursor.SetCursor(CursorType.Hand);
+                {
+                    if(cursor.currentType != CursorType.Pencil)
+                        cursor.SetCursor(CursorType.Hand);
+                }
                 else
-                    cursor.SetCursor(CursorType.Default);
+                {
+                    if(cursor.currentType != CursorType.Pencil)
+                        cursor.SetCursor(CursorType.Default);
+                }
             }
-            else
+            else if(cursor.currentType != CursorType.Pencil)
                 cursor.SetCursor(CursorType.Default);
         }
-        else
+        else if(cursor.currentType != CursorType.Pencil)
             cursor.SetCursor(CursorType.Default);
     }
 
@@ -518,12 +524,12 @@ public class SelectPiece : MonoBehaviour
         if(promotionDialogue != null && promotionDialogue.gameObject.activeSelf)
             return;
         
+        BoardState currentBoardState = board.GetCurrentBoardState();
         if(context.started)
         {
             if(arrowTool.arrowsVisible)
                 arrowTool.ClearArrows();
                 
-            BoardState currentBoardState = board.GetCurrentBoardState();
             if(historyPanel.panelPointer == historyPanel.currentTurnPointer)
                 MouseDown(currentBoardState);
         }
@@ -532,7 +538,6 @@ public class SelectPiece : MonoBehaviour
             if(historyPanel.panelPointer != historyPanel.currentTurnPointer && selectedPiece != null)
                 historyPanel.JumpToPresent();
 
-            BoardState currentBoardState = board.GetCurrentBoardState();
             ReleaseMouse(currentBoardState);
         }
     }
@@ -591,9 +596,9 @@ public class SelectPiece : MonoBehaviour
         if(lastChangedRenderer != null)
             ResetLastChangedRenderer();
         
+        bool ignoreHexToggle = true;
         bool cursorVisability = cursor != null ? cursor.visible : true;
 
-        // if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
         if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit hit, 100))
         {
             if(hit.collider.TryGetComponent<IPiece>(out IPiece hoveredPiece) && selectedPiece != null)
@@ -604,32 +609,13 @@ public class SelectPiece : MonoBehaviour
                     if(!multiplayer && freePlaceMode.toggle.isOn)
                     {
                         // Free place mode override
-                        // If the hex is not empty, swap with ally, or take enemy, regardless of if the move is a potenial move
-                        // Else the hex is empty, so just put the piece at the proper location
-                        Jail jail = selectedPiece.captured 
-                            ? GameObject.FindObjectsOfType<Jail>()
-                                .Where(jail => jail.teamToPrison == selectedPiece.team)
-                                .First()
-                            : null;
-                        
-                        if(jail != null)
-                            jail.RemoveFromPrison(selectedPiece);
-                        
-                        if(hoveredPiece.team == selectedPiece.team)
+                        if(!selectedPiece.captured)
                         {
-                            // If jail is no null, that means our selected piece was removed from jail.
-                            // To swap with something in jail, we just need to send the piece there to jail first, then move to it
-                            // If it's not in jail, just swap the 2 pieces
-                            if(jail != null)
-                            {
-                                jail.Enprison(hoveredPiece);
-                                MoveOrAttack(otherPieceOccupiedHex);
-                            }
-                            else
+                            if(selectedPiece.team == hoveredPiece.team)
                                 Defend(hoveredPiece);
+                            else
+                                MoveOrAttack(otherPieceOccupiedHex);
                         }
-                        else
-                            MoveOrAttack(otherPieceOccupiedHex);
                     }
                     else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Attack)))
                         MoveOrAttack(otherPieceOccupiedHex);
@@ -656,32 +642,24 @@ public class SelectPiece : MonoBehaviour
                 if(!multiplayer && freePlaceMode.toggle.isOn)
                 {
                     // Free place mode override
-                    // If the hex is not empty, swap with ally, or take enemy, regardless of if the move is a potenial move
-                    // Else the hex is empty, so just put the piece at the proper location
-                    Jail jail = selectedPiece.captured 
-                        ? GameObject.FindObjectsOfType<Jail>()
-                            .Where(jail => jail.teamToPrison == selectedPiece.team)
-                            .First() 
-                        : null;
-
-                    if(jail != null)
-                        jail.RemoveFromPrison(selectedPiece);
-                        
-                    if(otherPiece != null && otherPiece.team == selectedPiece.team)
+                    if(otherPiece == null)
                     {
-                        // If jail is no null, that means our selected piece was removed from jail.
-                        // To swap with something in jail, we just need to send the piece there to jail first, then move to it
-                        // If it's not in jail, just swap the 2 pieces
-                        if(jail != null)
+                        if(selectedPiece.captured)
                         {
-                            jail.Enprison(otherPiece);
-                            MoveOrAttack(hitHex);
+                            Jail jail = GameObject.FindObjectsOfType<Jail>()
+                                .Where(jail => jail.teamToPrison == selectedPiece.team)
+                                .First();
+                            jail.RemoveFromPrison(selectedPiece);
                         }
-                        else
-                            Defend(otherPiece);
-                    }
-                    else
                         MoveOrAttack(hitHex);
+                    }
+                    else if(!selectedPiece.captured)
+                    {
+                        if(selectedPiece.team == otherPiece.team)
+                            Defend(otherPiece);
+                        else
+                            MoveOrAttack(hitHex);
+                    }
                 }
                 else if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                     MoveOrAttack(hitHex);
@@ -693,18 +671,17 @@ public class SelectPiece : MonoBehaviour
 
             if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece != null)
             {
+                if(!selectedPiece.captured)
+                    ignoreHexToggle = false;
                 // Piece dropped on top of jail
                 if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured)
                     board.Enprison(selectedPiece);
-                
-                Hex fromHex = board.GetHexIfInBounds(selectedPiece.location);
-                fromHex.ToggleSelect();
             }
         }
         if(selectedPiece != null)
         {
             PlayCancelNoise();
-            DeselectPiece(selectedPiece.location, selectedPiece.captured);
+            DeselectPiece(selectedPiece.location, ignoreHexToggle);
         }
     }
 
@@ -773,8 +750,7 @@ public class SelectPiece : MonoBehaviour
             fromJail = true;
             board.activePieces.Add((selectedPiece.team, selectedPiece.piece), selectedPiece);
         }
-        
-        
+
         if((selectedPiece is Pawn pawn) && pawn.GetGoalInRow(hitHex.index.row) == hitHex.index.row)
         {
             // We don't send a boardstate right now when multiplayer, as the promotion will finish that for us

@@ -194,7 +194,6 @@ public class Board : SerializedMonoBehaviour
         if(turnHistory.Count > 1)
             timeOffset = state.executedAtTime - Time.timeSinceLevelLoad;
 
-    
         SetBoardState(state, game.promotions);
         turnHistoryPanel?.SetGame(game);
         
@@ -683,22 +682,6 @@ public class Board : SerializedMonoBehaviour
 
         return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
     }
-
-    // public IEnumerable<IPiece> GetCheckingPieces(BoardState boardState, Team checkForTeam)
-    // {
-    //     Team otherTeam = checkForTeam.Enemy();
-
-    //     return activePieces
-    //     .Where(kvp => kvp.Key.Item1 == checkForTeam
-    //         && boardState.allPiecePositions.ContainsKey(kvp.Key)
-    //         && MoveGenerator.GetAllPossibleMoves(kvp.Value.location, kvp.Value.piece, kvp.Value.team, boardState, promotions)
-    //             .Any(move =>
-    //                 move.Item2 == MoveType.Attack
-    //                 && boardState.allPiecePositions.ContainsKey(move.Item1)
-    //                 && boardState.allPiecePositions[move.Item1] == (otherTeam, Piece.King)
-    //             )
-    //     ).Select(kvp => kvp.Value);
-    // }
     
     public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
     {
@@ -998,19 +981,22 @@ public class Board : SerializedMonoBehaviour
     {
         ClearMoveHighlight();
 
-        Hex fromHex = GetHexIfInBounds(move.from);
-        Hex toHex = GetHexIfInBounds(move.to);
+        if(TryGetHexIfInBounds(move.from, out Hex fromHex))
+        {
+            fromHex.Highlight(lastMoveHighlightColor);
+            highlightedHexes.Add(fromHex);
+        }
 
-        fromHex.Highlight(lastMoveHighlightColor);
-        toHex.Highlight(move.capturedPiece.HasValue
-            ? Color.red
-            : move.defendedPiece.HasValue
-                ? Color.green
-                : lastMoveHighlightColor
-        );
-
-        highlightedHexes.Add(fromHex);
-        highlightedHexes.Add(toHex);
+        if(TryGetHexIfInBounds(move.to, out Hex toHex))
+        {
+            toHex.Highlight(move.capturedPiece.HasValue
+                ? Color.red
+                : move.defendedPiece.HasValue
+                    ? Color.green
+                    : lastMoveHighlightColor
+            );
+            highlightedHexes.Add(toHex);
+        }
     }
 
     private void ClearMoveHighlight()

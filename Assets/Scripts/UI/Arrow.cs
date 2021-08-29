@@ -24,12 +24,12 @@ public class Arrow : MonoBehaviour
         tail.SetPosition(1, backwardsVec.normalized * pos1Offset);
 
         // adjust the position of the remaining nodes
-        for(int i = 0; i < tail.positionCount; i++)
+        for(int i = 2; i < tail.positionCount; i++)
         {
             Vector3 pos = tail.GetPosition(i);
             float percent = (float)i / (float)(tail.positionCount - 1);
-            if(i != 0 && i != 1)
-                pos = backwardsVec * percent;
+            // if(i != 0 && i != 1)
+            pos = backwardsVec * percent;
             tail.SetPosition(i, pos);
         }
 

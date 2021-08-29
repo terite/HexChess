@@ -81,7 +81,7 @@ public class TurnHistoryPanel : MonoBehaviour
     public void SetGame(Game game)
     {
         Clear();
-        for(int i = 0; i < game.turnHistory.Count; i++)
+        for(int i = game.turnHistory.Count <= 1 ? 0 : 1; i < game.turnHistory.Count; i++)
         {
             BoardState state = game.turnHistory[i];
             List<BoardState> subset = game.turnHistory.Take(i + 1).ToList();
@@ -98,6 +98,12 @@ public class TurnHistoryPanel : MonoBehaviour
         {
             lastMovePanel?.ClearHighlight();
 
+            foreach(MovePanel panel in panels)
+            {
+                if(panel.whiteState == newState && panel.whiteState.executedAtTime == newState.executedAtTime)
+                    return;
+            }
+            
             lastMovePanel = Instantiate(movePanelPrefab, collectionContainer);
             lastMovePanel.SetLight();
             foreach(MovePanel panel in panels)

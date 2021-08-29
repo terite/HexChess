@@ -13,6 +13,7 @@ public class ArrowTool : MonoBehaviour
     private Board board;
     private Multiplayer multiplayer;
     private HandicapOverlayToggle singlePlayerHandicapOverlayToggle;
+    private VirtualCursor virtualCursor;
 
     [SerializeField] private Arrow arrowPrefab;
     [SerializeField] private PromotionDialogue promotionDialogue;
@@ -39,6 +40,7 @@ public class ArrowTool : MonoBehaviour
         multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
             singlePlayerHandicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
+        virtualCursor = GameObject.FindObjectOfType<VirtualCursor>();
     }
 
     public void Input(CallbackContext context)
@@ -61,6 +63,8 @@ public class ArrowTool : MonoBehaviour
         {
             if(hit.collider == null)
                 return;
+
+            virtualCursor?.SetCursor(CursorType.Pencil);
             
             if(hit.collider.TryGetComponent(out Hex hitHex))
                 startHex = hitHex;
@@ -69,6 +73,8 @@ public class ArrowTool : MonoBehaviour
 
     private void EndDrawArrow()
     {
+        virtualCursor?.SetCursor(CursorType.Default);
+
         // All arrows must have both a startHex and an end hex
         if(startHex == null)
             return;
