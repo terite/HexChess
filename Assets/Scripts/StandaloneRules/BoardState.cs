@@ -23,7 +23,7 @@ public struct BoardState
         this.executedAtTime = executedAtTime;
     }
 
-    public static Move GetLastMove(List<BoardState> history, List<Promotion> promotions)
+    public static Move GetLastMove(List<BoardState> history, List<Promotion> promotions, bool isFreeplaced = false)
     {
         if(history.Count > 1)
         {
@@ -38,17 +38,19 @@ public struct BoardState
                     // This case happens when using free place mode and removing a piece from the board into the jail
                     
                     // UnityEngine.Debug.Log($"{kvp.Key} does not exist on board, likely in jail.");
-
-                    return new Move(
-                        turn: history.Count / 2,
-                        lastTeam: kvp.Key.team,
-                        lastPiece: piece,
-                        from: kvp.Value,
-                        to: Index.invalid,
-                        capturedPiece: piece,
-                        defendedPiece: null,
-                        duration: nowState.executedAtTime - lastState.executedAtTime
-                    );
+                    if(isFreeplaced)
+                        return new Move(
+                            turn: history.Count / 2,
+                            lastTeam: kvp.Key.team,
+                            lastPiece: piece,
+                            from: kvp.Value,
+                            to: Index.invalid,
+                            capturedPiece: piece,
+                            defendedPiece: null,
+                            duration: nowState.executedAtTime - lastState.executedAtTime
+                        );
+                    else
+                        continue;
                 }
 
                 if(kvp.Value == nowPos)
@@ -94,6 +96,29 @@ public struct BoardState
                     defendedPiece: defendedPiece,
                     duration: nowState.executedAtTime - lastState.executedAtTime
                 );
+            }
+
+            // check if any piece didn't have a last pos but does now, this is a piece freed from jail
+            foreach(var kvp in nowState.allPiecePositions)
+            {
+                if(!lastState.TryGetIndex(kvp.Key, out Index lastIndex))
+                {
+                    if(isFreeplaced)
+                        return new Move(
+                            turn: history.Count / 2,
+                            lastTeam: kvp.Key.team,
+                            lastPiece: kvp.Key.piece,
+                            from: Index.invalid,
+                            to: kvp.Value,
+                            capturedPiece: null,
+                            defendedPiece: null,
+                            duration: nowState.executedAtTime - lastState.executedAtTime
+                        );
+                    else
+                        continue;
+                }
+                else
+                    continue;
             }
 
             // No piece moved. Most likely turn was passed with free place mode.

@@ -28,6 +28,7 @@ public class SelectPiece : MonoBehaviour
     public IPiece selectedPiece {get; private set;}
     [SerializeField] private OnMouse onMouse;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
+    bool isFreeplaced => !multiplayer && freePlaceMode.toggle.isOn;
     private bool hoverExitedInitialHex = false;
     List<(Hex, MoveType)> pieceMoves = new List<(Hex, MoveType)>();
     List<(Hex, MoveType)> previewMoves = new List<(Hex, MoveType)>();
@@ -81,7 +82,7 @@ public class SelectPiece : MonoBehaviour
     {
         if(checkedKingHex != null)
         {
-            Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions);
+            Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
             if(lastMove.from != checkedKingHex.index && lastMove.to != checkedKingHex.index)
                 checkedKingHex.Unhighlight();
             checkedKingHex = null;
@@ -573,7 +574,7 @@ public class SelectPiece : MonoBehaviour
         }
 
         // But pulling pieces ouf of jail in free place mode doesn't have a hex for us to check, so let's cast a ray and check that instead.
-        if(!multiplayer && freePlaceMode.toggle.isOn)
+        if(isFreeplaced)
         {
             // if(Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
             if(cursorVisability && Physics.Raycast(cam.ScreenPointToRay(mouse.position.ReadValue()), out RaycastHit pieceHit, 100, layerMask))
@@ -606,7 +607,7 @@ public class SelectPiece : MonoBehaviour
                 if(!hoveredPiece.captured)
                 {
                     Hex otherPieceOccupiedHex = board.GetHexIfInBounds(hoveredPiece.location);
-                    if(!multiplayer && freePlaceMode.toggle.isOn)
+                    if(isFreeplaced)
                     {
                         // Free place mode override
                         if(!selectedPiece.captured)
@@ -617,15 +618,19 @@ public class SelectPiece : MonoBehaviour
                                 MoveOrAttack(otherPieceOccupiedHex);
                         }
                     }
-                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Attack)))
-                        MoveOrAttack(otherPieceOccupiedHex);
-                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Defend)))
-                        Defend(hoveredPiece);
-                    else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.EnPassant)))
-                        EnPassant(currentBoardState, otherPieceOccupiedHex);
+                    else
+                    {
+                        ignoreHexToggle = false;
+                        if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Attack)))
+                            MoveOrAttack(otherPieceOccupiedHex);
+                        else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.Defend)))
+                            Defend(hoveredPiece);
+                        else if(pieceMoves.Contains((otherPieceOccupiedHex, MoveType.EnPassant)))
+                            EnPassant(currentBoardState, otherPieceOccupiedHex);
+                    }
                 }
                 // The piece was dropped on top of a piece in jail
-                else if(!multiplayer && freePlaceMode.toggle.isOn)
+                else if(isFreeplaced)
                 {
                     if(!selectedPiece.captured)
                         board.Enprison(selectedPiece);
@@ -639,7 +644,7 @@ public class SelectPiece : MonoBehaviour
                     ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
                     : null;
 
-                if(!multiplayer && freePlaceMode.toggle.isOn)
+                if(isFreeplaced)
                 {
                     // Free place mode override
                     if(otherPiece == null)
@@ -661,15 +666,19 @@ public class SelectPiece : MonoBehaviour
                             MoveOrAttack(hitHex);
                     }
                 }
-                else if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
-                    MoveOrAttack(hitHex);
-                else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
-                    Defend(otherPiece);
-                else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
-                    EnPassant(currentBoardState, hitHex);
+                else
+                {
+                    ignoreHexToggle = false;
+                    if(pieceMoves.Contains((hitHex, MoveType.Attack)) || pieceMoves.Contains((hitHex, MoveType.Move)))
+                        MoveOrAttack(hitHex);
+                    else if(pieceMoves.Contains((hitHex, MoveType.Defend)))
+                        Defend(otherPiece);
+                    else if(pieceMoves.Contains((hitHex, MoveType.EnPassant)))
+                        EnPassant(currentBoardState, hitHex);
+                }
             }
 
-            if(!multiplayer && freePlaceMode.toggle.isOn && selectedPiece != null)
+            if(isFreeplaced && selectedPiece != null)
             {
                 if(!selectedPiece.captured)
                     ignoreHexToggle = false;

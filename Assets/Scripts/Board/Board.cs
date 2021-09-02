@@ -17,6 +17,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private Timers timers;
     [SerializeField] private SmoothHalfOrbitalCamera cam;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
+    bool isFreeplaced => freePlaceMode != null && freePlaceMode.toggle.isOn;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private TurnHistoryPanel turnHistoryPanel;
     public AudioClip moveClip;
@@ -157,7 +158,7 @@ public class Board : SerializedMonoBehaviour
 
         if(newState.currentMove != Team.None && turnHistory.Count > 1)
         {
-            Move newMove = BoardState.GetLastMove(turnHistory, promotions);
+            Move newMove = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
             if(newMove.lastTeam != Team.None)
                 HighlightMove(newMove);
             else
@@ -197,7 +198,7 @@ public class Board : SerializedMonoBehaviour
         SetBoardState(state, game.promotions);
         turnHistoryPanel?.SetGame(game);
         
-        Move move = BoardState.GetLastMove(turnHistory, promotions);
+        Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
         if(move.lastTeam != Team.None)
             moveTracker.UpdateText(move);
 
@@ -205,7 +206,7 @@ public class Board : SerializedMonoBehaviour
         turnsSincePawnMovedOrPieceTaken = 0;
         for(int i = 0; i < turnHistory.Count - 1; i++)
         {
-            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList(), promotions);
+            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList(), promotions, isFreeplaced);
             if(moveStep.capturedPiece.HasValue || moveStep.lastPiece >= Piece.Pawn1)
                 turnsSincePawnMovedOrPieceTaken = 0;
             else
@@ -217,7 +218,7 @@ public class Board : SerializedMonoBehaviour
         {
             IEnumerable<BoardState> lastMoveTurns = turnHistory.Skip(turnHistory.Count - 3).Take(2);
             newTurn?.Invoke(lastMoveTurns.Last());
-            move = BoardState.GetLastMove(lastMoveTurns.ToList(), promotions);
+            move = BoardState.GetLastMove(lastMoveTurns.ToList(), promotions, isFreeplaced);
             turnHistoryPanel.UpdateMovePanels(lastMoveTurns.Last(), move, Mathf.FloorToInt((float)turnHistory.Count / 2f) + turnHistory.Count % 2);
             moveTracker.UpdateText(move);
             HighlightMove(move);
@@ -317,7 +318,7 @@ public class Board : SerializedMonoBehaviour
                     return;
             }
 
-            Move move = BoardState.GetLastMove(turnHistory, promotions);
+            Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
             HighlightMove(move);
 
             EndGame(
@@ -355,7 +356,7 @@ public class Board : SerializedMonoBehaviour
             newState.currentMove = otherTeam;
             turnHistory.Add(newState);
 
-            Move move = BoardState.GetLastMove(turnHistory, promotions);
+            Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
             if(move.lastTeam != Team.None)
                 HighlightMove(move);
             else
@@ -393,7 +394,7 @@ public class Board : SerializedMonoBehaviour
                 newState.currentMove = otherTeam;
                 turnHistory.Add(newState);
 
-                Move move = BoardState.GetLastMove(turnHistory, promotions);
+                Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
                 if(move.lastTeam != Team.None)
                     HighlightMove(move);
                 else
@@ -427,7 +428,7 @@ public class Board : SerializedMonoBehaviour
 
         turnHistory.Add(newState);
 
-        Move newMove = BoardState.GetLastMove(turnHistory, promotions);
+        Move newMove = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
         if(newMove.lastTeam != Team.None)
             HighlightMove(newMove);
         else

@@ -27,10 +27,13 @@ public class TurnHistoryPanel : MonoBehaviour
     public float traverseDelay = 0.25f;
     private float traverseAtTime;
     VirtualCursor cursor;
+    FreePlaceModeToggle freePlaceModeToggle;
+    bool isFreePlaceMode => freePlaceModeToggle != null && freePlaceModeToggle.toggle.isOn;
     private void Awake() 
     {
         board.newTurn += NewTurn;
         cursor = GameObject.FindObjectOfType<VirtualCursor>();
+        freePlaceModeToggle = GameObject.FindObjectOfType<FreePlaceModeToggle>();
     }
     private void Start() 
     {
@@ -74,7 +77,7 @@ public class TurnHistoryPanel : MonoBehaviour
     private void NewTurn(BoardState newState)
     {
         // If the current move is black, we know white just made a move, let's add an entry to the list
-        Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions);
+        Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreePlaceMode);
         UpdateMovePanels(newState, lastMove, Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2);
     }
 
@@ -85,7 +88,7 @@ public class TurnHistoryPanel : MonoBehaviour
         {
             BoardState state = game.turnHistory[i];
             List<BoardState> subset = game.turnHistory.Take(i + 1).ToList();
-            Move lastMove = BoardState.GetLastMove(subset, board.promotions);
+            Move lastMove = BoardState.GetLastMove(subset, board.promotions, isFreePlaceMode);
             UpdateMovePanels(state, lastMove, Mathf.FloorToInt((float)subset.Count / 2f) + subset.Count % 2);
         }
     }

@@ -41,7 +41,7 @@ public struct Move
             _ => ""
         };
 
-        if(from == Index.invalid)
+        if(from == Index.invalid && to == Index.invalid)
         {   
             // No piece moved - skipped move with free place mode
             fromIndex = "";
@@ -52,9 +52,18 @@ public struct Move
         }
         else if(to == Index.invalid)
         {
+            // Put in jail with free place mode
             otherPiece = " ";
             type = "";
             toIndex = "jailed";
+        }
+        else if(from == Index.invalid)
+        {
+            // Freed from jail with free place mode
+            fromIndex = toIndex;
+            toIndex = "freed";
+            otherPiece = " ";
+            type = "";
         }
         
         string promo = "";
