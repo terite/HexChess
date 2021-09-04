@@ -105,9 +105,18 @@ public class ArrowTool : MonoBehaviour
                     return;
                 }
 
-                // When handicap overlay is turned off, we don't want to color the arrows, just draw blue ones
+                // When handicap overlay is turned off, we want to draw a blue arrow unless ctrl, alt, or shift, is held
                 if(!handicapOverlayEnabled)
-                    DrawArrow(startHex, endHex);
+                {
+                    if(Keyboard.current.ctrlKey.isPressed)
+                        DrawArrow(startHex, endHex, captureColor);
+                    else if(Keyboard.current.altKey.isPressed)
+                        DrawArrow(startHex, endHex, threatenedColor);
+                    else if(Keyboard.current.shiftKey.isPressed)
+                        DrawArrow(startHex, endHex, defendColor);
+                    else
+                        DrawArrow(startHex, endHex);
+                }
                 else
                 {
                     BoardState state = board.GetCurrentBoardState();

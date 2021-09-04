@@ -719,18 +719,7 @@ public class Board : SerializedMonoBehaviour
 
         // Move piece
         if(!isQuery)
-        {
-            moveTracker?.UpdateText(new Move(
-                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                piece.team,
-                piece.piece,
-                piece.location,
-                targetLocation,
-                takenPieceAtLocation,
-                defendedPieceAtLocation
-            ));
             piece.MoveTo(GetHexIfInBounds(targetLocation));
-        }
 
         // Update boardstate
         if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
@@ -739,6 +728,16 @@ public class Board : SerializedMonoBehaviour
             allPiecePositions.Remove(targetLocation);
         allPiecePositions.Add((piece.team, piece.piece), targetLocation);
         currentState.allPiecePositions = allPiecePositions;
+
+        if(!isQuery)
+        {
+            List<BoardState> states = new List<BoardState>();
+            states.Add(boardState);
+            states.Add(currentState);
+
+            Move move = BoardState.GetLastMove(states, promotions, isFreeplaced);
+            moveTracker?.UpdateText(move);
+        }
         
         return currentState;
     }
@@ -771,16 +770,6 @@ public class Board : SerializedMonoBehaviour
                 defendedPieceAtLocation = occupyingType;
         }
 
-        // Move piece
-        moveTracker.UpdateText(new Move(
-            Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-            piece.team,
-            piece.piece,
-            piece.location,
-            targetLocation.index,
-            takenPieceAtLocation,
-            defendedPieceAtLocation
-        ));
         piece.MoveTo(targetLocation, () => {
             // Update boardstate
             if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
@@ -789,6 +778,12 @@ public class Board : SerializedMonoBehaviour
             currentState.allPiecePositions = allPiecePositions;
 
             AdvanceTurn(currentState);
+
+            // After the promotion, update the move tracker
+            List<BoardState> hist = new List<BoardState>();
+            hist.Add(boardState);
+            hist.Add(currentState);
+            moveTracker.UpdateText(BoardState.GetLastMove(hist, promotions, isFreeplaced));
         });
     }
 

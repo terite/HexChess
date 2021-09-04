@@ -44,7 +44,7 @@ public struct Move
         if(from == Index.invalid && to == Index.invalid)
         {   
             // No piece moved - skipped move with free place mode
-            fromIndex = "";
+            fromIndex = "skipped";
             toIndex = "";
             piece = "";
             type = "";

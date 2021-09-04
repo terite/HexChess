@@ -28,6 +28,7 @@ public class SelectPiece : MonoBehaviour
     public IPiece selectedPiece {get; private set;}
     [SerializeField] private OnMouse onMouse;
     [SerializeField] private FreePlaceModeToggle freePlaceMode;
+    [SerializeField] private LastMoveTracker lastMoveTracker;
     bool isFreeplaced => !multiplayer && freePlaceMode.toggle.isOn;
     private bool hoverExitedInitialHex = false;
     List<(Hex, MoveType)> pieceMoves = new List<(Hex, MoveType)>();
@@ -134,7 +135,6 @@ public class SelectPiece : MonoBehaviour
             BoardState currentBoardState = board.GetCurrentBoardState();
             if(hit.collider.TryGetComponent<Hex>(out Hex clickedHex) && currentBoardState.allPiecePositions.ContainsKey(clickedHex.index))
             {
-                // IPiece pieceOnHex = currentBoardState.allPiecePositions[clickedHex.index];
                 if(currentBoardState.TryGetPiece(clickedHex.index, out (Team team, Piece piece) teamedPiece) && teamedPiece.team == currentBoardState.currentMove)
                 {
                     if(cursor.currentType != CursorType.Pencil)
@@ -607,9 +607,20 @@ public class SelectPiece : MonoBehaviour
                 if(!hoveredPiece.captured)
                 {
                     Hex otherPieceOccupiedHex = board.GetHexIfInBounds(hoveredPiece.location);
+                    // Free place mode override
                     if(isFreeplaced)
                     {
-                        // Free place mode override
+                        if(selectedPiece == hoveredPiece)
+                        {
+                            BoardState currentState = board.GetCurrentBoardState();
+                            lastMoveTracker.UpdateText(new Move(
+                                board.turnHistory.Count / 2,
+                                currentState.currentMove,
+                                Piece.King,
+                                Index.invalid,
+                                Index.invalid
+                            ));
+                        }
                         if(!selectedPiece.captured)
                         {
                             if(selectedPiece.team == hoveredPiece.team)
@@ -633,7 +644,11 @@ public class SelectPiece : MonoBehaviour
                 else if(isFreeplaced)
                 {
                     if(!selectedPiece.captured)
+                    {
                         board.Enprison(selectedPiece);
+                        Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
+                        lastMoveTracker.UpdateText(move);
+                    }
                 }
             }
 
@@ -644,10 +659,21 @@ public class SelectPiece : MonoBehaviour
                     ? board.activePieces[currentBoardState.allPiecePositions[hitHex.index]] 
                     : null;
 
+                // Free place mode override
                 if(isFreeplaced)
                 {
-                    // Free place mode override
-                    if(otherPiece == null)
+                    if(otherPiece == selectedPiece)
+                    {
+                        BoardState currentState = board.GetCurrentBoardState();
+                        lastMoveTracker.UpdateText(new Move(
+                            board.turnHistory.Count / 2,
+                            currentState.currentMove,
+                            Piece.King,
+                            Index.invalid,
+                            Index.invalid
+                        ));
+                    }
+                    else if(otherPiece == null)
                     {
                         if(selectedPiece.captured)
                         {
@@ -684,9 +710,22 @@ public class SelectPiece : MonoBehaviour
                     ignoreHexToggle = false;
                 // Piece dropped on top of jail
                 if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured)
+                {
                     board.Enprison(selectedPiece);
+                    Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
+                    lastMoveTracker.UpdateText(move);
+                }
+            }
+            else if(!isFreeplaced)
+            {
+                // If dropping a piece on a jail and free place mode is not on, we need to be sure to toggle the hex that the selected piece is occupying to off
+                if(hit.collider.TryGetComponent<Jail>(out Jail jail))
+                    ignoreHexToggle = false;
             }
         }
+        else
+            ignoreHexToggle = false;
+
         if(selectedPiece != null)
         {
             PlayCancelNoise();

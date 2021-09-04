@@ -29,6 +29,7 @@ public struct BoardState
         {
             BoardState lastState = history[history.Count - 2];
             BoardState nowState = history[history.Count - 1];
+            // bool moveFound = false;
             foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions)
             {
                 Piece piece = kvp.Key.piece;
@@ -36,7 +37,6 @@ public struct BoardState
                 if(!nowState.TryGetIndex(kvp.Key, out Index nowPos))
                 {
                     // This case happens when using free place mode and removing a piece from the board into the jail
-                    
                     // UnityEngine.Debug.Log($"{kvp.Key} does not exist on board, likely in jail.");
                     if(isFreeplaced)
                         return new Move(
@@ -131,9 +131,9 @@ public struct BoardState
                 capturedPiece: null,
                 defendedPiece: null,
                 duration: nowState.executedAtTime - lastState.executedAtTime
-                );
+            );
         }
-        return new Move(0, Team.None, Piece.King, default(Index), default(Index));
+        return new Move(0, Team.None, Piece.King, Index.invalid, Index.invalid);
     }
 
     public readonly bool TryGetPiece(Index index, out (Team team, Piece piece) teamedPiece) => 

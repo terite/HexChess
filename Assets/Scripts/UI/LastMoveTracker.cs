@@ -23,11 +23,8 @@ public class LastMoveTracker : MonoBehaviour
         string from = move.from.GetKey();
         string to = move.to.GetKey();
 
-        Team otherTeam = move.lastTeam == Team.White ? Team.Black : Team.White;
-        string lastPieceString = board.activePieces.ContainsKey((move.lastTeam, move.lastPiece)) 
-            ? board.activePieces[(move.lastTeam, move.lastPiece)].GetPieceString() 
-            : "";
-        
+        Team otherTeam = move.lastTeam.Enemy();
+        string lastPieceString = GetStringForPiece(move, move.lastPiece, move.lastTeam, board.promotions);
         IPiece capturedPiece = move.capturedPiece.HasValue 
             ? board.piecePrefabs[(otherTeam, move.capturedPiece.Value)].GetComponent<IPiece>()
             : null;
@@ -50,13 +47,42 @@ public class LastMoveTracker : MonoBehaviour
         IPiece defendedPiece = move.defendedPiece.HasValue
             ? board.activePieces[(move.lastTeam, move.defendedPiece.Value)]
             : null;
-
-        text.text = move.capturedPiece.HasValue
+    
+        // This is the default text to use
+        string textToSet = move.capturedPiece.HasValue
             ? $"{lastPieceString} {from} takes {capturedPieceString} {to}"
             : move.defendedPiece.HasValue 
                 ? $"{lastPieceString} {from} defends {defendedPiece.GetPieceString()} {to}" 
                 : $"{lastPieceString} {from} to {to}";
+        
+        // No piece was moved - skipped move with free place mode
+        if(move.from == Index.invalid && move.to == Index.invalid)
+            textToSet = "Move skipped";
+        // Put in jail with free place mode
+        else if(move.to == Index.invalid)
+            textToSet = $"{lastPieceString} {from} jailed";
+        // Freed from jail with free place mode
+        else if(move.from == Index.invalid)
+            textToSet = $"Freed {lastPieceString} to {to}";
 
+        text.text = textToSet;
         text.color = move.lastTeam == Team.White ? Color.white : Color.black;
+    }
+
+    private string GetStringForPiece(Move move, Piece potentialPawn, Team team, List<Promotion> promotions)
+    {
+        if(potentialPawn < Piece.Pawn1)
+            return potentialPawn.GetPieceLongString();
+
+        // The piece may habe been promoted. If so, we want to return the promoted piece. But only if it's not the turn the promo happened on   
+        IEnumerable<Promotion> applicablePromotions = promotions.Where(promo => promo.team == team && promo.from == potentialPawn);
+        if(applicablePromotions.Any())
+        {
+            Promotion applicablePromo = applicablePromotions.First();
+            string result = applicablePromo.turnNumber < move.turn || move.lastTeam != applicablePromo.team ? applicablePromo.to.GetPieceLongString() : potentialPawn.GetPieceLongString();
+            return $"{result}";
+        }
+        
+        return potentialPawn.GetPieceLongString();
     }
 }
