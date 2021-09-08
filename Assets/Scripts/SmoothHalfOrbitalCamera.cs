@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -20,7 +21,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     public float minimumRotationMagnitude = 100f;
 
     Vector3 temp_rotation;
-    bool rotating;
+    public bool rotating {get; private set;}
 
     float scroll;
     float adjustedResetTime;
@@ -32,7 +33,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     private VirtualCursor cursor;
 
-    bool needsReset = false;
+    public bool needsReset {get; private set;} = false;
 
     private void OnValidate()
     {
@@ -95,6 +96,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
             _ => throw new System.NotSupportedException($"Team {team} not supported"),
         };
         needsReset = true;
+        cursor?.Hide();
         keys.SetKeys(team);
         SetDefaultTeam(team);
         StopRotating();
@@ -125,6 +127,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
     {
         rotating = true;
         Cursor.lockState = CursorLockMode.Locked;
+        cursor?.SetCursor(CursorType.Default);
         cursor?.Hide();
         needsReset = true;
     }
@@ -184,15 +187,22 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
                 {
                     if(Cursor.lockState != CursorLockMode.None)
                         Cursor.lockState = CursorLockMode.None;
-                    cursor?.Show();
                     needsReset = false;
                     temp_rotation = defaultRotation;
                     scroll = defaultScroll;
+                    // cursor?.Show();
+                    StartCoroutine(EndOfFrameWork());
                 }
             }
 
             LookTowardsOrigin();
         }
+    }
+
+    IEnumerator EndOfFrameWork()
+    {
+        yield return new WaitForEndOfFrame();
+        cursor?.Show();
     }
 
     public void LookTowardsOrigin()
