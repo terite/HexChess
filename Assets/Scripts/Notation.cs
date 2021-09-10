@@ -105,8 +105,8 @@ public static class Notation
 
                 if(alternatePieces.Count > 0)
                 {
-                    bool fileAmbiguaty = false;
-                    bool rankAmbiguaty = false;
+                    bool fileAmbiguity = false;
+                    bool rankAmbiguity = false;
 
                     foreach(Piece alternate in alternatePieces)
                     {
@@ -120,18 +120,18 @@ public static class Notation
                             if(boardState.ValidateMoves(possibleMovesConcerningHex, (lt, alternate), board.promotions).Any())
                             {
                                 if(index.col == move.from.col)
-                                    rankAmbiguaty = true;
+                                    rankAmbiguity = true;
                                 if(index.row == move.from.row)
-                                    fileAmbiguaty = true;
+                                    fileAmbiguity = true;
                             }
                         }
                     }
 
-                    if(fileAmbiguaty && rankAmbiguaty)
+                    if(fileAmbiguity && rankAmbiguity)
                         fromIndex = move.from.GetKey();
-                    else if(fileAmbiguaty)
+                    else if(fileAmbiguity)
                         fromIndex = $"{move.from.GetLetter()}";
-                    else if(rankAmbiguaty)
+                    else if(rankAmbiguity)
                         fromIndex = $"{move.from.GetNumber()}";
                     else
                         fromIndex = "";
