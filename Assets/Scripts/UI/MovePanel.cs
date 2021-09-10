@@ -47,7 +47,7 @@ public class MovePanel : MonoBehaviour
         }
 
         TextMeshProUGUI toChange = move.lastTeam == Team.White ? whiteText : blackText;
-        string shortForm = move.GetNotation(board.promotions, state, NotationType.LongForm);
+        string shortForm = Notation.Get(board, state, move, NotationType.ShortForm);
         
         toChange.text = shortForm;
 

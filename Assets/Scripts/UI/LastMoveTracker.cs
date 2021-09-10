@@ -48,13 +48,25 @@ public class LastMoveTracker : MonoBehaviour
             ? board.activePieces[(move.lastTeam, move.defendedPiece.Value)]
             : null;
     
+        string promoStr = "";
+        if(lastPieceString == "Pawn")
+        {
+            IEnumerable<Promotion> applicablePromos = board.promotions.Where(promo => promo.team == move.lastTeam && promo.from == move.lastPiece && promo.turnNumber <= move.turn);
+            if(applicablePromos.Any())
+            {
+                Promotion promo = applicablePromos.First();
+                promoStr = promo.to.GetPieceLongString();
+            }
+        }
+        promoStr = string.IsNullOrEmpty(promoStr) ? promoStr : $" promoted to {promoStr}";
+
         // This is the default text to use
         string textToSet = move.capturedPiece.HasValue
-            ? $"{lastPieceString} {from} takes {capturedPieceString} {to}"
+            ? $"{lastPieceString} {from} takes {capturedPieceString} {to}{promoStr}"
             : move.defendedPiece.HasValue 
-                ? $"{lastPieceString} {from} defends {defendedPiece.GetPieceString()} {to}" 
-                : $"{lastPieceString} {from} to {to}";
-        
+                ? $"{lastPieceString} {from} defends {defendedPiece.GetPieceString()} {to}{promoStr}" 
+                : $"{lastPieceString} {from} to {to}{promoStr}";
+  
         // No piece was moved - skipped move with free place mode
         if(move.from == Index.invalid && move.to == Index.invalid)
             textToSet = "Move skipped";
@@ -63,7 +75,7 @@ public class LastMoveTracker : MonoBehaviour
             textToSet = $"{lastPieceString} {from} jailed";
         // Freed from jail with free place mode
         else if(move.from == Index.invalid)
-            textToSet = $"Freed {lastPieceString} to {to}";
+            textToSet = $"Freed {lastPieceString} to {to}{promoStr}";
 
         text.text = textToSet;
         text.color = move.lastTeam == Team.White ? Color.white : Color.black;
@@ -79,7 +91,7 @@ public class LastMoveTracker : MonoBehaviour
         if(applicablePromotions.Any())
         {
             Promotion applicablePromo = applicablePromotions.First();
-            string result = applicablePromo.turnNumber < move.turn || move.lastTeam != applicablePromo.team ? applicablePromo.to.GetPieceLongString() : potentialPawn.GetPieceLongString();
+            string result = applicablePromo.turnNumber <= move.turn - 1 && move.lastTeam == applicablePromo.team ? applicablePromo.to.GetPieceLongString() : potentialPawn.GetPieceLongString();
             return $"{result}";
         }
         

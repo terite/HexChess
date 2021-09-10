@@ -59,7 +59,6 @@ public struct BoardState
                     continue;
                 }
 
-
                 (Team previousTeamAtLocation, Piece? previousPieceAtLocation) = lastState.allPiecePositions.Contains(nowPos)
                     ? lastState.allPiecePositions[nowPos]
                     : (Team.None, (Piece?)null);
@@ -343,6 +342,22 @@ public struct BoardState
                 {
                     yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Pawn1);
                 }
+            }
+        }
+    }
+
+    public IEnumerable<(Index target, MoveType moveType)> ValidateMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, (Team team, Piece piece) teamedPiece, List<Promotion> promotions)
+    {
+        foreach(var possibleMove in possibleMoves)
+        {
+            (Index possibleHex, MoveType possibleMoveType) = possibleMove;
+
+            if(TryGetIndex(teamedPiece, out Index startLoc))
+            {
+                var newStateWithPromos = ApplyMove(teamedPiece, startLoc, possibleMove, promotions, Piece.Queen);
+
+                if(!newStateWithPromos.newState.IsChecking(teamedPiece.team.Enemy(), promotions))
+                    yield return (possibleMove.target, possibleMove.moveType);
             }
         }
     }

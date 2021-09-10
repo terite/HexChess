@@ -465,7 +465,10 @@ public class SelectPiece : MonoBehaviour
                     DisablePreview();
             }
             else if(previewMoves.Count > 0)
+            {
                 DisablePreview();
+                lastHoveredHex = null;
+            }
         }
         else if(previewMoves.Count > 0)
             DisablePreview();
@@ -643,7 +646,7 @@ public class SelectPiece : MonoBehaviour
                 // The piece was dropped on top of a piece in jail
                 else if(isFreeplaced)
                 {
-                    if(!selectedPiece.captured)
+                    if(!selectedPiece.captured && selectedPiece.piece != Piece.King)
                     {
                         board.Enprison(selectedPiece);
                         Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
@@ -706,10 +709,10 @@ public class SelectPiece : MonoBehaviour
 
             if(isFreeplaced && selectedPiece != null)
             {
-                if(!selectedPiece.captured)
+                if(!selectedPiece.captured && selectedPiece.piece != Piece.King)
                     ignoreHexToggle = false;
                 // Piece dropped on top of jail
-                if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured)
+                if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured && selectedPiece.piece != Piece.King)
                 {
                     board.Enprison(selectedPiece);
                     Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
