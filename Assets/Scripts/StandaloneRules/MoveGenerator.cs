@@ -302,12 +302,17 @@ public static class MoveGenerator
                     // can defend -- this should account for promoted pawns as well, todo
                     IEnumerable<Promotion> applicablePromos = promos.Where(promo => promo.team == occupier.team && promo.from == occupier.piece);
                     Piece realPiece = applicablePromos.Any() ? applicablePromos.First().from : occupier.piece;
-                
-                    if(occupier.team == team && Contains(DefendableTypes, realPiece))
-                        possible[i] = (index, MoveType.Defend);
-                    // allied, non-defendable piece
-                    else if(occupier.team == team)
-                        possible[i] = (Index.invalid, MoveType.None);
+                    
+                    if(occupier.team == team)
+                    {
+                        if(Contains(DefendableTypes, realPiece))
+                            possible[i] = (index, MoveType.Defend);
+                        // allied, non-defendable piece
+                        else if(includeBlocking)
+                            possible[i] = (index, MoveType.Attack);
+                        else
+                            possible[i] = (Index.invalid, MoveType.None);
+                    }
                     // else it's an attack, keep as is
                 }
             }
