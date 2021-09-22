@@ -27,29 +27,34 @@ public class MovePanel : MonoBehaviour
     [ShowInInspector] public Move blackMove {get; private set;}
     public int index {get; private set;}
 
+    bool whiteSet = false;
+    bool blackSet = false;
+
     private void Awake()
     {
         board = GameObject.FindObjectOfType<Board>();
         historyPanel = GameObject.FindObjectOfType<TurnHistoryPanel>();
     }
     public void SetIndex(int index) => this.index = index;
-    public void SetMove(BoardState state, Move move)
+    public void SetMove(BoardState state, Move move, NotationType notationType)
     {
         if(move.lastTeam == Team.White)
         {
+            whiteSet = true;
             whiteState = state;
             whiteMove = move;
         }
         else if(move.lastTeam == Team.Black)
         {
+            blackSet = true;
             blackState = state;
             blackMove = move;
         }
 
         TextMeshProUGUI toChange = move.lastTeam == Team.White ? whiteText : blackText;
-        string shortForm = Notation.Get(board, state, move, NotationType.ShortForm);
+        string notation = Notation.Get(board, state, move, notationType);
         
-        toChange.text = shortForm;
+        toChange.text = notation;
 
         if(move.lastTeam == Team.White)
             blackText.text = "";
@@ -57,6 +62,15 @@ public class MovePanel : MonoBehaviour
         TextMeshProUGUI deltaTimeToChange = move.lastTeam == Team.White ? whiteDeltaTime : blackDeltaTime;
         if(deltaTimeToChange != null)
             deltaTimeToChange.text = $"+{TimeSpan.FromSeconds(move.duration).ToString(move.duration.GetStringFromSeconds())}";
+    }
+
+    public void SetNotation(NotationType type)
+    {
+        if(whiteSet)
+            whiteText.text = Notation.Get(board, whiteState, whiteMove, type);
+        
+        if(blackSet)
+            blackText.text = Notation.Get(board, blackState, blackMove, type);
     }
 
     public void SetTimestamp(float seconds, Team team)

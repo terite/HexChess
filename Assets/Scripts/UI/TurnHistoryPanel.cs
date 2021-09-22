@@ -29,11 +29,15 @@ public class TurnHistoryPanel : MonoBehaviour
     VirtualCursor cursor;
     FreePlaceModeToggle freePlaceModeToggle;
     bool isFreePlaceMode => freePlaceModeToggle != null && freePlaceModeToggle.toggle.isOn;
+
+    [SerializeField] private Toggle shortFormToggle;
+    public NotationType notationToUse => shortFormToggle != null && shortFormToggle.isOn ? NotationType.ShortForm : NotationType.LongForm;
     private void Awake() 
     {
         board.newTurn += NewTurn;
         cursor = GameObject.FindObjectOfType<VirtualCursor>();
         freePlaceModeToggle = GameObject.FindObjectOfType<FreePlaceModeToggle>();
+        shortFormToggle.isOn = PlayerPrefs.GetInt("NotationType", 0) == 1;
     }
     private void Start() 
     {
@@ -47,6 +51,12 @@ public class TurnHistoryPanel : MonoBehaviour
 
             startPanel.SetTimestamp(0, team);
         }
+        if(shortFormToggle != null)
+            shortFormToggle.onValueChanged.AddListener(val => {
+                PlayerPrefs.SetInt("NotationType", val ? 1 : 0);
+                NotationType toUse = val ? NotationType.ShortForm : NotationType.LongForm;
+                panels.ForEach(panel => panel.SetNotation(toUse));
+            });
     }
 
     private void Update()
@@ -123,7 +133,7 @@ public class TurnHistoryPanel : MonoBehaviour
 
             lastMovePanel.SetTurnNumber(turnNumber);
             lastMovePanel.SetIndex(panels.Count - 1);
-            lastMovePanel.SetMove(newState, lastMove);
+            lastMovePanel.SetMove(newState, lastMove, notationToUse);
             lastMovePanel.SetTimestamp(newState.executedAtTime, Team.White);
             lastMovePanel.ClearTimestamp(Team.Black);
             lastMovePanel.ClearDeltaTime(Team.Black);
@@ -137,7 +147,7 @@ public class TurnHistoryPanel : MonoBehaviour
         }
         else
         {
-            lastMovePanel?.SetMove(newState, lastMove);
+            lastMovePanel?.SetMove(newState, lastMove, notationToUse);
             lastMovePanel?.SetTimestamp(newState.executedAtTime, Team.Black);
 
             blackTotal += lastMove.duration;
