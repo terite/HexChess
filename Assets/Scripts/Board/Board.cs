@@ -24,7 +24,7 @@ public class Board : SerializedMonoBehaviour
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
-    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@hexEngine == null")] public IEnumerable<BoardState> turnHistory => currentGame?.turnHistory;
+    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@currentGame == null")] public IEnumerable<BoardState> turnHistory => currentGame?.turnHistory;
     [ReadOnly] public Dictionary<(Team, Piece), IPiece> activePieces = new Dictionary<(Team, Piece), IPiece>();
     public delegate void NewTurn(BoardState newState);
     [HideInInspector] public NewTurn newTurn;
@@ -35,7 +35,7 @@ public class Board : SerializedMonoBehaviour
     List<Hex> highlightedHexes = new List<Hex>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     public List<string> gamesToLoadLoc = new List<string>();
-    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@hexEngine == null")] public List<Promotion> promotions => currentGame?.promotions;
+    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@currentGame == null")] public List<Promotion> promotions => currentGame?.promotions;
     public Color lastMoveHighlightColor;
     public int turnsSincePawnMovedOrPieceTaken = 0;
     public bool surpressVictoryAudio = false;
@@ -61,8 +61,6 @@ public class Board : SerializedMonoBehaviour
             }
         }
     }
-
-    public BoardState GetDefaultBoardState() => GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
 
     public void SetBoardState(BoardState newState, int? turn = null)
     {
@@ -188,8 +186,16 @@ public class Board : SerializedMonoBehaviour
 
     public void LoadGame(Game toLoad)
     {
-        if(currentGame != null && currentGame.onGameOver != null)
-            currentGame.onGameOver -= HexChessGameEnded;  
+        if(currentGame != null)
+        {
+            if(currentGame.onGameOver != null)
+                currentGame.onGameOver -= HexChessGameEnded;
+            
+            if(currentGame.whiteTimekeeper != null)
+                currentGame.whiteTimekeeper.Stop();
+            if(currentGame.blackTimekeeper != null)
+                currentGame.blackTimekeeper.Stop();
+        }
         
         currentGame = toLoad;
         currentGame.onGameOver += HexChessGameEnded;
@@ -329,7 +335,7 @@ public class Board : SerializedMonoBehaviour
 
     public void HexChessGameEnded()
     {
-        // HexChessGame.onGameOver may be invoked off of the main thread (in the case of a flagfall only).
+        // Game.onGameOver may be invoked off of the main thread (in the case of a flagfall only).
         // Because of this, we need to communicate back to the main thread that the game has ended so that we may prcoess our game over.
         // Because the Update() method is always executed on the main thread, we can flip a bool and check for that flip in our update loop.
         // We must use a lock here so that flipping the bool is sync'd back to the main thread.

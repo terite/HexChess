@@ -19,7 +19,7 @@ public static class HexachessagonEngine
     
     public static Index GetStartLocation((Team team, Piece piece) teamedPiece)
     {
-        BoardState defaultState = Game.CreateNewGame().turnHistory[0];
+        BoardState defaultState = BoardState.defaultState;
         if(defaultState.TryGetIndex(teamedPiece, out Index index))
             return index;
         else

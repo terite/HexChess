@@ -330,14 +330,14 @@ public class BoardStateTests
         var state1 = CreateBoardState(Team.White, new[] {
             (new Index(9, 'I'), Team.Black, Piece.King),
             (new Index(1, 'A'), Team.White, Piece.King),
-            (new Index(2, 'C'), Team.White, Piece.Pawn1),
+            (new Index(2, 'C'), Team.White, Piece.Pawn3),
             (new Index(4, 'B'), Team.Black, Piece.Pawn1),
         });
         // Black pawn on B4 can enpassant -> C3
         var state2 = CreateBoardState(Team.Black, new[] {
             (new Index(9, 'I'), Team.Black, Piece.King),
             (new Index(1, 'A'), Team.White, Piece.King),
-            (new Index(4, 'C'), Team.White, Piece.Pawn1),
+            (new Index(4, 'C'), Team.White, Piece.Pawn3),
             (new Index(4, 'B'), Team.Black, Piece.Pawn1),
         });
 

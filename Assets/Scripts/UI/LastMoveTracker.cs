@@ -7,10 +7,10 @@ using Extensions;
 public class LastMoveTracker : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI text;
-    Board board;
+    [SerializeField] private Board board;
 
     private void Awake() {
-        board = GameObject.FindObjectOfType<Board>();
+        // board = GameObject.FindObjectOfType<Board>();
         text.text = string.Empty;
         gameObject.SetActive(false);
     }

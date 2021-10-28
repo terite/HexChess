@@ -6,9 +6,6 @@ using Newtonsoft.Json;
 
 public class Game 
 {
-    public static readonly string defaultGameFileLoc = "Assets/Resources/DefaultBoardState.json";
-    static readonly Game defaultGame = Deserialize(File.ReadAllText(defaultGameFileLoc));
-
     public Winner winner {get; private set;}
     public GameEndType endType {get; private set;}
     public List<BoardState> turnHistory {get; private set;}
@@ -54,7 +51,9 @@ public class Game
         }
     }
 
-    public static Game CreateNewGame() => defaultGame;
+    public Game(SerializeableGame fromGame) : this(fromGame.GetHistory(), fromGame.promotions, fromGame.winner, fromGame.endType, fromGame.timerDuration, fromGame.hasClock){}
+
+    public static Game CreateNewGame() => new Game(SerializeableGame.defaultGame);
 
     public string Serialize()
     {
@@ -68,15 +67,7 @@ public class Game
         return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions, winner, endType, timerDuration, hasClock));
     }
 
-    public static Game Deserialize(string json)
-    {
-        List<BoardState> history = new List<BoardState>();
-        
-        SerializeableGame game = JsonConvert.DeserializeObject<SerializeableGame>(json);
-        foreach((Team team, List<SerializedPiece> pieces, Team check, Team checkmate, float duration) in game.serializedBoards)
-            history.Add(BoardState.GetBoardStateFromDeserializedBoard(pieces, team, check, checkmate, duration));
-        return new Game(history, game.promotions, game.winner, game.endType, game.timerDuration, game.hasClock);
-    }
+    public static Game Deserialize(string json) => new Game(SerializeableGame.Deserialize(json));
 
     public void ChangeTimeParams(bool showClock, float timerDuration)
     {

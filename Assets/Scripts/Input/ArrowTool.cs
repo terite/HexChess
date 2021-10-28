@@ -143,8 +143,7 @@ public class ArrowTool : MonoBehaviour
                                 {
                                     // Moving into a position where the pawn can be enpassant'd
                                     // Only matters when pawn is at it's default position
-                                    BoardState defaultBoardState = board.GetDefaultBoardState();
-                                    if(defaultBoardState.TryGetIndex(hex1TeamedPiece, out Index index) && index == startHex.index)
+                                    if(BoardState.defaultState.TryGetIndex(hex1TeamedPiece, out Index index) && index == startHex.index)
                                     {
                                         HexNeighborDirection dir = hex1TeamedPiece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down;
                                         Hex advanceOne = board.GetNeighborAt(startHex.index, dir);

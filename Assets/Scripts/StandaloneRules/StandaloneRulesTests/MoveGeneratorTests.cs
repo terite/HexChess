@@ -12,7 +12,7 @@ public class MoveGeneratorTests
         Index target = new Index(4, 'D');
 
         var piecePositions = new BidirectionalDictionary<(Team, Piece), Index>();
-        piecePositions.Add(victimLoc, (Team.White, Piece.Pawn1));
+        piecePositions.Add(victimLoc, (Team.White, Piece.Pawn4));
         piecePositions.Add(attackerLoc, (Team.Black, Piece.Pawn1));
         var state = new BoardState(piecePositions, Team.Black, Team.None, Team.None, 0);
 

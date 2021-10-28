@@ -23,15 +23,15 @@ public class Timekeeper
 
     public void Pause() => paused = true;
     public void Play() => paused = false;
-    // public void Stop()
-    // {
-    //     if(thread != null && thread.IsAlive)
-    //     {
-    //         try{
-    //             thread.Abort();
-    //         }catch{}
-    //     }
-    // }
+    public void Stop()
+    {
+        if(thread != null && thread.IsAlive)
+        {
+            try{
+                thread.Abort();
+            }catch{}
+        }
+    }
 
     public void Timer()
     {
@@ -66,7 +66,7 @@ public class Timekeeper
             else
                 lastElapsedVal = stopwatch.Elapsed.TotalSeconds;
 
-            Thread.Sleep(10);
+            Thread.Sleep(100);
         }
         
         stopwatch.Stop();

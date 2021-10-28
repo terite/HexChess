@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 
 public struct BoardState
 {
+    public static readonly BoardState defaultState = GetBoardStateFromDeserializedBoard(SerializeableGame.defaultSerializedBoard.pieces, SerializeableGame.defaultSerializedBoard.team, SerializeableGame.defaultSerializedBoard.check, SerializeableGame.defaultSerializedBoard.checkmate, SerializeableGame.defaultSerializedBoard.duration);
     public Team currentMove;
     public BidirectionalDictionary<(Team team, Piece piece), Index> allPiecePositions;
     public Team check;

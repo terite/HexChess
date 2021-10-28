@@ -9,8 +9,6 @@ public static class MoveGenerator
     {
         int goal = team == Team.White ? 18 - (target.row % 2) : target.row % 2;
         return target.row == goal;
-        // HexNeighborDirection forward = team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down;
-        // return !target.TryGetNeighbor(forward, out Index _);
     }
 
     public static readonly Piece[] DefendableTypes = new Piece[]
@@ -470,6 +468,7 @@ public static class MoveGenerator
         // Check en passant
         Index? leftPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownLeft : HexNeighborDirection.UpLeft);
         Index? rightPassant = location.GetNeighborAt(isWhite ? HexNeighborDirection.DownRight : HexNeighborDirection.UpRight);
+
         bool canPassantLeft = leftAttack.HasValue && leftPassant.HasValue && PawnCanPassant(team, leftPassant.Value, boardState);
         bool canPassantRight = rightAttack.HasValue && rightPassant.HasValue && PawnCanPassant(team, rightPassant.Value, boardState);
 
@@ -643,7 +642,6 @@ public static class MoveGenerator
                     Piece realVictim = HexachessagonEngine.GetRealPiece(victim, promotions);
                     if(!realVictim.IsPawn())
                         continue;
-
                 }
 
                 // What we promote to doesn't matter for the purpose of determining enemy checks

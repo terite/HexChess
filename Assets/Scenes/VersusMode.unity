@@ -22909,6 +22909,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 1575216242}
+  board: {fileID: 155833291}
 --- !u!1 &1598423476
 GameObject:
   m_ObjectHideFlags: 0
