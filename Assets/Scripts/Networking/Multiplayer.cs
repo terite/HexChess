@@ -33,13 +33,17 @@ public class Multiplayer : MonoBehaviour
         whiteKeys.SetActive(gameParams.localTeam == Team.White);
         blackKeys.SetActive(gameParams.localTeam == Team.Black);
 
+        board.currentGame.ChangeTimeParams(gameParams.showClock, gameParams.timerDuration);
+
         if(gameParams.timerDuration <= 0)
         {
+            // Game has no timer, but might have a clock
             timers.gameObject.SetActive(gameParams.showClock);
             timers.isClock = gameParams.showClock;
         }
         else
         {
+            // Game has a timer
             timers.gameObject.SetActive(true);
             timers.SetTimers(gameParams.timerDuration);
         }
@@ -62,27 +66,27 @@ public class Multiplayer : MonoBehaviour
         if(state.currentMove != gameParams.localTeam)
             turnChangePanel.Display(gameParams.localTeam);
 
-        board.SetBoardState(state, board.promotions);
+        board.SetBoardState(state);
         board.AdvanceTurn(state, false);
 
-        moveTracker.UpdateText(BoardState.GetLastMove(board.turnHistory, board.promotions));
+        moveTracker.UpdateText(board.currentGame.GetLastMove());
     }
 
     public void SendBoard(BoardState state)
     {
-        state.executedAtTime = Time.timeSinceLevelLoad + board.timeOffset;
+        state.executedAtTime = board.currentGame.CurrentTime;
         networker.SendMessage(
             new Message(MessageType.BoardState, state.Serialize())
         );
     }
 
     public void Surrender(Team surrenderingTeam, float timestamp) => 
-        board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
+        board.currentGame.Surrender(surrenderingTeam, timestamp);
     public void Surrender(Team surrenderingTeam) => 
-        Surrender(surrenderingTeam, Time.timeSinceLevelLoad + board.timeOffset);
+        Surrender(surrenderingTeam, board.currentGame.CurrentTime);
 
     public void Draw(float timestamp) => 
-        board.EndGame(timestamp, GameEndType.Draw, Winner.Draw);
+        board.currentGame.EndGame(GameEndType.Draw, Winner.Draw, timestamp);
     public void ClaimDraw() =>
         networker.RespondToDrawOffer(MessageType.AcceptDraw);
 
@@ -118,7 +122,10 @@ public class Multiplayer : MonoBehaviour
         {
             IPiece piece = board.activePieces[(promo.team, promo.from)];
             if(piece is Pawn pawn)
-                board.Promote(pawn, promo.to);
+            {
+                board.PromoteIPiece(pawn, promo.to);
+                board.currentGame.AddPromotion(promo);
+            }
         }
     }
 }

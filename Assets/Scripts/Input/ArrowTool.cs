@@ -127,7 +127,8 @@ public class ArrowTool : MonoBehaviour
                             DrawArrow(startHex, endHex, hex1TeamedPiece.team != hex2TeamedPiece.team ? captureColor : defendColor);
                         else
                         {
-                            IEnumerable<IPiece> potentialEnPassantChecks = Enumerable.Empty<IPiece>();
+                            Team enemyTeam = hex1TeamedPiece.team.Enemy();
+                            IEnumerable<Index> potentialEnPassantChecks = Enumerable.Empty<Index>();
                             IEnumerable<Index> potentialEnPassantCaptures = Enumerable.Empty<Index>();
                             // When Hex1 has a non-promoted pawn on it, and hex2 is a pawn double move, we must check both the endHex and the hex being skipped over for threats
                             // This accounts for moving into an enpassant
@@ -135,7 +136,7 @@ public class ArrowTool : MonoBehaviour
                             if(pieceOnHex1 is Pawn)
                             {
                                 // check if player drew an EnPassant capture
-                                IEnumerable<Index> pawnAttacks = board.GetAllValidAttacksForPieceConcerningHex(pieceOnHex1, board.GetCurrentBoardState(), endHex.index);
+                                IEnumerable<Index> pawnAttacks = board.currentGame.GetAllValidAttacksForPieceConcerningHex((pieceOnHex1.team, pieceOnHex1.piece), board.GetCurrentBoardState(), endHex.index);
                                 if(pawnAttacks.Contains(endHex.index))
                                     potentialEnPassantCaptures = pawnAttacks;
                                 else
@@ -150,13 +151,13 @@ public class ArrowTool : MonoBehaviour
                                         Hex advanceTwo = advanceOne != null ? board.GetNeighborAt(advanceOne.index, dir) : null;
                                         // Player drew a pawn double move, check if the enemy team has a pawn that can EnPassant that move
                                         if(endHex == advanceTwo)
-                                            potentialEnPassantChecks = board.GetAllValidTheoreticalAttacksFromTeamConcerningHex(hex1TeamedPiece.team.Enemy(), advanceOne);
+                                            potentialEnPassantChecks = board.currentGame.GetAllValidTheoreticalAttacksFromTeamConcerningHex(enemyTeam, advanceOne.index, state);
                                     }
                                 }
                             }
 
                             // check if any piece on the opposite team threatens endhex
-                            var theoreticalAttacksAtHex = board.GetAllValidTheoreticalAttacksFromTeamConcerningHex(hex1TeamedPiece.team.Enemy(), endHex);
+                            var theoreticalAttacksAtHex = board.currentGame.GetAllValidTheoreticalAttacksFromTeamConcerningHex(enemyTeam, endHex.index, state);
                             if(potentialEnPassantCaptures.Any())
                                 DrawArrow(startHex, endHex, captureColor);
                             else if(theoreticalAttacksAtHex.Any() || potentialEnPassantChecks.Any())

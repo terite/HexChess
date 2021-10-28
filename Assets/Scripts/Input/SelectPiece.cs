@@ -41,8 +41,8 @@ public class SelectPiece : MonoBehaviour
     public Color whiteColor;
     public Color blackColor;
     public Color yellowColor;
-    [ShowInInspector, ReadOnly] List<IPiece> attacksConcerningHex = new List<IPiece>();
-    Dictionary<IPiece, List<IPiece>> attacksConcerningHexDict = new Dictionary<IPiece, List<IPiece>>();
+    [ShowInInspector, ReadOnly] List<Index> attacksConcerningHex = new List<Index>();
+    Dictionary<IPiece, List<Index>> attacksConcerningHexDict = new Dictionary<IPiece, List<Index>>();
     MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
 
@@ -83,7 +83,7 @@ public class SelectPiece : MonoBehaviour
     {
         if(checkedKingHex != null)
         {
-            Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
+            Move lastMove = board.currentGame.GetLastMove(isFreeplaced);
             if(lastMove.from != checkedKingHex.index && lastMove.to != checkedKingHex.index)
                 checkedKingHex.Unhighlight();
             checkedKingHex = null;
@@ -428,8 +428,8 @@ public class SelectPiece : MonoBehaviour
                             hoveredPiece = board.activePieces[(t, p)];
                         if(hoveredPiece != null && !hoveredPiece.captured)
                         {
-                            IEnumerable<(Hex targetIndex, MoveType moveType)> incomingPreviewMoves = board.GetAllValidMovesForPiece(
-                                hoveredPiece,
+                            IEnumerable<(Hex targetIndex, MoveType moveType)> incomingPreviewMoves = board.currentGame.GetAllValidMovesForPiece(
+                                (hoveredPiece.team, hoveredPiece.piece),
                                 currentBoardState,
                                 true
                             ).Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType));
@@ -438,7 +438,7 @@ public class SelectPiece : MonoBehaviour
                             previewMoves = incomingPreviewMoves.ToList();
                             previewMoves.Add((hoveredHex, MoveType.None));
 
-                            List<IPiece> validAttacksOnHex = board.GetValidAttacksConcerningHex(hoveredHex).ToList();
+                            List<Index> validAttacksOnHex = board.currentGame.GetValidAttacksConcerningHex(hoveredHex.index, currentBoardState).ToList();
 
                             if(!attacksConcerningHexDict.ContainsKey(hoveredPiece))
                                 attacksConcerningHexDict.Add(hoveredPiece, validAttacksOnHex);
@@ -476,30 +476,50 @@ public class SelectPiece : MonoBehaviour
 
     private void ColorizePieces()
     {
-        IPiece hoveredPiece = board.activePieces[board.GetCurrentBoardState().allPiecePositions[lastHoveredHex.index]];
+        BoardState boardState = board.GetCurrentBoardState();
+        IPiece hoveredPiece = board.activePieces[boardState.allPiecePositions[lastHoveredHex.index]];
         if(!attacksConcerningHexDict.ContainsKey(hoveredPiece)) 
             return;
 
         attacksConcerningHex = attacksConcerningHexDict[hoveredPiece];
-        foreach(IPiece piece in attacksConcerningHex)
+        foreach(Index index in attacksConcerningHex)
         {
-            if((MonoBehaviour)piece == null)
-                continue;
-                
-            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_HighlightColor", piece.team == hoveredPiece.team ? greenColor : orangeColor);
+            if(boardState.TryGetPiece(index, out var teamedPiece) && board.activePieces.ContainsKey(teamedPiece))
+            {
+                IPiece piece = board.activePieces[teamedPiece];
+
+                // I don't THINK this is still needed
+                // I may have added it for some case where the IPiece is being deleted but somehow not removed from the activePieces structure
+                // Thus giving us a null object, but IPiece is an interface, so we can't test if that's null. 
+                // We know IPiece is only added to MonoBehaviours, so we can safely cast
+                if((MonoBehaviour)piece == null)
+                    continue;
+                    
+                MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+                renderer.material.SetColor("_HighlightColor", piece.team == hoveredPiece.team ? greenColor : orangeColor);
+            }
         }
     }
 
-    private void ClearPiecesColorization(List<IPiece> set)
+    private void ClearPiecesColorization(List<Index> set)
     {
-        foreach(IPiece piece in set)
+        BoardState boardState = board.GetCurrentBoardState();
+        foreach(Index index in set)
         {
-            if((MonoBehaviour)piece == null)
-                continue;
+            if(boardState.TryGetPiece(index, out var teamedPiece) && board.activePieces.ContainsKey(teamedPiece))
+            {
+                IPiece piece = board.activePieces[teamedPiece];
+                
+                // I don't THINK this is still needed
+                // I may have added it for some case where the IPiece is being deleted but somehow not removed from the activePieces structure
+                // Thus giving us a null object, but IPiece is an interface, so we can't test if that's null. 
+                // We know IPiece is only added to MonoBehaviours, so we can safely cast
+                if((MonoBehaviour)piece == null)
+                    continue;
 
-            MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-            renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
+                MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
+                renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
+            }
         }
     }
 
@@ -553,7 +573,7 @@ public class SelectPiece : MonoBehaviour
             return;
 
         // If the game is over, prevent any further moves
-        if(board.game.endType != GameEndType.Pending)
+        if(board.currentGame.endType != GameEndType.Pending)
             return;
 
         bool cursorVisability = cursor != null ? cursor.visible : true;
@@ -617,7 +637,7 @@ public class SelectPiece : MonoBehaviour
                         {
                             BoardState currentState = board.GetCurrentBoardState();
                             lastMoveTracker.UpdateText(new Move(
-                                board.turnHistory.Count / 2,
+                                board.currentGame.GetTurnCount(),
                                 currentState.currentMove,
                                 Piece.King,
                                 Index.invalid,
@@ -626,7 +646,7 @@ public class SelectPiece : MonoBehaviour
                         }
                         if(!selectedPiece.captured)
                         {
-                            if(selectedPiece.team == hoveredPiece.team)
+                            if(selectedPiece.team == hoveredPiece.team && selectedPiece != hoveredPiece)
                                 Defend(hoveredPiece);
                             else
                                 MoveOrAttack(otherPieceOccupiedHex);
@@ -649,7 +669,7 @@ public class SelectPiece : MonoBehaviour
                     if(!selectedPiece.captured && selectedPiece.piece != Piece.King)
                     {
                         board.Enprison(selectedPiece);
-                        Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
+                        Move move = board.currentGame.GetLastMove(isFreeplaced);
                         lastMoveTracker.UpdateText(move);
                     }
                 }
@@ -669,7 +689,7 @@ public class SelectPiece : MonoBehaviour
                     {
                         BoardState currentState = board.GetCurrentBoardState();
                         lastMoveTracker.UpdateText(new Move(
-                            board.turnHistory.Count / 2,
+                            board.currentGame.GetTurnCount(),
                             currentState.currentMove,
                             Piece.King,
                             Index.invalid,
@@ -715,7 +735,7 @@ public class SelectPiece : MonoBehaviour
                 if(hit.collider.TryGetComponent<Jail>(out Jail jail) && !selectedPiece.captured && selectedPiece.piece != Piece.King)
                 {
                     board.Enprison(selectedPiece);
-                    Move move = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreeplaced);
+                    Move move = board.currentGame.GetLastMove(isFreeplaced);
                     lastMoveTracker.UpdateText(move);
                 }
             }
@@ -753,7 +773,7 @@ public class SelectPiece : MonoBehaviour
         
         if(!fromJail)
         {
-            pieceMoves = board.GetAllValidMovesForPiece(selectedPiece, currentBoardState)
+            pieceMoves = board.currentGame.GetAllValidMovesForPiece((selectedPiece.team, selectedPiece.piece), currentBoardState)
                 .Select(kvp => (board.GetHexIfInBounds(kvp.target), kvp.moveType))
                 .ToList();
             

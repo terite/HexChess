@@ -84,6 +84,7 @@ public class BidirectionalDictionary<T, K> : ICollection<KeyValuePair<T, K>>, IE
 
     public void Add(T key, K value)
     {
+        // UnityEngine.Debug.Log($"Contains Key? {ContainsKey(key)} : {key}, Contains Value? {ContainsKey(value)} : {value}");
         if(!ContainsKey(key) && !ContainsKey(value))
         {
             forwardDict.Add(key, value);

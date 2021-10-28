@@ -30,7 +30,7 @@ public class BoardTests
         Assert.AreEqual(1, board.activePieces.Count);
         IPiece piece = board.activePieces[(Team.White, Piece.King)];
         var kingMoves = MoveGenerator
-            .GetAllPossibleMoves(piece.location, piece.piece, piece.team, board.GetCurrentBoardState(), board.promotions)
+            .GetAllPossibleMoves(piece.location, piece.piece, piece.team, board.GetCurrentBoardState(), board.currentGame.promotions)
             .ToArray();
 
         Assert.AreEqual(6, kingMoves.Length);
@@ -64,13 +64,13 @@ public class BoardTests
             executedAtTime = 1,
         };
         board.SetBoardState(newState);
-        board.turnHistory.Add(newState);
+        board.currentGame.AddState(newState);
         // board.AdvanceTurn(newState, false);
 
         // Assert.True(board.IsChecking(board.GetCurrentBoardState(), Team.White));
         BoardState currentState = board.GetCurrentBoardState();
-        Assert.True(currentState.IsChecking(Team.White, board.promotions));
-        Assert.False(currentState.IsChecking(Team.Black, board.promotions));
+        Assert.True(board.currentGame.IsChecking(Team.White, currentState));
+        Assert.False(board.currentGame.IsChecking(Team.Black, currentState));
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class BoardTests
         var pawn = new GameObject().AddComponent<Pawn>();
         pawn.Init(Team.Black, Piece.Pawn1, new Index(4, 'B'));
         var board = GameObject.FindObjectOfType<Board>();
-        var moves = MoveGenerator.GetAllPossibleMoves(pawn.location, pawn.piece, pawn.team, state2, board.promotions).ToList();
+        var moves = MoveGenerator.GetAllPossibleMoves(pawn.location, pawn.piece, pawn.team, state2, board.currentGame.promotions).ToList();
 
         Assert.AreEqual((new Index(3, 'A'), MoveType.EnPassant), moves[0]);
         Assert.AreEqual((new Index(3, 'B'), MoveType.Move), moves[1]);

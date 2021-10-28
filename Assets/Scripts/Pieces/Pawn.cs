@@ -31,13 +31,13 @@ public class Pawn : MonoBehaviour, IPiece
         startLoc = startingLocation;
     }
 
-    public void MoveTo(Hex hex, Action action = null)
+    public void MoveTo(Hex hex, Action<Piece> action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;
-        
+
         // If the pawn reaches the other side of the board, it can Promote
-        if(location.row == goal)
+        if(location.row == goal && action != null)
             hex.board?.QueryPromote(this, action);
     }
 

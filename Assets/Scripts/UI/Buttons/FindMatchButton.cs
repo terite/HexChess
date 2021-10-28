@@ -6,6 +6,6 @@ public class FindMatchButton : MonoBehaviour
     [SerializeField] private Button button;
     [SerializeField] private Networker networker;
     public string dns;
-    private void Awake() => 
+    private void Awake() =>
         button.onClick.AddListener(() => networker.TryConnectClient(dns, networker.port, true));
 }

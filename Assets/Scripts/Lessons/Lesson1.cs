@@ -15,16 +15,13 @@ public class Lesson1 : MonoBehaviour
         board.gameOver += GameOver;
     }
 
-    private void GameOver(Game game)
-    {
-        Reset();
-    }
+    private void GameOver(Game game) => Reset();
 
     private void NewTurn(BoardState newState)
     {
         if(newState.currentMove == Team.Black)
         {
-            Move move = BoardState.GetLastMove(board.turnHistory, board.promotions);
+            Move move = board.currentGame.GetLastMove();
             if(move.capturedPiece.HasValue)
                 agent.AddReward(0.1f);
 

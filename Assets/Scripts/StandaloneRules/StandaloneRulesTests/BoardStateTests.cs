@@ -32,8 +32,8 @@ public class BoardStateTests
     public void IsChecking_NoPiecesTest()
     {
         var bs = CreateBoardState(Array.Empty<(Index, Team, Piece)>());
-        Assert.False(bs.IsChecking(Team.White, null));
-        Assert.False(bs.IsChecking(Team.Black, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs, null));
+        Assert.False(MoveValidator.IsChecking(Team.Black, bs, null));
     }
     [Test]
     public void IsChecking_KingOnlyNoCheckTest()
@@ -43,8 +43,8 @@ public class BoardStateTests
             (new Index(9, 'E'), Team.Black, Piece.King),
         });
 
-        Assert.False(bs.IsChecking(Team.White, null));
-        Assert.False(bs.IsChecking(Team.Black, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs, null));
+        Assert.False(MoveValidator.IsChecking(Team.Black, bs, null));
     }
 
     [Test]
@@ -55,8 +55,8 @@ public class BoardStateTests
             (new Index(6, 'E'), Team.Black, Piece.King),
         });
 
-        Assert.True(bs.IsChecking(Team.White, null));
-        Assert.True(bs.IsChecking(Team.Black, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs, null));
+        Assert.True(MoveValidator.IsChecking(Team.Black, bs, null));
     }
 
     [Test]
@@ -68,8 +68,8 @@ public class BoardStateTests
             (new Index(5, 'F'), Team.White, Piece.Pawn1),
         });
 
-        Assert.True(bs.IsChecking(Team.White, null));
-        Assert.False(bs.IsChecking(Team.Black, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs, null));
+        Assert.False(MoveValidator.IsChecking(Team.Black, bs, null));
     }
     
     [Test]
@@ -80,7 +80,7 @@ public class BoardStateTests
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(7, 'A'), Team.White, Piece.KingsBishop),
         });
-        Assert.True(bs1.IsChecking(Team.White, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs1, null));
 
         var bs2 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
@@ -88,7 +88,7 @@ public class BoardStateTests
             (new Index(7, 'A'), Team.White, Piece.KingsBishop),
             (new Index(7, 'B'), Team.White, Piece.KingsRook), // blocking bishop
         });
-        Assert.False(bs2.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs2, null));
     }
 
     [Test]
@@ -99,14 +99,14 @@ public class BoardStateTests
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(5, 'A'), Team.White, Piece.KingsRook),
         });
-        Assert.True(bs1.IsChecking(Team.White, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs1, null));
 
         var bs2 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(5, 'B'), Team.White, Piece.KingsRook),
         });
-        Assert.False(bs2.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs2, null));
 
         var bs3 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
@@ -114,7 +114,7 @@ public class BoardStateTests
             (new Index(5, 'A'), Team.White, Piece.KingsRook),
             (new Index(5, 'C'), Team.White, Piece.Pawn5), // blocks rook
         });
-        Assert.False(bs3.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs3, null));
     }
     [Test]
     public void IsChecking_KnightCheckTest()
@@ -124,21 +124,21 @@ public class BoardStateTests
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(5, 'H'), Team.White, Piece.KingsKnight),
         });
-        Assert.True(bs1.IsChecking(Team.White, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs1, null));
 
         var bs2 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(4, 'H'), Team.White, Piece.KingsKnight),
         });
-        Assert.False(bs2.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs2, null));
 
         var bs3 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(5, 'H'), Team.Black, Piece.KingsKnight), // Knight on same team as king
         });
-        Assert.False(bs3.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs3, null));
 
     }
     [Test]
@@ -149,14 +149,14 @@ public class BoardStateTests
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(4, 'F'), Team.White, Piece.WhiteSquire),
         });
-        Assert.True(bs1.IsChecking(Team.White, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs1, null));
 
         var bs2 = CreateBoardState(new[] {
             (new Index(1, 'A'), Team.White, Piece.King),
             (new Index(5, 'E'), Team.Black, Piece.King),
             (new Index(4, 'G'), Team.White, Piece.WhiteSquire),
         });
-        Assert.False(bs2.IsChecking(Team.White, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs2, null));
     }
 
     [Test]
@@ -168,10 +168,10 @@ public class BoardStateTests
             (new Index(1, 'E'), Team.White, Piece.Pawn1),
         });
 
-        Assert.False(bs.IsChecking(Team.Black, null));
-        Assert.False(bs.IsChecking(Team.White, null));
-        Assert.True(bs.IsChecking(Team.White, new List<Promotion>() { new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 0) }));
-        Assert.False(bs.IsChecking(Team.Black, new List<Promotion>() { new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 0) }));
+        Assert.False(MoveValidator.IsChecking(Team.Black, bs, null));
+        Assert.False(MoveValidator.IsChecking(Team.White, bs, null));
+        Assert.True(MoveValidator.IsChecking(Team.White, bs, new List<Promotion>() { new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 0) }));
+        Assert.False(MoveValidator.IsChecking(Team.Black, bs, new List<Promotion>() { new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 0) }));
     }
     #endregion
 
@@ -186,8 +186,8 @@ public class BoardStateTests
         });
 
         (Team, Piece) piece = (Team.White, Piece.Pawn1);
-        (Index target, MoveType) move = (new Index(2, 'E'), MoveType.Move);
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(piece, new Index(1, 'E'), move, null, Piece.Pawn1);
+        (Index target, MoveType moveType) move = (new Index(2, 'E'), MoveType.Move);
+        (BoardState newState, List<Promotion> promotions) = HexachessagonEngine.QueryMove(new Index(1, 'E'), move, bs, Piece.Pawn1, null);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(move.target, piece));
@@ -202,7 +202,7 @@ public class BoardStateTests
             (new Index(8, 'E'), Team.White, Piece.Pawn1),
         });
 
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(new Index(8, 'E'), new Index(9, 'E'), MoveType.Move, Piece.Queen, null);
+        (BoardState newState, List<Promotion> promotions) = HexachessagonEngine.QueryMove(new Index(8, 'E'), (new Index(9, 'E'), MoveType.Move), bs, Piece.Queen, null);
 
         Assert.AreEqual(promotions[0], new Promotion(Team.White, Piece.Pawn1, Piece.Queen, 1));
         Assert.AreEqual(1, promotions.Count);
@@ -225,9 +225,9 @@ public class BoardStateTests
             (victimLocation, Team.Black, Piece.Pawn1),
         });
 
-        (Index target, MoveType) move = (victimLocation, MoveType.Attack);
+        (Index target, MoveType moveType) move = (victimLocation, MoveType.Attack);
         var attacker = bs.allPiecePositions[attackerLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation, move, null, Piece.Pawn1);
+        (BoardState newState, List<Promotion> promotions) = HexachessagonEngine.QueryMove(attackerLocation, move, bs, Piece.Pawn1, null);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(move.target, attacker));
@@ -246,10 +246,11 @@ public class BoardStateTests
             (defenderLocation, Team.White, Piece.KingsRook),
         });
 
-        (Index target, MoveType) move = (victimLocation, MoveType.Defend);
+        (Index target, MoveType moveType) move = (victimLocation, MoveType.Defend);
         var defender = bs.allPiecePositions[defenderLocation];
         var victim = bs.allPiecePositions[victimLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(defender, defenderLocation, move, null, Piece.Pawn1);
+
+        (BoardState newState, List<Promotion> promotions) = HexachessagonEngine.QueryMove(defenderLocation, move, bs, Piece.Pawn1, null);
 
         Assert.Null(promotions);
         Assert.True(newState.IsOccupiedBy(victimLocation, defender));
@@ -269,10 +270,10 @@ public class BoardStateTests
             (attackerLocation, Team.White, Piece.Pawn1),
         });
 
-        (Index target, MoveType) move = (victimLocation.GetNeighborAt(HexNeighborDirection.Up)!.Value, MoveType.EnPassant);
+        (Index target, MoveType moveType) move = (victimLocation.GetNeighborAt(HexNeighborDirection.Up)!.Value, MoveType.EnPassant);
         var victim = bs.allPiecePositions[victimLocation];
         var attacker = bs.allPiecePositions[attackerLocation];
-        (BoardState newState, List<Promotion> promotions) = bs.ApplyMove(attacker, attackerLocation , move, null, Piece.Pawn1);
+        (BoardState newState, List<Promotion> promotions) = HexachessagonEngine.QueryMove(attackerLocation, move, bs, Piece.Pawn1, null);
 
         Assert.Null(promotions);
         Assert.False(newState.IsOccupied(attackerLocation));
@@ -288,22 +289,22 @@ public class BoardStateTests
     public void AnyValid_EmptyBoardTest()
     {
         var board1 = CreateBoardState(null);
-        Assert.False(board1.HasAnyValidMoves(Team.White, null, default));
-        Assert.False(board1.HasAnyValidMoves(Team.Black, null, default));
+        Assert.False(MoveValidator.HasAnyValidMoves(Team.White, null, board1, default));
+        Assert.False(MoveValidator.HasAnyValidMoves(Team.Black, null, board1, default));
 
         var board2 = CreateBoardState(new[] {
             (new Index(5, 'E'), Team.White, Piece.King),
         });
 
-        Assert.True(board2.HasAnyValidMoves(Team.White, null, default));
-        Assert.False(board2.HasAnyValidMoves(Team.Black, null, default));
+        Assert.True(MoveValidator.HasAnyValidMoves(Team.White, null, board2, default));
+        Assert.False(MoveValidator.HasAnyValidMoves(Team.Black, null, board2, default));
 
         var board3 = CreateBoardState(new[] {
             (new Index(5, 'E'), Team.Black, Piece.King),
         });
 
-        Assert.False(board3.HasAnyValidMoves(Team.White, null, default));
-        Assert.True(board3.HasAnyValidMoves(Team.Black, null, default));
+        Assert.False(MoveValidator.HasAnyValidMoves(Team.White, null, board3, default));
+        Assert.True(MoveValidator.HasAnyValidMoves(Team.Black, null, board3, default));
     }
 
     [Test]
@@ -315,7 +316,7 @@ public class BoardStateTests
             (new Index(3, 'B'), attacker, Piece.Queen),
             (new Index(1, 'A'), defender, Piece.King),
         });
-        Assert.False(bs.HasAnyValidMoves(defender, null, default));
+        Assert.False(MoveValidator.HasAnyValidMoves(defender, null, bs, default));
     }
 
     #endregion
@@ -341,10 +342,10 @@ public class BoardStateTests
         });
 
         var enPassantMove = (new Index(4, 'B'), new Index(3, 'C'), MoveType.EnPassant, Piece.Pawn1);
-        var moves = state2.GenerateAllValidMoves(Team.Black, null, state1).ToArray();
+        var moves = MoveGenerator.GenerateAllValidMoves(Team.Black, null, state2, state1).ToArray();
         Assert.That(moves, Has.Member(enPassantMove));
 
-        moves = state2.GenerateAllValidMoves(Team.Black, null, state2).ToArray();
+        moves = MoveGenerator.GenerateAllValidMoves(Team.Black, null, state2, state2).ToArray();
         Assert.That(moves, Has.No.Member(enPassantMove));
     }
     #endregion

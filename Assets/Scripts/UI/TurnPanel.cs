@@ -40,10 +40,9 @@ public class TurnPanel : MonoBehaviour
         float gameLength = game.GetGameLength();
         string formattedGameLength = TimeSpan.FromSeconds(gameLength).ToString(gameLength.GetStringFromSeconds());
         int turnCount = game.GetTurnCount();
-        string turnPlurality = turnCount > 1 ? "turns" : "turn";
         string durationString = game.timerDuration == 0 && !game.hasClock 
-            ? $"Game over! After {turnCount} {turnPlurality}" 
-            : $"Game over! After {turnCount} {turnPlurality} in {formattedGameLength}";
+            ? $"Game over! On turn {turnCount}" 
+            : $"Game over! On turn {turnCount} in {formattedGameLength}";
 
         turnText.text = game.endType switch {
             // game.endType was added in v1.0.8 to support flagfalls and stalemates, any game saves from before then will default to Pending
@@ -74,7 +73,7 @@ public class TurnPanel : MonoBehaviour
 
     public void NewTurn(BoardState newState)
     {
-        int turnCount = Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2;
+        int turnCount = board.currentGame.GetTurnCount() + board.currentGame.turnHistory.Count % 2;
         NewTurn(newState, turnCount);
     }
 

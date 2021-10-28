@@ -5,7 +5,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Linq;
-using System.IO;
 using System;
 using Extensions;
 
@@ -25,8 +24,7 @@ public class Board : SerializedMonoBehaviour
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
-    public Game game;
-    public List<BoardState> turnHistory = new List<BoardState>();
+    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@hexEngine == null")] public IEnumerable<BoardState> turnHistory => currentGame?.turnHistory;
     [ReadOnly] public Dictionary<(Team, Piece), IPiece> activePieces = new Dictionary<(Team, Piece), IPiece>();
     public delegate void NewTurn(BoardState newState);
     [HideInInspector] public NewTurn newTurn;
@@ -37,83 +35,55 @@ public class Board : SerializedMonoBehaviour
     List<Hex> highlightedHexes = new List<Hex>();
     [ReadOnly] public readonly string defaultBoardStateFileLoc = "DefaultBoardState";
     public List<string> gamesToLoadLoc = new List<string>();
-    [ReadOnly] public List<Promotion> promotions = new List<Promotion>();
+    [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@hexEngine == null")] public List<Promotion> promotions => currentGame?.promotions;
     public Color lastMoveHighlightColor;
-    public float timeOffset {get; private set;} = 0f;
     public int turnsSincePawnMovedOrPieceTaken = 0;
-    [OdinSerialize] public List<List<Piece>> insufficientSets = new List<List<Piece>>();
     public bool surpressVictoryAudio = false;
 
     private BoardState? lastSetState = null;
+    public Game currentGame {get; private set;}
+    
+    object lockObj = new object();
+    bool hexGameOver = false;
 
-    // Used to write the default boardstate out to file
-    [Button]
-    public void WriteTurnHistoryToFile(string name)
+    private void Awake() => ResetPieces(Game.CreateNewGame());
+
+    private void Start() => newTurn?.Invoke(currentGame.GetCurrentBoardState());
+
+    private void Update()
     {
-        List<BoardState> hist = new List<BoardState>();
-        hist.Add(GetCurrentBoardState());
-        Game game = new Game(hist, promotions);
-        string json = game.Serialize();
-        File.WriteAllText("Assets/Resources/" + name + ".json", json);
-        // Debug.Log($"Wrote to file: {defaultBoardStateFileLoc}");
+        lock(lockObj)
+        {
+            if(hexGameOver)
+            {
+                hexGameOver = false;
+                ProcessEndGame();
+            }
+        }
     }
-    // private void Awake() => SetBoardState(turnHistory[turnHistory.Count - 1]);
 
-    private void Awake() => ResetPieces();
-    private void Start() => newTurn?.Invoke(turnHistory[turnHistory.Count - 1]);
-    public void LoadDefaultBoard() => LoadGame(GetGame(defaultBoardStateFileLoc));
     public BoardState GetDefaultBoardState() => GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
 
-    public bool CheckFiveFoldProgress(BoardState toCheck) => turnHistory.Any(state => state == toCheck);
-    public int GetFiveFoldProgress(BoardState toCheck) => turnHistory.Count(state => state == toCheck);
-
-    public void SetBoardState(BoardState newState, List<Promotion> promos = null, int? turn = null)
+    public void SetBoardState(BoardState newState, int? turn = null)
     {
         BoardState defaultBoard = GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
-        promotions = promos == null ? new List<Promotion>() : promos;
         foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefab in piecePrefabs)
         {
             IPiece piece;
             Jail applicableJail = jails[(int)prefab.Key.team];
             IPiece jailedPiece = applicableJail.GetPieceIfInJail(prefab.Key.piece);
+            var prefabTeamedPiece = prefab.Key;
+            GameObject prefabGO = prefab.Value;
 
             defaultBoard.TryGetIndex(prefab.Key, out Index startLoc);
             Vector3 loc = GetHexIfInBounds(startLoc.row, startLoc.col).transform.position + Vector3.up;
+
             if(activePieces.ContainsKey(prefab.Key))
             {
                 piece = activePieces[prefab.Key];
                 // Reset promoted pawn if needed
                 if(prefab.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
-                {
-                    var teamedPiece = prefab.Key;
-                    GameObject prefabGO = prefab.Value;
-
-                    if(turn.HasValue)
-                    {
-                        IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.turnNumber <= turn.Value);
-                        if(applicablePromos.Any())
-                        {
-                            Promotion promotion = applicablePromos.First();
-                            GameObject properPromotedPrefab = piecePrefabs[(promotion.team, promotion.to)];
-                            if(properPromotedPrefab.GetComponent<IPiece>().GetType() != piece.GetType())
-                            {
-                                Debug.Log("Pawn is promoted to the wrong piece.");
-                                piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
-                            }   
-                        }
-                        else
-                        {
-                            Debug.Log("No applicable promo found, resetting promoted piece to pawn.");
-                            piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
-                        }
-                    }
-                    else
-                    {
-                        Debug.Log("No turn provided to check promo status, revert to pawn.");
-                        piece = ResetPieceToPrefab(startLoc, loc, teamedPiece, prefabGO);
-                    }
-
-                }
+                    CheckForAndDemoteIPieceIfNeeded(turn, ref piece, prefabTeamedPiece, prefabGO, startLoc, loc);
             }
             else if(jailedPiece != null)
             {
@@ -121,6 +91,10 @@ public class Board : SerializedMonoBehaviour
                 applicableJail.RemoveFromPrison(piece);
                 // a piece coming out of jail needs to be added back into the Active Pieces dictionary
                 activePieces.Add(prefab.Key, piece);
+                
+                // This IPiece might be promoted, if it is, and is moving out of jail due to crawling history to a point where it wasn't promoted, then the IPiece must be demoted to a pawn
+                if(prefab.Key.piece >= Piece.Pawn1 && !(piece is Pawn))
+                    CheckForAndDemoteIPieceIfNeeded(turn, ref piece, prefabTeamedPiece, prefabGO, startLoc, loc);
             }
             else
             {
@@ -130,8 +104,9 @@ public class Board : SerializedMonoBehaviour
             }
             
             // It might need to be promoted.
-            // Do that before moving to avoid opening the promotiond dialogue when the pawn is moved to the promotion position
-            piece = GetPromotedPieceIfNeeded(piece, promos != null, turn);
+            // Do that before moving to avoid opening the promotion dialogue when the pawn is moved to the promotion position
+            if(newState.currentMove == piece.team.Enemy())
+                piece = GetPromotedPieceIfNeeded(piece, turn);
             
             // If the piece is on the board, place it at the correct location
             if(newState.TryGetIndex(prefab.Key, out Index newLoc))
@@ -156,9 +131,9 @@ public class Board : SerializedMonoBehaviour
             }
         }
 
-        if(newState.currentMove != Team.None && turnHistory.Count > 1)
+        if(newState.currentMove != Team.None && currentGame.turnHistory.Count > 1)
         {
-            Move newMove = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
+            Move newMove = currentGame.GetLastMove(isFreeplaced);
             if(newMove.lastTeam != Team.None)
                 HighlightMove(newMove);
             else
@@ -168,6 +143,35 @@ public class Board : SerializedMonoBehaviour
             ClearMoveHighlight();
 
         lastSetState = newState; 
+    }
+
+    private void CheckForAndDemoteIPieceIfNeeded(int? turn, ref IPiece piece, (Team team, Piece piece) prefabTeamedPiece, GameObject prefabGO, Index startLoc, Vector3 loc)
+    {
+        if(turn.HasValue)
+        {
+            Team team = piece.team;
+            IEnumerable<Promotion> applicablePromos = currentGame.promotions.Where(promo => promo.turnNumber <= turn.Value && promo.team == team);
+            if(applicablePromos.Any())
+            {
+                Promotion promotion = applicablePromos.First();
+                GameObject properPromotedPrefab = piecePrefabs[(promotion.team, promotion.to)];
+                if(properPromotedPrefab.GetComponent<IPiece>().GetType() != piece.GetType())
+                {
+                    Debug.Log("Pawn is promoted to the wrong piece.");
+                    piece = ResetPieceToPrefab(startLoc, loc, prefabTeamedPiece, prefabGO);
+                }
+            }
+            else
+            {
+                Debug.Log("No applicable promo found, resetting promoted piece to pawn.");
+                piece = ResetPieceToPrefab(startLoc, loc, prefabTeamedPiece, prefabGO);
+            }
+        }
+        else
+        {
+            Debug.Log("No turn provided to check promo status, revert to pawn.");
+            piece = ResetPieceToPrefab(startLoc, loc, prefabTeamedPiece, prefabGO);
+        }
     }
 
     private IPiece ResetPieceToPrefab(Index startLoc, Vector3 loc, (Team team, Piece piece) teamedPiece, GameObject prefabGO)
@@ -182,72 +186,67 @@ public class Board : SerializedMonoBehaviour
         return piece;
     }
 
-    public void LoadGame(Game game)
+    public void LoadGame(Game toLoad)
     {
-        turnHistory = game.turnHistory;
-        this.game = game;        
+        if(currentGame != null && currentGame.onGameOver != null)
+            currentGame.onGameOver -= HexChessGameEnded;  
+        
+        currentGame = toLoad;
+        currentGame.onGameOver += HexChessGameEnded;
 
         foreach(Jail jail in jails)
             jail?.Clear();
 
-        BoardState state = turnHistory[turnHistory.Count - 1];
+        BoardState state = currentGame.GetCurrentBoardState();
 
-        if(turnHistory.Count > 1)
-            timeOffset = state.executedAtTime - Time.timeSinceLevelLoad;
+        SetBoardState(state);
+        turnHistoryPanel?.SetGame(currentGame);
 
-        SetBoardState(state, game.promotions);
-        turnHistoryPanel?.SetGame(game);
-        
-        Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
+        Move move = currentGame.GetLastMove(isFreeplaced);
         if(move.lastTeam != Team.None)
             moveTracker.UpdateText(move);
 
-        // When loading a game, we need to count how many turns have passed towards the 50 move rule
-        turnsSincePawnMovedOrPieceTaken = 0;
-        for(int i = 0; i < turnHistory.Count - 1; i++)
-        {
-            Move moveStep = BoardState.GetLastMove(turnHistory.Skip(i).Take(2).ToList(), promotions, isFreeplaced);
-            if(moveStep.capturedPiece.HasValue || moveStep.lastPiece >= Piece.Pawn1)
-                turnsSincePawnMovedOrPieceTaken = 0;
-            else
-                turnsSincePawnMovedOrPieceTaken++;
-        }
-
         // game.endType may not exist in older game saves, this bit of code supports both new and old save styles
-        if(game.endType != GameEndType.Pending)
+        if(currentGame.endType != GameEndType.Pending)
         {
-            IEnumerable<BoardState> lastMoveTurns = turnHistory.Skip(turnHistory.Count - 3).Take(2);
-            newTurn?.Invoke(lastMoveTurns.Last());
-            move = BoardState.GetLastMove(lastMoveTurns.ToList(), promotions, isFreeplaced);
-            turnHistoryPanel.UpdateMovePanels(lastMoveTurns.Last(), move, Mathf.FloorToInt((float)turnHistory.Count / 2f) + turnHistory.Count % 2);
+            IEnumerable<BoardState> lastMoveTurns = currentGame.turnHistory.Skip(currentGame.turnHistory.Count - 3).Take(2);
+
+            // This creates a bug in the turn history where the ended game state is being added to the history panel and overriding a previous panel
+            // Though it may be being utilized to update something else
+            // newTurn?.Invoke(lastMoveTurns.Last()); 
+
+            move = HexachessagonEngine.GetLastMove(lastMoveTurns.ToList(), currentGame.promotions, isFreeplaced);
+            turnHistoryPanel.UpdateMovePanels(lastMoveTurns.Last(), move, Mathf.FloorToInt((float)currentGame.turnHistory.Count / 2f) + currentGame.turnHistory.Count % 2);
             moveTracker.UpdateText(move);
             HighlightMove(move);
             
-            gameOver?.Invoke(game);
+            gameOver?.Invoke(currentGame);
         }
         else
         {
-            if(game.winner == Winner.Pending)
+            if(currentGame.winner == Winner.Pending)
             {
                 turnPanel?.Reset();
                 newTurn?.Invoke(state);
-                cam.SetToTeam(state.currentMove);
+
+                if(PlayerPrefs.GetInt("AutoFlipCam", 1).IntToBool())
+                    cam.SetToTeam(state.currentMove);
             }
             else
-                gameOver?.Invoke(game);
+                gameOver?.Invoke(currentGame);
         }
 
         if(timers != null)
         {
-            if(game.timerDuration <= 0)
+            if(currentGame.timerDuration <= 0)
             {
-                timers.gameObject.SetActive(game.hasClock);
-                timers.isClock = game.hasClock;
+                timers.gameObject.SetActive(currentGame.hasClock);
+                timers.isClock = currentGame.hasClock;
             }
             else
             {
                 timers.gameObject.SetActive(true);
-                timers.SetTimers(game.timerDuration);
+                timers.SetTimers(currentGame.timerDuration);
             }
         }
     }
@@ -266,539 +265,164 @@ public class Board : SerializedMonoBehaviour
         if(promotionDialogue.gameObject.activeSelf)
             return Team.None;
 
-        return turnHistory[turnHistory.Count - 1].currentMove;
+        return currentGame.GetCurrentTurn();
     }
  
     public BoardState GetCurrentBoardState() => turnHistoryPanel != null && turnHistoryPanel.TryGetCurrentBoardState(out BoardState state) 
         ? state 
-        : turnHistory[turnHistory.Count - 1];
-
-    public BoardState ExecuteMove((IPiece piece, Index target, MoveType type) move, BoardState startState, bool isQuery = false)
-    {
-        if(move.type == MoveType.Attack || move.type == MoveType.Move)
-            return MovePiece(move.piece, move.target, startState, isQuery);
-        else if(move.type == MoveType.Defend && startState.TryGetPiece(move.target, out (Team team, Piece piece) otherPiece) && activePieces.ContainsKey(otherPiece))
-            return Swap(move.piece, activePieces[otherPiece], startState, isQuery);
-        else if(move.type == MoveType.EnPassant && startState.TryGetPiece(move.target, out (Team team, Piece piece) enemyPiece))
-            return EnPassant((Pawn)move.piece, enemyPiece.team, enemyPiece.piece, move.target, startState, isQuery);
-        return startState;
-    }
+        : currentGame.GetCurrentBoardState();
 
     public void AdvanceTurn(BoardState newState, bool updateTime = true, bool surpressAudio = false)
     {
         if(!surpressAudio)
             audioSource.PlayOneShot(moveClip);
 
-        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
-        float timestamp = Time.timeSinceLevelLoad + timeOffset;
-        Team otherTeam = newState.currentMove == Team.White ? Team.Black : Team.White;
+        currentGame.AdvanceTurn(newState, isFreeplaced, updateTime);
+        newState = currentGame.GetCurrentBoardState();
 
-        if(updateTime)
-            newState.executedAtTime = timestamp;
+        Move move = currentGame.GetLastMove(isFreeplaced);
+        HighlightMove(move);
 
-        if(multiplayer == null || multiplayer.gameParams.localTeam == newState.currentMove)
-            newState = ResetCheck(newState);
-        else
-            newState = ResetCheck(newState);
-        
-        newState = CheckForCheckAndMate(newState, otherTeam, newState.currentMove);
-
-        // Handle potential checkmate
-        if(newState.checkmate != Team.None)
-        {
-            newState.currentMove = otherTeam;
-            turnHistory.Add(newState);
-            newTurn.Invoke(newState);
-
-            if(multiplayer)
-            {
-                if(multiplayer.gameParams.localTeam == newState.checkmate)
-                    multiplayer.SendGameEnd(timestamp, MessageType.Checkmate);
-                else
-                    return;
-            }
-
-            Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
-            HighlightMove(move);
-
-            EndGame(
-                timestamp,
-                endType: GameEndType.Checkmate,
-                winner: newState.checkmate == Team.White ? Winner.Black : Winner.White
-            );
-            return;
-        }
-
-        // When another player has 0 valid moves, a stalemate has occured
-        bool isStalemate = true;
-        IEnumerable<KeyValuePair<(Team, Piece), IPiece>> otherTeamPieces = activePieces.Where(piece => piece.Key.Item1 == otherTeam);
-        foreach(KeyValuePair<(Team, Piece), IPiece> otherTeamPiece in otherTeamPieces)
-        {
-            IEnumerable<(Index, MoveType)> validMoves = GetAllValidMovesForPiece(otherTeamPiece.Value, newState);
-            if(validMoves.Any())
-            {
-                isStalemate = false;
-                break;
-            }
-        }
-
-        // Handle potential stalemate
-        if(isStalemate)
-        {
-            if(multiplayer)
-            {
-                if(multiplayer.gameParams.localTeam == otherTeam)
-                    multiplayer.SendGameEnd(timestamp, MessageType.Stalemate);
-                else
-                    return;
-            }
-
-            newState.currentMove = otherTeam;
-            turnHistory.Add(newState);
-
-            Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
-            if(move.lastTeam != Team.None)
-                HighlightMove(move);
-            else
-                ClearMoveHighlight();
-
-            newTurn.Invoke(newState);
-
-            EndGame(timestamp, GameEndType.Stalemate, Winner.None);
-            return;
-        }
-
-        // Check for insufficient material, stalemate if both teams have insufficient material
-        IEnumerable<Piece> whitePieces = GetRemainingPieces(Team.White, newState);
-        IEnumerable<Piece> blackPieces = GetRemainingPieces(Team.Black, newState);
-        bool whiteSufficient = true;
-        bool blackSufficient = true;
-
-        foreach(List<Piece> insufficientSet in insufficientSets)
-        {
-            whiteSufficient = whiteSufficient ? whitePieces.Except(insufficientSet).Any() : false;
-            blackSufficient = blackSufficient ? blackPieces.Except(insufficientSet).Any() : false;
-        }
-
-        if(!whiteSufficient && !blackSufficient)
-        {
-            if(multiplayer)
-            {
-                if(multiplayer.gameParams.localTeam == otherTeam)
-                    multiplayer.SendGameEnd(timestamp, MessageType.Stalemate);
-                else
-                    return;
-            }
-            else if(freePlaceMode == null || !freePlaceMode.toggle.isOn)
-            {
-                newState.currentMove = otherTeam;
-                turnHistory.Add(newState);
-
-                Move move = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
-                if(move.lastTeam != Team.None)
-                    HighlightMove(move);
-                else
-                    ClearMoveHighlight();
-
-                newTurn.Invoke(newState);
-
-                EndGame(timestamp, GameEndType.Stalemate, Winner.None);
-                return;
-            }
-        }
-
-        newState.currentMove = otherTeam;
-
-        // Check for 5 fold repetition
-        // When the same board state occurs 5 times in a game, the game ends in a draw
-        if(GetFiveFoldProgress(newState) >= 5)
-        {
-            turnHistory.Add(newState);
-
-            if(multiplayer != null)
-            {
-                multiplayer.ClaimDraw();
-                return;
-            }
-
-            newTurn.Invoke(newState);
-            EndGame(timestamp, GameEndType.Draw, Winner.Draw);
-            return;
-        }
-
-        turnHistory.Add(newState);
-
-        Move newMove = BoardState.GetLastMove(turnHistory, promotions, isFreeplaced);
-        if(newMove.lastTeam != Team.None)
-            HighlightMove(newMove);
-        else
-            ClearMoveHighlight();
-
-        newTurn.Invoke(newState);
-
-        // The game ends in a draw due to 50 move rule (50 turns of both teams playing with no captured piece, or moved pawn)
-        IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.team == newMove.lastTeam && promo.from == newMove.lastPiece);
-        Piece lastPiece = newMove.lastPiece >= Piece.Pawn1 
-            ? applicablePromos.Any() 
-                ? applicablePromos.First().to 
-                : newMove.lastPiece 
-            : newMove.lastPiece;
-
-        if(newMove.capturedPiece.HasValue || lastPiece >= Piece.Pawn1)
-            turnsSincePawnMovedOrPieceTaken = 0;
-        else
-            turnsSincePawnMovedOrPieceTaken++;
-
-        if(turnsSincePawnMovedOrPieceTaken == 100f)
-        {
-            if(multiplayer != null)
-            {
-                multiplayer.ClaimDraw();
-                return;
-            }
-
-            EndGame(timestamp, GameEndType.Draw, Winner.Draw);
-            return;
-        }
+        newTurn?.Invoke(newState);
 
         // In sandbox mode, flip the camera when the turn passes if the toggle is on
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
         {
-            FlipCameraToggle flipCameraToggle = GameObject.FindObjectOfType<FlipCameraToggle>();
-            if(flipCameraToggle != null && flipCameraToggle.toggle.isOn)
+            if(PlayerPrefs.GetInt("AutoFlipCam", 1).IntToBool())
                 cam.SetToTeam(newState.currentMove);
         }
     }
 
-    private BoardState ResetCheck(BoardState newState)
+    void ProcessEndGame()
     {
-        if(turnHistory.Count > 0)
-        {
-            BoardState oldState = turnHistory[turnHistory.Count - 1];
-            if(oldState.check != Team.None)
-            {
-                newState.check = Team.None;
-                newState.checkmate = Team.None;
-            }
-        }
-        else
-        {
-            newState.check = Team.None;
-            newState.checkmate = Team.None;
-        }
-        return newState;
-    }
-
-    private BoardState CheckForCheckAndMate(BoardState newState, Team otherTeam, Team t)
-    {
-        if(newState.IsChecking(t, promotions))
-        {
-            List<(Index, MoveType)> validMoves = new List<(Index, MoveType)>();
-            // Check for mate
-            foreach(KeyValuePair<(Team, Piece), IPiece> kvp in activePieces)
-            {
-                (Team team, Piece piece) = kvp.Key;
-                if(team == newState.currentMove)
-                    continue;
-                IEnumerable<(Index, MoveType)> vm = GetAllValidMovesForPiece(kvp.Value, newState);
-                validMoves.AddRange(vm);
-            }
-            // Debug.Log(validMoves.First().Item1.GetKey());
-            if(validMoves.Count == 0)
-                newState.checkmate = otherTeam;
-            else
-                newState.check = otherTeam;
-        }
-
-        return newState;
-    }
-
-    IEnumerable<Piece> GetRemainingPieces(Team team, BoardState state) =>
-        state.allPiecePositions.Where(kvp => kvp.Key.Item1 == team).Select(kvp => {
-            IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == kvp.Key.Item2 && promo.team == team);
-            if(applicablePromos.Any())
-                return applicablePromos.First().to;
-            return kvp.Key.Item2;
-        });
-
-    public IEnumerable<(Index target, MoveType type)> InvalidateImpossibleMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
-    {
-        foreach(var possibleMove in possibleMoves)
-        {
-            (Index possibleHex, MoveType possibleMoveType) = possibleMove;
-
-            BoardState newState;
-            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
-            else if(possibleMoveType == MoveType.Defend)
-                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex]], boardState, true);
-            else if(possibleMoveType == MoveType.EnPassant)
-            {
-                Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
-                Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
-                if(!enemyLoc.HasValue || !enemyStartLoc.HasValue)
-                {
-                    // Debug.LogError($"Invalid hex for EnPassant on {possibleHex}");
-                    yield return (Index.invalid, MoveType.None);
-                    continue;
-                }
-                if(!boardState.TryGetPiece(enemyLoc.Value, out (Team team, Piece piece) enemy))
-                {
-                    yield return (Index.invalid, MoveType.None);
-                    continue;
-                }
-
-                if(turnHistory.Count - 2 >= 0)
-                {
-                    BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
-                    if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
-                    {
-                        yield return (Index.invalid, MoveType.None);
-                        continue;
-                    }
-                    newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
-                }
-                else
-                {
-                    yield return (Index.invalid, MoveType.None);
-                    continue;
-                }
-
-            }
-            else if(possibleMoveType == MoveType.None)
-            {
-                yield return (possibleHex, possibleMoveType);
-                continue;
-            }
-            else
-            {
-                Debug.LogWarning($"Unhandled move type {possibleMoveType}");
-                yield return (Index.invalid, MoveType.None);
-                continue;
-            }
-
-            if(newState.IsChecking(piece.team.Enemy(), promotions))
-            {
-                yield return (Index.invalid, MoveType.None);
-                continue;
-            }
-
-            yield return (possibleMove.target, possibleMove.moveType);
-        }
-    }
-
-    public IEnumerable<(Index target, MoveType moveType)> ValidateMoves(IEnumerable<(Index target, MoveType moveType)> possibleMoves, IPiece piece, BoardState boardState, bool includeBlocking = false)
-    {
-        foreach(var possibleMove in possibleMoves)
-        {
-            (Index possibleHex, MoveType possibleMoveType) = possibleMove;
-
-            BoardState newState;
-            if(possibleMoveType == MoveType.Move || possibleMoveType == MoveType.Attack)
-                newState = MovePiece(piece, possibleHex, boardState, true, includeBlocking);
-            else if(possibleMoveType == MoveType.Defend)
-                newState = Swap(piece, activePieces[boardState.allPiecePositions[possibleHex]], boardState, true);
-            else if(possibleMoveType == MoveType.EnPassant)
-            {
-                Index? enemyLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
-                Index? enemyStartLoc = HexGrid.GetNeighborAt(possibleHex, piece.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down);
-
-                if(!enemyLoc.HasValue || !enemyStartLoc.HasValue)
-                    continue;
-                if(!boardState.TryGetPiece(enemyLoc.Value, out (Team team, Piece piece) enemy))
-                    continue;
-                if(turnHistory.Count - 2 >= 0)
-                {
-                    BoardState previousBoardState = turnHistory[turnHistory.Count - 2];
-                    if(!previousBoardState.IsOccupiedBy(enemyStartLoc.Value, enemy))
-                        continue;
-                    else
-                        newState = EnPassant((Pawn)piece, enemy.team, enemy.piece, possibleHex, boardState, true);
-                }
-                else
-                    continue;
-            }
-            else
-            {
-                Debug.LogWarning($"Unhandled move type {possibleMoveType}");
-                continue;
-            }
-
-            // If any piece is checking, the move is invalid, remove it from the list of possible moves
-            if(!newState.IsChecking(piece.team.Enemy(), promotions))
-                yield return (possibleMove.target, possibleMove.moveType);
-        }
-    }
-
-    public List<(IPiece piece, Index target, MoveType moveType)> GetAllValidMovesForTeam(Team team, bool includeBlocking = false)
-    {
-        List<(IPiece piece, Index target, MoveType moveType)> moves = new List<(IPiece piece, Index target, MoveType moveType)>();
-        BoardState currentState = GetCurrentBoardState();
-        foreach(KeyValuePair<(Team, Piece), IPiece> piece in activePieces)
-        {
-            if(piece.Key.Item1 != team)
-                continue;
-            moves.AddRange(
-                GetAllValidMovesForPiece(piece.Value, currentState, includeBlocking)
-                .Select(move => (piece.Value, move.target, move.moveType))
-            );
-        }
-        return moves;
-    }
-
-    public IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece(IPiece piece, BoardState boardState, bool includeBlocking = false)
-    {
-        Piece realPiece = piece.piece >= Piece.Pawn1 && !(piece is Pawn)
-            ? promotions.Where(promo => promo.from == piece.piece && promo.team == piece.team).First().to
-            : piece.piece;
-
-        IEnumerable<(Index, MoveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, realPiece, piece.team, boardState, promotions, includeBlocking);
-        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking);
-    }
-
-    public IEnumerable<Index> GetAllValidAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
-    {
-        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(piece.location, BoardState.GetRealPiece((piece.team, piece.piece), promotions), piece.team, boardState, promotions, includeBlocking)
-            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
-            .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
-
-        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
-    }
-
-    public IEnumerable<IPiece> GetValidAttacksConcerningHex(Hex hex) => activePieces
-        .Where(kvp => GetAllValidAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
-            .Any(targetIndex => targetIndex == hex.index)
-        ).Select(kvp => kvp.Value);
-    
-    public IEnumerable<IPiece> GetAllValidTheoreticalAttacksFromTeamConcerningHex(Team team, Hex hex) => activePieces
-        .Where(kvp => GetAllTheoreticalAttacksForPieceConcerningHex(kvp.Value, GetCurrentBoardState(), hex.index, true)
-            .Any(targetIndex => targetIndex == hex.index) && kvp.Key.Item1 == team
-        ).Select(kvp => kvp.Value);
-
-    public IEnumerable<Index> GetAllTheoreticalAttacksForPieceConcerningHex(IPiece piece, BoardState boardState, Index hexIndex, bool includeBlocking = false)
-    {
-        IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllTheoreticalAttacks(piece.location, piece.piece, piece.team, boardState, promotions, includeBlocking)
-            .Where(kvp => kvp.target != null && kvp.target == hexIndex)
-            .Where(kvp => kvp.moveType != MoveType.Defend);
-
-        return ValidateMoves(possibleMoves, piece, boardState, includeBlocking).Select(kvp => kvp.target);
-    }
-    
-    public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState, bool isQuery = false, bool includeBlocking = false)
-    {
-        // Copy the existing board state
-        BoardState currentState = boardState;
-        // BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = new BidirectionalDictionary<(Team, Piece), Index>(boardState.allPiecePositions);
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = boardState.allPiecePositions.Clone();
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+        BoardState finalState = currentGame.GetCurrentBoardState();
+        Team otherTeam = finalState.currentMove.Enemy();
         
-        // If the hex being moved into contains an enemy piece, capture it
-        Piece? takenPieceAtLocation = null;
-        Piece? defendedPieceAtLocation = null;
-        
-        if(currentState.TryGetPiece(targetLocation, out (Team occupyingTeam, Piece occupyingType) teamedPiece))
+        switch(currentGame.endType)
         {
-            if(teamedPiece.occupyingTeam != piece.team || includeBlocking)
+            case GameEndType.Checkmate:
+                if(multiplayer && multiplayer.gameParams.localTeam == finalState.checkmate)
+                    multiplayer.SendGameEnd(finalState.executedAtTime, MessageType.Checkmate);
+                break;
+            case GameEndType.Draw:
+                if(multiplayer != null)
+                    multiplayer.ClaimDraw();
+                break;
+            case GameEndType.Flagfall:
+                Team flagfellTeam = currentGame.winner == Winner.White ? Team.Black : Team.White;
+                if(multiplayer && multiplayer.localTeam == flagfellTeam) // Only the team that flagfell sends the flagfall, this prevents both sending and both clients ending the game twice
+                    multiplayer.SendFlagfall(new Flagfall(flagfellTeam, finalState.executedAtTime));
+                break;
+            case GameEndType.Stalemate:
+                if(multiplayer && multiplayer.gameParams.localTeam == otherTeam)
+                    multiplayer.SendGameEnd(finalState.executedAtTime, MessageType.Stalemate);
+                break;
+            case GameEndType.Surrender:
+                break;
+            default:
+                break;
+        }
+        EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
+    }
+
+    public void HexChessGameEnded()
+    {
+        // HexChessGame.onGameOver may be invoked off of the main thread (in the case of a flagfall only).
+        // Because of this, we need to communicate back to the main thread that the game has ended so that we may prcoess our game over.
+        // Because the Update() method is always executed on the main thread, we can flip a bool and check for that flip in our update loop.
+        // We must use a lock here so that flipping the bool is sync'd back to the main thread.
+        lock(lockObj)
+        {
+            hexGameOver = true;
+        }
+    } 
+
+    public BoardState MovePiece(IPiece piece, Index targetLocation, BoardState boardState)
+    {
+        // No promotions are happening in here, so we can just assume queen since it won't change anything
+        
+        // I was for some reason using realPiece in QueryMove. 
+        // That's obviously wrong, but I remember it fixing a bug, I just forgot which one.
+        // If we use realPiece, the wrong piece is moved when stepping through history/loading games in the case of a promotion
+        // Piece realPiece = currentGame.GetRealPiece((piece.team, piece.piece)); 
+        var newStateWithPromos = currentGame.QueryMove((piece.team, piece.piece), (targetLocation, MoveType.Move), boardState, Piece.Queen);
+        
+        // If there is a piece at the target location, capture it if it is an enemy
+        if(boardState.TryGetPiece(targetLocation, out (Team occupyingTeam, Piece occupyingType) teamedPiece))
+        {
+            if(teamedPiece.occupyingTeam != piece.team)
             {
-                takenPieceAtLocation = teamedPiece.occupyingType;
                 // Debug.Log($"{piece.team} : {piece.piece} at {piece.location.GetKey()} to capture {teamedPiece.occupyingTeam} : {teamedPiece.occupyingType} at {targetLocation.GetKey()}");
                 IPiece occupyingPiece = activePieces[teamedPiece];
 
-                // Capture the enemy piece
-                if(!isQuery)
-                {
-                    if(occupyingPiece.piece == Piece.King)
-                        Debug.LogError("Kings can't be captured. Game should not allow this state to occur.");
-                    jails[(int)teamedPiece.occupyingTeam].Enprison(occupyingPiece);
-                    activePieces.Remove(teamedPiece);
-                }
-                allPiecePositions.Remove(teamedPiece);
+                // Capture the enemy IPiece
+                if(occupyingPiece.piece == Piece.King)
+                    Debug.LogError("Kings can't be captured. Game should not allow this state to occur.");
+                jails[(int)teamedPiece.occupyingTeam].Enprison(occupyingPiece);
+                activePieces.Remove(teamedPiece);
             }
-            else
-                defendedPieceAtLocation = teamedPiece.occupyingType;    
         }
 
-        // Move piece
-        if(!isQuery)
-            piece.MoveTo(GetHexIfInBounds(targetLocation));
+        // Trigger move for IPiece
+        piece.MoveTo(GetHexIfInBounds(targetLocation));
 
-        // Update boardstate
-        if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
-            allPiecePositions.Remove((piece.team, piece.piece));
-        if(allPiecePositions.ContainsKey(targetLocation))
-            allPiecePositions.Remove(targetLocation);
-        allPiecePositions.Add((piece.team, piece.piece), targetLocation);
-        currentState.allPiecePositions = allPiecePositions;
-
-        if(!isQuery)
-        {
-            List<BoardState> hist = new List<BoardState>(turnHistory);
-            hist.Add(currentState);
-
-            Move move = BoardState.GetLastMove(hist, promotions, isFreeplaced);
-            moveTracker?.UpdateText(move);
-        }
+        // Update move tracker
+        List<BoardState> hist = new List<BoardState>(currentGame.turnHistory);
+        hist.Add(newStateWithPromos.newState);
+        Move move = HexachessagonEngine.GetLastMove(hist, currentGame.promotions, isFreeplaced);
+        moveTracker?.UpdateText(move);
         
-        return currentState;
+        return newStateWithPromos.newState;
     }
 
     public void MovePieceForPromotion(IPiece piece, Hex targetLocation, BoardState boardState)
     {
-        // Copy the existing board state
-        BoardState currentState = boardState;
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = boardState.allPiecePositions.Clone();
-        
         // If the hex being moved into contains an enemy piece, capture it
-        Piece? takenPieceAtLocation = null;
-        Piece? defendedPieceAtLocation = null;
-        if(currentState.allPiecePositions.Contains(targetLocation.index))
+        if(boardState.TryGetPiece(targetLocation.index, out (Team team, Piece type) occupyingPiece))
         {
-            (Team occupyingTeam, Piece occupyingType) = currentState.allPiecePositions[targetLocation.index];
-            if(occupyingTeam != piece.team)
+            if(occupyingPiece.type == Piece.King)
+                Debug.LogError("Kings can't be captured!");
+            else if(occupyingPiece.team != piece.team)
             {
-                takenPieceAtLocation = occupyingType;
-                IPiece occupyingPiece = activePieces[(occupyingTeam, occupyingType)];
-
-                if(occupyingPiece.piece == Piece.King)
-                    Debug.LogError("Kings can't be captured!");
-                // Capture the enemy piece
-                jails[(int)occupyingTeam].Enprison(occupyingPiece);
-                activePieces.Remove((occupyingTeam, occupyingType));
-                allPiecePositions.Remove((occupyingTeam, occupyingType));
+                IPiece occupyingIPiece = activePieces[occupyingPiece];
+                // Capture the enemy IPiece
+                jails[(int)occupyingPiece.type].Enprison(occupyingIPiece);
+                activePieces.Remove(occupyingPiece);
             }
-            else
-                defendedPieceAtLocation = occupyingType;
         }
 
-        piece.MoveTo(targetLocation, () => {
-            // Update boardstate
-            if(allPiecePositions.ContainsKey((piece.team, piece.piece)))
-                allPiecePositions.Remove((piece.team, piece.piece));
-            allPiecePositions.Add((piece.team, piece.piece), targetLocation.index);
-            currentState.allPiecePositions = allPiecePositions;
+        Index startLoc = piece.location;
 
-            AdvanceTurn(currentState);
-            moveTracker.UpdateText(BoardState.GetLastMove(turnHistory, promotions, isFreeplaced));
+        piece.MoveTo(targetLocation, (Piece promoteTo) => {
+            Piece realPiece = currentGame.GetRealPiece((piece.team, piece.piece));
+            var newStateWithPromos = currentGame.QueryMove((piece.team, realPiece), (targetLocation.index, MoveType.Move), boardState, promoteTo, currentGame.GetTurnCount() + 1);
+            currentGame.SetPromotions(newStateWithPromos.promotions);
+            AdvanceTurn(newStateWithPromos.newState);
+            moveTracker.UpdateText(currentGame.GetLastMove(isFreeplaced));
         });
     }
 
-    public void QueryPromote(Pawn pawn, Action action)
+    public void QueryPromote(Pawn pawn, Action<Piece> action)
     {
         // We don't want to display the query promote screen if we're not the team making the promote
         // That information will arrive to us across the network
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer != null && multiplayer.localTeam != GetCurrentTurn())
             return;
+            
         promotionDialogue.Display(pieceType => {
-            Promote(pawn, pieceType);
-            int promoTurnCount = Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1;
-            action?.Invoke();
+            PromoteIPiece(pawn, pieceType);
+            int promoTurnCount = currentGame.GetTurnCount() + 1; // +1 because we haven't yet applied the move to the game
+            action?.Invoke(pieceType);
 
-            Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
+            // Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
             multiplayer?.SendPromote(new Promotion(pawn.team, pawn.piece, pieceType, promoTurnCount));
         });
     }
 
-    public IPiece Promote(Pawn pawn, Piece type, bool surpressNewPromotion = false)
+    public IPiece PromoteIPiece(Pawn pawn, Piece type)
     {
         // Replace the pawn with the chosen piece type
         // Worth noting: Even though the new IPiece is of a different type than Pawn,
@@ -808,28 +432,23 @@ public class Board : SerializedMonoBehaviour
 
         IPiece newPiece = Instantiate(piecePrefabs[(pawn.team, type)], hex.transform.position + Vector3.up, Quaternion.identity).GetComponent<IPiece>();
         newPiece.Init(pawn.team, pawn.piece, pawn.location);
-        if(!surpressNewPromotion)
-        {
-            Promotion newPromo = new Promotion(pawn.team, pawn.piece, type, Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1);
-            promotions.Add(newPromo);
-        }
         activePieces[(pawn.team, pawn.piece)] = newPiece;
         Destroy(pawn.gameObject);
         return newPiece;
     }
 
-    private IPiece GetPromotedPieceIfNeeded(IPiece piece, bool surpressNewPromotion = false, int? turn = null)
+    private IPiece GetPromotedPieceIfNeeded(IPiece piece, int? turn = null)
     {
         if(piece is Pawn pawn)
         {
             Piece p = pawn.piece;
-            foreach(Promotion promo in promotions)
+            foreach(Promotion promo in currentGame.promotions)
             {
                 if(promo.team == pawn.team && promo.from == p)
                 {
                     if(turn.HasValue)
                     {
-                        if(turn.Value >= promo.turnNumber)
+                        if(turn.Value + (piece.team == Team.Black ? 1 : 0) >= promo.turnNumber)
                             p = promo.to;
                         else
                             continue;
@@ -839,79 +458,68 @@ public class Board : SerializedMonoBehaviour
                 }
             }
             if(p != pawn.piece)
-                piece = Promote(pawn, p, surpressNewPromotion);
+                piece = PromoteIPiece(pawn, p);
         }
 
         return piece;
     }
 
-    public BoardState Swap(IPiece p1, IPiece p2, BoardState boardState, bool isQuery = false)
+    public BoardState Swap(IPiece p1, IPiece p2, BoardState boardState)
     {
         if(p1 == p2)
             return boardState;
 
-        BoardState currentState = boardState;
-        currentState.TryGetIndex((p1.team, p1.piece), out Index p1StartLoc);
-        currentState.TryGetIndex((p2.team, p2.piece), out Index p2StartLoc);
+        // BoardState currentState = boardState;
+        boardState.TryGetIndex((p1.team, p1.piece), out Index p1StartLoc);
+        boardState.TryGetIndex((p2.team, p2.piece), out Index p2StartLoc);
         
-        if(!isQuery)
-        {
-            moveTracker?.UpdateText(new Move(
-                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                p1.team,
-                p1.piece,
-                p1StartLoc,
-                p2StartLoc,
-                null,
-                p2.piece
-            ));
-            p1.MoveTo(GetHexIfInBounds(p2.location));
-            p2.MoveTo(GetHexIfInBounds(p1StartLoc));
-        }
+        var newStateWithPromos = currentGame.QueryMove(p1StartLoc, (p2StartLoc, MoveType.Defend), boardState, Piece.Queen);
 
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        allPiecePositions.Remove((p1.team, p1.piece), p1StartLoc);
-        allPiecePositions.Remove((p2.team, p2.piece), p2StartLoc);
-        allPiecePositions.Add((p1.team, p1.piece), p2StartLoc);
-        allPiecePositions.Add((p2.team, p2.piece), p1StartLoc);
-        
-        currentState.allPiecePositions = allPiecePositions;
+        // Update move tracker
+        moveTracker?.UpdateText(new Move(
+            currentGame.GetTurnCount() + 1, // +1 because we have yet to apply the move to the game
+            p1.team,
+            p1.piece,
+            p1StartLoc,
+            p2StartLoc,
+            null,
+            p2.piece
+        ));
 
-        return currentState;
+        // Move the 2 IPieces
+        p1.MoveTo(GetHexIfInBounds(p2StartLoc));
+        p2.MoveTo(GetHexIfInBounds(p1StartLoc));
+
+        return newStateWithPromos.newState;
     }
 
-    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Index targetHex, BoardState boardState, bool isQuery = false)
+    public BoardState EnPassant(Pawn pawn, Team enemyTeam, Piece enemyPiece, Index targetLocation, BoardState boardState)
     {
-        if(!isQuery)
-        {
-            IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
-            if(enemyPiece == Piece.King)
-                Debug.LogError("Kings can't be captured.");
-            activePieces.Remove((enemyTeam, enemyPiece));
-            // Capture enemy
-            jails[(int)enemyTeam].Enprison(enemyIPiece);
-            // Move pawn
-            moveTracker?.UpdateText(new Move(
-                Mathf.FloorToInt((float)turnHistory.Count / 2f) + 1,
-                pawn.team,
-                pawn.piece,
-                pawn.location,
-                targetHex,
-                enemyPiece,
-                null
-            ));
-            pawn.MoveTo(GetHexIfInBounds(targetHex));
-        }
-        
-        // Update board state
-        BoardState currentState = boardState;
-        BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-        allPiecePositions.Remove((enemyTeam, enemyPiece));
-        allPiecePositions.Remove((pawn.team, pawn.piece));
-        allPiecePositions.Add((pawn.team, pawn.piece), targetHex);
-        
-        currentState.allPiecePositions = allPiecePositions;
-        return currentState;
+        // An enpassant can never end with a pawn on a promotion hex, so we can just use Queen for our PromoteTo param as it doesn't matter here
+        var newStateWithPromos = currentGame.QueryMove((pawn.team, pawn.piece), (targetLocation, MoveType.EnPassant), boardState, Piece.Queen);
+
+        // Capture enemy IPiece
+        IPiece enemyIPiece = activePieces[(enemyTeam, enemyPiece)];
+        if(enemyPiece == Piece.King)
+            Debug.LogError("Kings can't be captured.");
+        activePieces.Remove((enemyTeam, enemyPiece));
+        jails[(int)enemyTeam].Enprison(enemyIPiece);
+
+        // Update move tracker
+        moveTracker?.UpdateText(new Move(
+            currentGame.GetTurnCount() + 1,
+            pawn.team,
+            pawn.piece,
+            pawn.location,
+            targetLocation,
+            enemyPiece,
+            null
+        ));
+
+        // Move pawn
+        pawn.MoveTo(GetHexIfInBounds(targetLocation));
+
+        return newStateWithPromos.newState;
     }
 
     public void Enprison(IPiece toPrison, bool updateState = true)
@@ -921,19 +529,14 @@ public class Board : SerializedMonoBehaviour
 
         if(updateState)
         {
-            BoardState currentState = GetCurrentBoardState();
-            BidirectionalDictionary<(Team, Piece), Index> allPiecePositions = currentState.allPiecePositions.Clone();
-            allPiecePositions.Remove((toPrison.team, toPrison.piece));
-            currentState.allPiecePositions = allPiecePositions;
-            AdvanceTurn(currentState);
+            BoardState newState = currentGame.Enprison((toPrison.team, toPrison.piece));
+            AdvanceTurn(newState);
         }
     }
 
     public void EndGame(float timestamp, GameEndType endType = GameEndType.Pending, Winner winner = Winner.Pending)
     {
         BoardState currentState = GetCurrentBoardState();
-        if(currentState.currentMove == Team.None)
-            return;
 
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer)
@@ -950,21 +553,7 @@ public class Board : SerializedMonoBehaviour
         else if(!surpressVictoryAudio)
             audioSource.PlayOneShot(winFanfare);
 
-        currentState.currentMove = Team.None;
-        currentState.executedAtTime = timestamp;
-        turnHistory.Add(currentState);
-        newTurn.Invoke(currentState);
-
-        game = new Game(
-            turnHistory,
-            promotions,
-            winner,
-            endType,
-            timers == null ? 0 : timers.timerDruation,
-            timers == null ? false : timers.isClock
-        );
-
-        gameOver?.Invoke(game);
+        gameOver?.Invoke(currentGame);
     }
 
     public void HighlightMove(Move move)
@@ -996,10 +585,10 @@ public class Board : SerializedMonoBehaviour
         highlightedHexes.Clear();
     }
 
-    public void ResetPieces() 
+    public void ResetPieces(Game game = null) 
     {
-        string lessonSet = gamesToLoadLoc[UnityEngine.Random.Range(0, gamesToLoadLoc.Count)];
-        LoadGame(GetGame(lessonSet));
+        Game toLoad = game == null ? GetGame(gamesToLoadLoc[UnityEngine.Random.Range(0, gamesToLoadLoc.Count)]) : game;
+        LoadGame(toLoad);
     }
 
     public void Reset()
@@ -1010,14 +599,6 @@ public class Board : SerializedMonoBehaviour
             sceneTransition.Transition(sceneName);
         else
             SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
-    }
-
-    private void MaybeNewHex()
-    {
-        #if UNITY_EDITOR
-        Hex[] selectedHexes = Selection.GetFiltered<Hex>(SelectionMode.Unfiltered);
-        Debug.Log(selectedHexes.Length);
-        #endif
     }
 
     [Button("Spawn Hexes")]

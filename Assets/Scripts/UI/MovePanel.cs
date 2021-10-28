@@ -52,7 +52,7 @@ public class MovePanel : MonoBehaviour
         }
 
         TextMeshProUGUI toChange = move.lastTeam == Team.White ? whiteText : blackText;
-        string notation = Notation.Get(board, state, move, notationType);
+        string notation = Notation.Get(state, move, board.currentGame.promotions, notationType);
         
         toChange.text = notation;
 
@@ -67,10 +67,10 @@ public class MovePanel : MonoBehaviour
     public void SetNotation(NotationType type)
     {
         if(whiteSet)
-            whiteText.text = Notation.Get(board, whiteState, whiteMove, type);
+            whiteText.text = Notation.Get(whiteState, whiteMove, board.currentGame.promotions, type);
         
         if(blackSet)
-            blackText.text = Notation.Get(board, blackState, blackMove, type);
+            blackText.text = Notation.Get(blackState, blackMove, board.currentGame.promotions, type);
     }
 
     public void SetTimestamp(float seconds, Team team)

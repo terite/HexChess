@@ -18,7 +18,7 @@ public class SetTimerButton : MonoBehaviour
                 timers.gameObject.SetActive(true);
 
             timers.SetTimers(int.Parse(minuteInput.text) * 60);
-            timers.RecalculateTimers();
+            timers.UpdateBothUI();
         });
     }
 }

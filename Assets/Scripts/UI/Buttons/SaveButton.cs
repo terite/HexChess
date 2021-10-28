@@ -46,20 +46,9 @@ public class SaveButton : MonoBehaviour
             return;
         }
 
-        Game game = board.game.winner > Winner.Pending 
-            ? board.game 
-            : new Game(
-                board.turnHistory, 
-                board.promotions, 
-                Winner.Pending,
-                GameEndType.Pending, 
-                timers.timerDruation, 
-                timers.isClock
-            );
-
         File.WriteAllText(
             file, 
-            game.Serialize()
+            board.currentGame.Serialize()
         );
 
         Debug.Log($"Saved to file: {file}");

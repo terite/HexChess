@@ -15,10 +15,7 @@ public class Lesson0 : MonoBehaviour
         board.gameOver += GameOver;
     }
 
-    private void GameOver(Game game)
-    {
-        Reset();
-    }
+    private void GameOver(Game game) => Reset();
 
     private void NewTurn(BoardState newState)
     {

@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using Extensions;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class Jail : MonoBehaviour 
 {
     [SerializeField] public Team teamToPrison;
 
-    List<IPiece> prisonedPieces = new List<IPiece>();
+    [ShowInInspector, ReadOnly] List<IPiece> prisonedPieces = new List<IPiece>();
     [SerializeField] private int piecesAcross;
     [SerializeField] private Vector2 xzOffsets = new Vector2();
 
@@ -43,14 +44,12 @@ public class Jail : MonoBehaviour
         Sort();
     }
 
-    private void Sort()
+    public void Sort()
     {
-        IPiece[] children = gameObject.GetComponentsInChildren<IPiece>();
-        IEnumerable<IPiece> sorted = from child in children orderby child.value descending select child;
-        for (int i = 0; i < sorted.Count(); i++)
+        List<IPiece> sortedPieces = prisonedPieces.OrderByDescending(child => child.value).ToList();
+        for(int i = 0; i < sortedPieces.Count; i++)
         {
-            IPiece sortPiece = sorted.ElementAt(i);
-            sortPiece.obj.transform.SetSiblingIndex(i);
+            IPiece sortPiece = sortedPieces[i];
             sortPiece.obj.transform.position = GetPos(i);
         }
     }
@@ -68,7 +67,8 @@ public class Jail : MonoBehaviour
 
     public Vector3 GetPos(int index)
     {
-        int xCount = (index % piecesAcross);
+        // Debug.Log(index);
+        int xCount = index % piecesAcross;
         int zCount = ((float)index / (float)piecesAcross).Floor();
         return new Vector3(
             x: transform.position.x + (xzOffsets.x * xCount),

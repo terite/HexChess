@@ -25,7 +25,7 @@ public class Squire : MonoBehaviour, IPiece
         this.location = startingLocation;
     }
 
-    public void MoveTo(Hex hex, Action action = null)
+    public void MoveTo(Hex hex, Action<Piece> action = null)
     {
         targetPos = hex.transform.position + Vector3.up;
         location = hex.index;

@@ -16,20 +16,17 @@ public class Lesson2 : MonoBehaviour
         board.gameOver += GameOver;
     }
 
-    private void GameOver(Game game)
-    {
-        Reset();
-    }
+    private void GameOver(Game game) => Reset();
 
     private void NewTurn(BoardState newState)
     {
         if(newState.currentMove == Team.Black)
         {
-            Move move = BoardState.GetLastMove(board.turnHistory, board.promotions);
+            Move move = board.currentGame.GetLastMove();
             if(move.capturedPiece.HasValue)
                 agent.AddReward(0.1f);
             
-            if(board.promotions.Any())
+            if(board.currentGame.promotions.Any())
                 agent.AddReward(0.1f);
 
             if(newState.checkmate != Team.Black)

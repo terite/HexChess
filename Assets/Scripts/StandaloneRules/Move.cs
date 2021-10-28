@@ -25,4 +25,11 @@ public struct Move
         this.defendedPiece = defendedPiece;
         this.duration = duration;
     }
+
+    public override string ToString()
+    {
+        string capturedText = capturedPiece.HasValue ? $" Captured: {capturedPiece.Value}" : "";
+        string defendedText = defendedPiece.HasValue ? $" Defeneded: {defendedPiece.Value}" : "";
+        return $"On turn {turn} {lastTeam} took {duration} seconds to play {lastPiece} {from}->{to}{capturedText}{defendedText}";
+    }
 }

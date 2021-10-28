@@ -7,8 +7,10 @@ public static class MoveGenerator
 {
     public static bool IsPromotionRank(Team team, Index target)
     {
-        HexNeighborDirection forward = team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down;
-        return !target.TryGetNeighbor(forward, out Index _);
+        int goal = team == Team.White ? 18 - (target.row % 2) : target.row % 2;
+        return target.row == goal;
+        // HexNeighborDirection forward = team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down;
+        // return !target.TryGetNeighbor(forward, out Index _);
     }
 
     public static readonly Piece[] DefendableTypes = new Piece[]
@@ -84,7 +86,6 @@ public static class MoveGenerator
             yield return (index, MoveType.Move);
         }
     }
-
 
     public static IEnumerable<(Index, MoveType)> GetAllSquireMovesIncludingInvalid(Index location, Team team, BoardState boardState, bool includeBlocking = false)
     {
@@ -517,9 +518,23 @@ public static class MoveGenerator
         return false;
     }
 
-    private static bool PawnCanPassant(Team team, Index victimIndex, BoardState boardState) => boardState.TryGetPiece(victimIndex, out (Team team, Piece piece) occupier) 
-        ? occupier.team != team && occupier.piece.IsPawn()
-        : false;
+    private static bool PawnCanPassant(Team team, Index victimIndex, BoardState boardState) 
+    {
+        if(boardState.TryGetPiece(victimIndex, out (Team team, Piece piece) occupier))
+        {
+            Index occupierStartLoc = HexachessagonEngine.GetStartLocation(occupier);
+            
+            // A pawn is only passantable if it's current location is 2 hexes straight from it's start location
+            HexNeighborDirection dir = occupier.team == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down;
+            Index? passantableLocation = occupierStartLoc.GetNeighborAt(dir)?.GetNeighborAt(dir);
+
+            bool pawnInProperLoc = passantableLocation.HasValue && victimIndex == passantableLocation.Value;
+
+            return occupier.team != team && occupier.piece.IsPawn() && pawnInProperLoc;
+        }
+        else
+            return false;
+    }
 
     private static bool PawnIsAtStart(Team team, Index location) => team == Team.White 
         ? location.row == 3 || location.row == 4 
@@ -600,5 +615,112 @@ public static class MoveGenerator
     private static bool Contains(Piece[] haystack, Piece needle)
     {
         return System.Array.IndexOf(haystack, needle) >= 0;
+    }
+
+    public static IEnumerable<(Index start, Index target, MoveType moveType, Piece promoteTo)> GenerateAllValidMoves(Team checkForTeam, List<Promotion> promotions, BoardState state, BoardState previousState)
+    {
+        Team enemyTeam = checkForTeam.Enemy();
+        foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in state.allPiecePositions)
+        {
+            if(kvp.Key.team != checkForTeam)
+                continue;
+
+            Piece realPiece = HexachessagonEngine.GetRealPiece(kvp.Key, promotions);
+            var pieceMoves = MoveGenerator.GetAllPossibleMoves(kvp.Value, realPiece, kvp.Key.team, state, promotions);
+            foreach((Index target, MoveType moveType) potentialMove in pieceMoves)
+            {
+                if(potentialMove.moveType == MoveType.EnPassant)
+                {
+                    if(!potentialMove.target.TryGetNeighbor(checkForTeam == Team.White ? HexNeighborDirection.Up : HexNeighborDirection.Down, out Index enemyStartLoc))
+                        continue;
+
+                    if(state.IsOccupied(enemyStartLoc))
+                        continue;
+
+                    if(!previousState.TryGetPiece(enemyStartLoc, out var victim))
+                        continue;
+
+                    Piece realVictim = HexachessagonEngine.GetRealPiece(victim, promotions);
+                    if(!realVictim.IsPawn())
+                        continue;
+
+                }
+
+                // What we promote to doesn't matter for the purpose of determining enemy checks
+                (BoardState newState, List<Promotion> newPromotions) = HexachessagonEngine.QueryMove(kvp.Key, (potentialMove.target, potentialMove.moveType), state, Piece.Pawn1, promotions);
+                if(MoveValidator.IsChecking(enemyTeam, newState, newPromotions))
+                    continue;
+
+                if(realPiece.IsPawn() && MoveGenerator.IsPromotionRank(checkForTeam, potentialMove.target))
+                {
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Queen);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensBishop);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensRook);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.QueensKnight);
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.BlackSquire);
+                }
+                else
+                    yield return (kvp.Value, potentialMove.target, potentialMove.moveType, Piece.Pawn1);
+            }
+        }
+    }
+
+    public static List<(Piece piece, Index index, MoveType moveType)> GetAllValidMovesForTeam(Team team, BoardState state, List<Promotion> promotions)
+    {
+        List<(Piece, Index, MoveType)> validMoves = new List<(Piece, Index, MoveType)>();
+        IEnumerable<Piece> remainingPiecesForTeam = HexachessagonEngine.GetRemainingPiecesForTeam(team, state, promotions);
+        foreach(Piece piece in remainingPiecesForTeam)
+        {
+            var moves = GetAllValidMovesForPiece((team, piece), state, promotions);
+            validMoves.AddRange(moves.Select(move => (piece, move.target, move.moveType)));
+        }
+        return validMoves;
+    }
+
+    public static IEnumerable<(Index target, MoveType moveType)> GetAllValidMovesForPiece((Team team, Piece piece) teamedPiece, BoardState boardState, List<Promotion> promotions, bool includeBlocking = false)
+    {
+        if(boardState.TryGetIndex(teamedPiece, out Index location))
+        {
+            Piece realPiece = HexachessagonEngine.GetRealPiece(location, boardState, promotions);
+
+            IEnumerable<(Index, MoveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(location, realPiece, teamedPiece.team, boardState, promotions, includeBlocking);
+            return MoveValidator.ValidateMoves(possibleMoves, teamedPiece, boardState, promotions);
+        }
+        return Enumerable.Empty<(Index target, MoveType moveType)>();
+    }
+
+    public static IEnumerable<Index> GetValidAttacksConcerningHex(Index hexIndex, BoardState state, List<Promotion> promotions) => state.allPiecePositions
+        .Where(kvp => GetAllValidAttacksForPieceConcerningHex((kvp.Key), state, hexIndex, promotions, true)
+            .Any(targetIndex => targetIndex == hexIndex)
+        ).Select(kvp => kvp.Value);
+    
+    public static IEnumerable<Index> GetAllValidAttacksForPieceConcerningHex((Team team, Piece piece) teamedPiece, BoardState boardState, Index hexIndex, List<Promotion> promotions, bool includeBlocking = false)
+    {
+        if(boardState.TryGetIndex(teamedPiece, out Index location))
+        {
+            IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllPossibleMoves(location, HexachessagonEngine.GetRealPiece(teamedPiece, promotions), teamedPiece.team, boardState, promotions, includeBlocking)
+                .Where(kvp => kvp.target != null && kvp.target == hexIndex)
+                .Where(kvp => kvp.moveType == MoveType.Attack || kvp.moveType == MoveType.EnPassant);
+
+            return MoveValidator.ValidateMoves(possibleMoves, teamedPiece, boardState, promotions).Select(validMove => validMove.target);
+        }
+        return Enumerable.Empty<Index>();
+    }
+
+    public static IEnumerable<Index> GetAllValidTheoreticalAttacksFromTeamConcerningHex(Team team, Index hexIndex, BoardState state, List<Promotion> promotions) => state.allPiecePositions
+        .Where(kvp => GetAllTheoreticalAttacksForPieceConcerningHex(kvp.Key, state, hexIndex, promotions, true)
+            .Any(targetIndex => targetIndex == hexIndex) && kvp.Key.Item1 == team
+        ).Select(kvp => kvp.Value);
+    
+    public static IEnumerable<Index> GetAllTheoreticalAttacksForPieceConcerningHex((Team team, Piece piece) teamedPiece, BoardState boardState, Index hexIndex, List<Promotion> promotions, bool includeBlocking = false)
+    {
+        if(boardState.TryGetIndex(teamedPiece, out Index location))
+        {
+            IEnumerable<(Index target, MoveType moveType)> possibleMoves = MoveGenerator.GetAllTheoreticalAttacks(location, teamedPiece.piece, teamedPiece.team, boardState, promotions, includeBlocking)
+                .Where(kvp => kvp.target != null && kvp.target == hexIndex)
+                .Where(kvp => kvp.moveType != MoveType.Defend);
+            return MoveValidator.ValidateMoves(possibleMoves, teamedPiece, boardState, promotions).Select(validMove => validMove.target);
+        }
+        return Enumerable.Empty<Index>();
     }
 }

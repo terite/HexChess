@@ -43,7 +43,7 @@ public class Hexmachina : Agent
     public override void CollectObservations(VectorSensor sensor)
     {
         BoardState state = board.GetCurrentBoardState();
-        List<Promotion> promotions = board.promotions;
+        List<Promotion> promotions = board.currentGame.promotions;
         cachedMoves.Clear();
 
         // current turn
@@ -78,16 +78,11 @@ public class Hexmachina : Agent
             {
                 Piece realPiece = piece;
                 if(piece >= Piece.Pawn1 && !(pieceObj is Pawn))
-                {
-                    // promoted pawn
-                    IEnumerable<Promotion> applicablePromos = promotions.Where(promo => promo.from == piece && promo.team == state.currentMove);
-                    if(applicablePromos.Any())
-                        realPiece = applicablePromos.First().to;
-                }
+                    realPiece = board.currentGame.GetRealPiece((state.currentMove, piece));
 
                 // This needs to have all moves that should not be allowed to be played to be turned to invalid moves
-                IEnumerable<(Index index, MoveType type)> allMoves = MoveGenerator.GetAllMovesIncludingInvalid(pieceObj.location, realPiece, state.currentMove, state, board.promotions);
-                allMoves = board.InvalidateImpossibleMoves(allMoves, pieceObj, state);
+                IEnumerable<(Index index, MoveType type)> allMoves = MoveGenerator.GetAllMovesIncludingInvalid(pieceObj.location, realPiece, state.currentMove, state, board.currentGame.promotions);
+                // allMoves = board.InvalidateImpossibleMoves(allMoves, pieceObj, state);
 
                 foreach((Index index, MoveType type) move in allMoves)
                 {
@@ -153,11 +148,10 @@ public class Hexmachina : Agent
         {
             Debug.Log($"Promo choice: {promoChoice}");
             Piece promoTo = GetPromoPiece(promoChoice);
-            move.piece = board.Promote(pawn, promoTo);
+            move.piece = board.PromoteIPiece(pawn, promoTo);
             AddReward(0.0001f);
         }
 
-        BoardState currentBoardState = board.GetCurrentBoardState();
         // Query move
         // BoardState queryState = board.QueryMove(move, currentBoardState);
 
@@ -167,8 +161,10 @@ public class Hexmachina : Agent
         //     AddReward(-0.5f - (0.01f * fiveFoldProgres));
 
         // Play move
-        currentBoardState = board.ExecuteMove(move, currentBoardState);
-        board.AdvanceTurn(currentBoardState, true, true);
+        var newStateWithPromos = board.currentGame.QueryMove(move.piece.location, (move.target, move.type), board.GetCurrentBoardState(), Piece.Queen);
+        board.currentGame.SetPromotions(newStateWithPromos.promotions);
+        // currentBoardState = board.ExecuteMove(move, currentBoardState);
+        board.AdvanceTurn(newStateWithPromos.newState, true, true);
         
         // Move m = BoardState.GetLastMove(board.turnHistory);
         // AddReward(-0.00001f * m.turn);

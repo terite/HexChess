@@ -40,8 +40,7 @@ public class BoardSensor : ISensor
         {
             if(state.TryGetPiece(index, out (Team team, Piece piece) teamedPiece))
             {
-                IEnumerable<Promotion> applicablePromos = board.promotions.Where(promo => promo.from == teamedPiece.piece && promo.team == teamedPiece.team);
-                Piece realPiece = applicablePromos.Any() ? applicablePromos.First().to : teamedPiece.piece;
+                Piece realPiece = board.currentGame.GetRealPiece(teamedPiece);
 
                 writer.Add(new Vector3(
                     (float)teamedPiece.team,

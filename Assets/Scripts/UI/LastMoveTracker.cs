@@ -24,7 +24,7 @@ public class LastMoveTracker : MonoBehaviour
         string to = move.to.GetKey();
 
         Team otherTeam = move.lastTeam.Enemy();
-        string lastPieceString = GetStringForPiece(move, move.lastPiece, move.lastTeam, board.promotions);
+        string lastPieceString = GetStringForPiece(move, move.lastPiece, move.lastTeam, board.currentGame.promotions);
         IPiece capturedPiece = move.capturedPiece.HasValue 
             ? board.piecePrefabs[(otherTeam, move.capturedPiece.Value)].GetComponent<IPiece>()
             : null;
@@ -34,14 +34,8 @@ public class LastMoveTracker : MonoBehaviour
         if(capturedPieceString == "Pawn")
         {
             // If the piece captured was a pawn, it may have been promoted. To get the correct string, let's pull it from the promotion data instead of the Piece data
-            IEnumerable<Promotion> applicablePromos = board.promotions.Where(promo => promo.team == otherTeam && promo.from == move.capturedPiece.Value);
-            if(applicablePromos.Any())
-            {
-                Promotion promo = applicablePromos.First();
-                // We have no way to get the IPiece for the captured piece. 
-                // It's no longer in the activePieces dictionary, and it's been promoted, so it's not the same IPiece as the prefab.
-                capturedPieceString = promo.to.GetPieceLongString();
-            }
+            Piece rp = board.currentGame.GetRealPiece((otherTeam, move.capturedPiece.Value));
+            capturedPieceString = rp.GetPieceLongString();
         }
 
         IPiece defendedPiece = move.defendedPiece.HasValue
@@ -51,12 +45,8 @@ public class LastMoveTracker : MonoBehaviour
         string promoStr = "";
         if(lastPieceString == "Pawn")
         {
-            IEnumerable<Promotion> applicablePromos = board.promotions.Where(promo => promo.team == move.lastTeam && promo.from == move.lastPiece && promo.turnNumber <= move.turn);
-            if(applicablePromos.Any())
-            {
-                Promotion promo = applicablePromos.First();
-                promoStr = promo.to.GetPieceLongString();
-            }
+            Piece rp = board.currentGame.GetRealPiece((move.lastTeam, move.lastPiece));
+            promoStr = rp.GetPieceLongString();
         }
         promoStr = string.IsNullOrEmpty(promoStr) ? promoStr : $" promoted to {promoStr}";
 

@@ -14,7 +14,7 @@ public class SurrenderButton : MonoBehaviour
         board = GameObject.FindObjectOfType<Board>();
         button.onClick.AddListener(() => {
             Networker networker = GameObject.FindObjectOfType<Networker>();
-            float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
+            float timestamp = board.currentGame.CurrentTime;
             if(networker != null)
             {
                 networker.SendMessage(new Message(
@@ -22,17 +22,17 @@ public class SurrenderButton : MonoBehaviour
                     data: Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(timestamp))
                 ));
                 Team surrenderingTeam = networker.isHost ? networker.host.team : networker.player.Value.team;
-                board.EndGame(timestamp, GameEndType.Surrender, surrenderingTeam == Team.White ? Winner.Black : Winner.White);
+                board.currentGame.Surrender(surrenderingTeam);
             }
             else
-                board.EndGame(timestamp, GameEndType.Surrender, board.GetCurrentTurn() == Team.White ? Winner.Black : Winner.White);
+                board.currentGame.Surrender(board.GetCurrentTurn());
         });
-        board.gameOver += gameOver;
+        board.gameOver += GameOver;
     }
 
-    private void gameOver(Game game)
+    private void GameOver(Game game)
     {
-        board.gameOver -= gameOver;
+        board.gameOver -= GameOver;
         button.onClick.RemoveAllListeners();
 
         if(GameObject.FindObjectOfType<Multiplayer>() == null)

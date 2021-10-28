@@ -4,18 +4,18 @@ using Extensions;
 
 public static class Notation
 {
-    public static string Get(Board board, BoardState boardState, Move move, NotationType notationType = NotationType.LongForm)
+    public static string Get(BoardState boardState, Move move, List<Promotion> promotions, NotationType notationType = NotationType.LongForm)
     {
         if(move.lastTeam == Team.None)
             return "";
 
         string fromIndex = move.from.GetKey();
         string toIndex = move.to.GetKey();
-        string piece = GetStringForPiece(move.lastPiece, move.lastTeam, board.promotions, move);
+        string piece = GetStringForPiece(move.lastPiece, move.lastTeam, promotions, move);
         string type = move.capturedPiece.HasValue ? "x" : move.defendedPiece.HasValue ? "d" : "m";
         string otherPiece = type switch{
-            "x" => GetStringForPiece(move.capturedPiece.Value, move.lastTeam.Enemy(), board.promotions, move),
-            "d" => GetStringForPiece(move.defendedPiece.Value, move.lastTeam, board.promotions, move),
+            "x" => GetStringForPiece(move.capturedPiece.Value, move.lastTeam.Enemy(), promotions, move),
+            "d" => GetStringForPiece(move.defendedPiece.Value, move.lastTeam, promotions, move),
             _ => ""
         };
 
@@ -57,11 +57,11 @@ public static class Notation
         Team lt = move.lastTeam;
         Piece lp = move.lastPiece;
 
-        IEnumerable<Promotion> applicablePromotions = board.promotions.Where(promo => promo.team == lt && promo.from == lp);
+        IEnumerable<Promotion> applicablePromotions = promotions.Where(promo => promo.team == lt && promo.from == lp);
         if(applicablePromotions.Any())
         {
             Promotion applicablePromo = applicablePromotions.First();
-            promo = applicablePromo.turnNumber == move.turn && move.lastTeam == applicablePromo.team ? $"={applicablePromo.to.GetPieceShortString()}" : "";
+            promo = applicablePromo.turnNumber == move.turn + (move.lastTeam == Team.Black ? 1 : 0) && move.lastTeam == applicablePromo.team ? $"={applicablePromo.to.GetPieceShortString()}" : "";
         }
         
         string check = boardState.checkmate != Team.None ? "#" : boardState.check != Team.None ? "+" : "";
@@ -78,9 +78,9 @@ public static class Notation
             }
             else
             {
-                List<Piece> alternatePieces = BoardState.GetRealPiece((lt, lp), board.promotions).GetAlternates().ToList();
+                List<Piece> alternatePieces = HexachessagonEngine.GetRealPiece((lt, lp), promotions).GetAlternates().ToList();
 
-                foreach(Promotion potentialAlternate in board.promotions)
+                foreach(Promotion potentialAlternate in promotions)
                 {
                     if(potentialAlternate.turnNumber < move.turn)
                     {
@@ -112,12 +112,12 @@ public static class Notation
                     {
                         if(boardState.TryGetIndex((lt, alternate), out Index index))
                         {
-                            Piece realPiece = BoardState.GetRealPiece((lt, alternate), board.promotions);
+                            Piece realPiece = HexachessagonEngine.GetRealPiece((lt, alternate), promotions);
 
-                            var possibleMovesConcerningHex = MoveGenerator.GetAllPossibleMoves(index, realPiece, lt, boardState, board.promotions, true)
+                            var possibleMovesConcerningHex = MoveGenerator.GetAllPossibleMoves(index, realPiece, lt, boardState, promotions, true)
                                 .Where(kvp => kvp.target != null && kvp.target == move.to);
 
-                            if(boardState.ValidateMoves(possibleMovesConcerningHex, (lt, alternate), board.promotions).Any())
+                            if(MoveValidator.ValidateMoves(possibleMovesConcerningHex, (lt, alternate), boardState, promotions).Any())
                             {
                                 if(index.col == move.from.col)
                                     rankAmbiguity = true;

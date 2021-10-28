@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public interface IPiece
@@ -11,7 +9,7 @@ public interface IPiece
     Index location {get; set;}
     bool captured {get; set;}
     ushort value {get; set;}
-    void MoveTo(Hex hex, Action action = null);
+    void MoveTo(Hex hex, Action<Piece> action = null);
     void CancelMove();
     void Init(Team team, Piece piece, Index startingLocation);
     string GetPieceString();

@@ -27,20 +27,24 @@ public class Lesson8 : MonoBehaviour
             // Dumb random AI
             turn = Team.None;
             BoardState state = board.GetCurrentBoardState();
-            List<(IPiece piece, Index target, MoveType moveType)> moves = board.GetAllValidMovesForTeam(Team.Black);
-            (IPiece piece, Index target, MoveType moveType) move = moves[UnityEngine.Random.Range(0, moves.Count)];
+            List<(Piece piece, Index target, MoveType moveType)> moves = board.currentGame.GetAllValidMovesForTeam(Team.Black, state);
+            (Piece piece, Index target, MoveType moveType) move = moves[UnityEngine.Random.Range(0, moves.Count)];
+            IPiece piece = board.activePieces[(Team.Black, move.piece)];
 
-            if((move.piece is Pawn pawn) && pawn.GetGoalInRow(move.target.row) == move.target.row)
-                move.piece = board.Promote(pawn, Piece.Queen);
 
-            BoardState newState = board.ExecuteMove(move, board.GetCurrentBoardState());
-            board.AdvanceTurn(newState, true, true);
+            var newStateWithPromos = board.currentGame.QueryMove(piece.location, (move.target, move.moveType), state, Piece.Queen);
+            if((piece is Pawn pawn) && pawn.GetGoalInRow(move.target.row) == move.target.row)
+            {
+                board.currentGame.SetPromotions(newStateWithPromos.promotions);
+                piece = board.PromoteIPiece(pawn, Piece.Queen);
+            }
+            board.AdvanceTurn(newStateWithPromos.newState, true, true);
         }
     }
 
     private void NewTurn(BoardState newState)
     {
-        Move move = BoardState.GetLastMove(board.turnHistory, board.promotions);
+        Move move = board.currentGame.GetLastMove();
         float reward = move.capturedPiece.HasValue ? 0.001f : 0f;
         int mod = newState.currentMove == Team.White ? 1 : newState.currentMove == Team.Black ? -1 : 0;
         

@@ -650,7 +650,7 @@ public class Networker : MonoBehaviour
             return;
 
         Board board = GameObject.FindObjectOfType<Board>();
-        float timestamp = Time.timeSinceLevelLoad + board.timeOffset;
+        float timestamp = board.currentGame.CurrentTime;
 
         if(answer == MessageType.AcceptDraw)
             multiplayer.Draw(timestamp);

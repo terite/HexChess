@@ -14,6 +14,7 @@ public class TurnHistoryPanel : MonoBehaviour
     [SerializeField] private SelectPiece selectPiece;
     [SerializeField] private LastMoveTracker lastMoveTracker;
     [SerializeField] private TurnPanel turnPanel;
+    [SerializeField] private ArrowTool arrowTool;
     MovePanel startPanel;
     MovePanel lastMovePanel;
     private List<MovePanel> panels = new List<MovePanel>();
@@ -87,8 +88,8 @@ public class TurnHistoryPanel : MonoBehaviour
     private void NewTurn(BoardState newState)
     {
         // If the current move is black, we know white just made a move, let's add an entry to the list
-        Move lastMove = BoardState.GetLastMove(board.turnHistory, board.promotions, isFreePlaceMode);
-        UpdateMovePanels(newState, lastMove, Mathf.FloorToInt((float)board.turnHistory.Count / 2f) + board.turnHistory.Count % 2);
+        Move lastMove = board.currentGame.GetLastMove(isFreePlaceMode);
+        UpdateMovePanels(newState, lastMove, board.currentGame.GetTurnCount() + board.currentGame.turnHistory.Count % 2);
     }
 
     public void SetGame(Game game)
@@ -98,7 +99,7 @@ public class TurnHistoryPanel : MonoBehaviour
         {
             BoardState state = game.turnHistory[i];
             List<BoardState> subset = game.turnHistory.Take(i + 1).ToList();
-            Move lastMove = BoardState.GetLastMove(subset, board.promotions, isFreePlaceMode);
+            Move lastMove = HexachessagonEngine.GetLastMove(subset, game.promotions, isFreePlaceMode);
             UpdateMovePanels(state, lastMove, Mathf.FloorToInt((float)subset.Count / 2f) + subset.Count % 2);
         }
     }
@@ -195,6 +196,8 @@ public class TurnHistoryPanel : MonoBehaviour
 
     public void HistoryStep(CallbackContext context)
     {
+        // This is called when the user presses left/right arrows
+
         if(panels.Count == 0)
             return;
 
@@ -227,6 +230,8 @@ public class TurnHistoryPanel : MonoBehaviour
         if(panels.Count == 0)
             return;
         
+        arrowTool.ClearArrows();
+        
         cursor?.SetCursor(CursorType.Default);
         if(selectPiece.selectedPiece != null)
         {
@@ -250,16 +255,16 @@ public class TurnHistoryPanel : MonoBehaviour
             // If the preview is not disabled prior to setting the board state, we may end up with missing pointer references anytime a piece was promoted/demoted by traversing the history
             selectPiece.DisablePreview();
             Move move = panel.GetMove(panelPointer.team);
-            board.SetBoardState(state, board.promotions, move.turn);
+            board.SetBoardState(state, move.turn);
             board.HighlightMove(move);
             selectPiece.HighlightPotentialCheckOrMate(state);
             lastMoveTracker.UpdateText(move);
 
             // Determine if it's game over or not. If so, call turnPanel.GameOver
-            if(board.game.endType == GameEndType.Pending || panelPointer != currentTurnPointer)
+            if(board.currentGame.endType == GameEndType.Pending || panelPointer != currentTurnPointer)
                 turnPanel.NewTurn(state, move.lastTeam == Team.Black ? move.turn + 1 : move.turn);
             else
-                turnPanel.SetGameEndText(board.game);
+                turnPanel.SetGameEndText(board.currentGame);
         }
     }
 
