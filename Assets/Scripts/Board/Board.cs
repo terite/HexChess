@@ -37,7 +37,6 @@ public class Board : SerializedMonoBehaviour
     public List<string> gamesToLoadLoc = new List<string>();
     [ReadOnly, ShowInInspector, DisableInEditorMode, HideIf("@currentGame == null")] public List<Promotion> promotions => currentGame?.promotions;
     public Color lastMoveHighlightColor;
-    public int turnsSincePawnMovedOrPieceTaken = 0;
     public bool surpressVictoryAudio = false;
 
     private BoardState? lastSetState = null;
@@ -148,10 +147,8 @@ public class Board : SerializedMonoBehaviour
         if(turn.HasValue)
         {
             Team team = piece.team;
-            IEnumerable<Promotion> applicablePromos = currentGame.promotions.Where(promo => promo.turnNumber <= turn.Value && promo.team == team);
-            if(applicablePromos.Any())
+            if(currentGame.TryGetApplicablePromo((team, piece.piece), turn.Value, out Promotion promotion))
             {
-                Promotion promotion = applicablePromos.First();
                 GameObject properPromotedPrefab = piecePrefabs[(promotion.team, promotion.to)];
                 if(properPromotedPrefab.GetComponent<IPiece>().GetType() != piece.GetType())
                 {
@@ -304,33 +301,47 @@ public class Board : SerializedMonoBehaviour
     {
         Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         BoardState finalState = currentGame.GetCurrentBoardState();
-        Team otherTeam = finalState.currentMove.Enemy();
-        
+
         switch(currentGame.endType)
         {
             case GameEndType.Checkmate:
                 if(multiplayer && multiplayer.gameParams.localTeam == finalState.checkmate)
+                {
                     multiplayer.SendGameEnd(finalState.executedAtTime, MessageType.Checkmate);
+                    EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
+                }
                 break;
             case GameEndType.Draw:
-                if(multiplayer != null)
-                    multiplayer.ClaimDraw();
+                
+                if(multiplayer)
+                    EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
                 break;
             case GameEndType.Flagfall:
                 Team flagfellTeam = currentGame.winner == Winner.White ? Team.Black : Team.White;
                 if(multiplayer && multiplayer.localTeam == flagfellTeam) // Only the team that flagfell sends the flagfall, this prevents both sending and both clients ending the game twice
+                {
                     multiplayer.SendFlagfall(new Flagfall(flagfellTeam, finalState.executedAtTime));
+                    EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
+                }                    
                 break;
             case GameEndType.Stalemate:
-                if(multiplayer && multiplayer.gameParams.localTeam == otherTeam)
+                Team otherTeam = finalState.currentMove.Enemy();
+                if(multiplayer && multiplayer.gameParams.localTeam == otherTeam) // this is probably broken
+                {
                     multiplayer.SendGameEnd(finalState.executedAtTime, MessageType.Stalemate);
+                    EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
+                }
                 break;
             case GameEndType.Surrender:
+                if(multiplayer) // The Surrender button is already handling sending the surrender to the other player
+                    EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
                 break;
             default:
                 break;
         }
-        EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
+
+        if(!multiplayer)
+            EndGame(currentGame.CurrentTime, currentGame.endType, currentGame.winner);
     }
 
     public void HexChessGameEnded()
@@ -448,21 +459,10 @@ public class Board : SerializedMonoBehaviour
         if(piece is Pawn pawn)
         {
             Piece p = pawn.piece;
-            foreach(Promotion promo in currentGame.promotions)
-            {
-                if(promo.team == pawn.team && promo.from == p)
-                {
-                    if(turn.HasValue)
-                    {
-                        if(turn.Value + (piece.team == Team.Black ? 1 : 0) >= promo.turnNumber)
-                            p = promo.to;
-                        else
-                            continue;
-                    }
-                    else
-                        p = promo.to;
-                }
-            }
+
+            if(currentGame.TryGetApplicablePromo((piece.team, piece.piece), turn.HasValue ? turn.Value + (piece.team == Team.Black ? 1 : 0) : int.MaxValue, out Promotion promo))
+                p = promo.to;
+
             if(p != pawn.piece)
                 piece = PromoteIPiece(pawn, p);
         }

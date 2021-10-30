@@ -41,6 +41,13 @@ public static class HexachessagonEngine
         return teamedPiece.piece;
     }
 
+    public static bool TryGetApplicablePromo((Team team, Piece piece) teamedPiece, int turnNumber, out Promotion promotion, List<Promotion> promotions)
+    {
+        IEnumerable<Promotion> potential = promotions.Where(promo => promo.turnNumber <= turnNumber && promo.team == teamedPiece.team && promo.from == teamedPiece.piece);
+        promotion = potential.FirstOrDefault();
+        return potential.Any();
+    }
+
     public static BoardState Enprison(BoardState currentState, (Team team, Piece piece) teamedPiece)
     {
         var allPiecePositions = currentState.allPiecePositions.Clone();
@@ -91,7 +98,7 @@ public static class HexachessagonEngine
                 {
                     // Pawns that move sideways are always attacks. If the new location was unoccupied, then did En Passant
                     Index? enemyLocation = nowPos.GetNeighborAt(kvp.Key.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up);
-                    if (enemyLocation != null && lastState.TryGetPiece(enemyLocation.Value, out var captured))
+                    if(enemyLocation != null && lastState.TryGetPiece(enemyLocation.Value, out var captured))
                         capturedPiece = captured.piece;
                 }
 
@@ -100,12 +107,16 @@ public static class HexachessagonEngine
 
                 // In the case of a defend, we may check the piece being defended before the rook doing the defending. 
                 // If this is the case, we need to ensure the piece is the rook and the defended piece is the non-rook, as well as the proper to/from indcies
-                // May need to get real piece for previousPieceAtLocation. A pawn promoted to a rook defending another piece would likely show as a pawn here
                 Piece? defendedPiece = previousTeamAtLocation != kvp.Key.team ? null : (Piece?)HexachessagonEngine.GetRealPiece(kvp.Key, promotions);
-                if(defendedPiece != null && (defendedPiece == Piece.QueensRook || defendedPiece == Piece.KingsRook))
+                if(defendedPiece != null)
                 {
-                    (defendedPiece, piece) = (piece, defendedPiece.Value);
-                    (to, from) = (from, to);
+                    if(defendedPiece == Piece.QueensRook || defendedPiece == Piece.KingsRook)
+                        (defendedPiece, piece) = (previousPieceAtLocation, defendedPiece.Value);
+                    else
+                    {
+                        piece = previousPieceAtLocation.Value;
+                        (to, from) = (from, to);
+                    }
                 }
 
                 return new Move(

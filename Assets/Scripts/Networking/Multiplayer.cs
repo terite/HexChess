@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Multiplayer : MonoBehaviour
@@ -53,7 +55,8 @@ public class Multiplayer : MonoBehaviour
     }
 
     public void ReceiveBoard(BoardState state)
-    { 
+    {
+        Debug.Log($"Received boardstate: {state.currentMove}'s turn");
         // If a board state is received and the history panel is displaying a previous move, jump to current move then accept new board state
         if(historyPanel.currentTurnPointer != historyPanel.panelPointer)
             historyPanel.JumpToPresent();
@@ -66,10 +69,16 @@ public class Multiplayer : MonoBehaviour
         if(state.currentMove != gameParams.localTeam)
             turnChangePanel.Display(gameParams.localTeam);
 
-        board.SetBoardState(state);
+        board.SetBoardState(state, board.currentGame.GetTurnCount() + 1);
         board.AdvanceTurn(state, false);
 
-        moveTracker.UpdateText(board.currentGame.GetLastMove());
+        if(board.currentGame.endType == GameEndType.Pending)
+            moveTracker.UpdateText(board.currentGame.GetLastMove());
+        else
+        {
+            List<BoardState> hist = board.currentGame.turnHistory.Skip(board.currentGame.turnHistory.Count - 3).Take(2).ToList();
+            moveTracker.UpdateText(HexachessagonEngine.GetLastMove(hist, board.currentGame.promotions));
+        }
     }
 
     public void SendBoard(BoardState state)
@@ -80,8 +89,11 @@ public class Multiplayer : MonoBehaviour
         );
     }
 
-    public void Surrender(Team surrenderingTeam, float timestamp) => 
-        board.currentGame.Surrender(surrenderingTeam, timestamp);
+    public void Surrender(Team surrenderingTeam, float timestamp)
+    {
+        if(board.currentGame.endType == GameEndType.Pending)
+            board.currentGame.Surrender(surrenderingTeam, timestamp);
+    }
     public void Surrender(Team surrenderingTeam) => 
         Surrender(surrenderingTeam, board.currentGame.CurrentTime);
 
@@ -112,12 +124,13 @@ public class Multiplayer : MonoBehaviour
     public void SendPromote(Promotion promo)
     {
         BoardState state = board.GetCurrentBoardState();
-        state.currentMove = state.currentMove == Team.White ? Team.Black : Team.White;
+        // state.currentMove = state.currentMove == Team.White ? Team.Black : Team.White;
         networker.SendMessage(new Message(MessageType.Promotion, promo.Serialize()));
         SendBoard(state);
     }
     public void ReceivePromotion(Promotion promo)
     {
+        Debug.Log($"promo received for turn {promo.turnNumber}");
         if(board.activePieces.ContainsKey((promo.team, promo.from)))
         {
             IPiece piece = board.activePieces[(promo.team, promo.from)];

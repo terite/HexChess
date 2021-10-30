@@ -9,7 +9,8 @@ namespace Extensions
         public static HexNeighborDirection OppositeDirection(this HexNeighborDirection direction) =>
             (HexNeighborDirection)(((int)direction + 3) % 6);
 
-        public static Team Enemy(this Team team) => team == Team.White ? Team.Black : Team.White;
+        // White is an enemy to black, but none has no enemy, so we return none as the enemy to none
+        public static Team Enemy(this Team team) => team == Team.None ? Team.None : team == Team.White ? Team.Black : Team.White;
 
         public static bool IsRook(this Piece piece) => piece == Piece.KingsRook || piece == Piece.QueensRook;
         public static bool IsKnight(this Piece piece) => piece == Piece.KingsKnight || piece == Piece.QueensKnight;

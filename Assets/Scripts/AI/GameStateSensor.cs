@@ -31,7 +31,7 @@ public class GameStateSensor : ISensor
         BoardState state = board.GetCurrentBoardState();
         writer[0] = (float)state.currentMove;
         // progression towards 50 move rule
-        writer[1] = board.turnsSincePawnMovedOrPieceTaken;
+        writer[1] = board.currentGame.turnsSincePawnMovedOrPieceTaken;
 
         return 2;
     }

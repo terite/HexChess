@@ -611,10 +611,7 @@ public static class MoveGenerator
         return true;
     }
 
-    private static bool Contains(Piece[] haystack, Piece needle)
-    {
-        return System.Array.IndexOf(haystack, needle) >= 0;
-    }
+    private static bool Contains(Piece[] haystack, Piece needle) => System.Array.IndexOf(haystack, needle) >= 0;
 
     public static IEnumerable<(Index start, Index target, MoveType moveType, Piece promoteTo)> GenerateAllValidMoves(Team checkForTeam, List<Promotion> promotions, BoardState state, BoardState previousState)
     {

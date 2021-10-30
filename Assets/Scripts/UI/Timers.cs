@@ -17,6 +17,7 @@ public class Timers : MonoBehaviour
     private void Awake() {
         board = GameObject.FindObjectOfType<Board>();
         board.newTurn += NewTurn;
+        board.gameOver += GameOver;
         
         if(isClock)
         {
@@ -26,6 +27,14 @@ public class Timers : MonoBehaviour
         else if(timerDruation > 0)
             UpdateBothTimers();
     }
+
+    private void GameOver(Game game)
+    {
+        if(isClock)
+            UpdateBothClocks();
+        else if(timerDruation > 0)
+            UpdateBothTimers();
+    } 
 
     public void SetClock()
     {

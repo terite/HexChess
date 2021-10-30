@@ -87,6 +87,13 @@ public class TurnHistoryPanel : MonoBehaviour
 
     private void NewTurn(BoardState newState)
     {
+        if(board.currentGame.endType != GameEndType.Pending)
+        {
+            List<BoardState> finalSet = board.currentGame.turnHistory.Skip(board.currentGame.turnHistory.Count - 3).Take(2).ToList();
+            Move move = HexachessagonEngine.GetLastMove(finalSet, board.currentGame.promotions);
+            UpdateMovePanels(finalSet.Last(), move, board.currentGame.GetTurnCount() + board.currentGame.turnHistory.Count % 2);
+            return;
+        }
         // If the current move is black, we know white just made a move, let's add an entry to the list
         Move lastMove = board.currentGame.GetLastMove(isFreePlaceMode);
         UpdateMovePanels(newState, lastMove, board.currentGame.GetTurnCount() + board.currentGame.turnHistory.Count % 2);

@@ -284,7 +284,7 @@ public class Networker : MonoBehaviour
     // Both client + server
     public void SendMessage(Message message)
     {
-        if (stream != null)
+        if(stream != null)
         {
             byte[] messageData = message.Serialize();
             stream.Write(messageData, 0, messageData.Length);
@@ -665,6 +665,8 @@ public class Networker : MonoBehaviour
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
+        
+        board.currentGame.EndGame(GameEndType.Draw, Winner.Draw, timestamp);
     }
 
     public void UpdateName(string newName)

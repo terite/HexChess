@@ -7,7 +7,8 @@ using Newtonsoft.Json;
 public struct SerializeableGame
 {
     public static readonly string defaultGameFileLoc = "Assets/Resources/DefaultBoardState.json";
-    public static readonly SerializeableGame defaultGame = SerializeableGame.Deserialize(File.ReadAllText(defaultGameFileLoc));
+    // public static readonly SerializeableGame defaultGame = SerializeableGame.Deserialize(File.ReadAllText(defaultGameFileLoc));
+    public static readonly SerializeableGame defaultGame = SerializeableGame.Deserialize(DefaultBoard.json);
     public static readonly (Team team, List<SerializedPiece> pieces, Team check, Team checkmate, float duration) defaultSerializedBoard = defaultGame.serializedBoards.FirstOrDefault();
 
     public List<(Team, List<SerializedPiece>, Team, Team, float)> serializedBoards;

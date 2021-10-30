@@ -131,6 +131,9 @@ public class Game
         EndGame(GameEndType.Flagfall, teamOutOfTime == Team.White ? Winner.Black : Winner.White);
     public void EndGame(GameEndType endType, Winner winner, float? timestamp = null)
     {
+        whiteTimekeeper?.Pause();
+        blackTimekeeper?.Pause();
+
         BoardState currentState = GetCurrentBoardState();
         this.endType = endType;
         this.winner = winner;
@@ -228,6 +231,9 @@ public class Game
 
         RecalculateTimekeepers();
     }
+
+    public bool TryGetApplicablePromo((Team team, Piece piece) teamedPiece, int turnNumber, out Promotion promotion) =>
+        HexachessagonEngine.TryGetApplicablePromo(teamedPiece, turnNumber, out promotion, promotions);
 
     public Piece GetRealPiece((Team team, Piece piece) teamedPiece) =>
         HexachessagonEngine.GetRealPiece(teamedPiece, promotions);
