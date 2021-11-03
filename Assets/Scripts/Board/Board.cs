@@ -20,7 +20,10 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private TurnHistoryPanel turnHistoryPanel;
     public AudioClip moveClip;
+    public AudioClip defendClip;
     public AudioClip winFanfare;
+    public AudioClip loseKnell;
+    public AudioClip drawAudio;
     public List<Jail> jails = new List<Jail>();
     [SerializeField] private GameObject hexPrefab;
     public Dictionary<(Team, Piece), GameObject> piecePrefabs = new Dictionary<(Team, Piece), GameObject>();
@@ -277,14 +280,19 @@ public class Board : SerializedMonoBehaviour
 
     public void AdvanceTurn(BoardState newState, bool updateTime = true, bool surpressAudio = false)
     {
-        if(!surpressAudio)
-            audioSource.PlayOneShot(moveClip);
-
         currentGame.AdvanceTurn(newState, isFreeplaced, updateTime);
         newState = currentGame.GetCurrentBoardState();
 
         Move move = currentGame.GetLastMove(isFreeplaced);
         HighlightMove(move);
+
+        if(!surpressAudio)
+        {
+            if(move.defendedPiece.HasValue)
+                audioSource.PlayOneShot(defendClip);
+            else
+                audioSource.PlayOneShot(moveClip);
+        }
 
         newTurn?.Invoke(newState);
 
@@ -553,11 +561,23 @@ public class Board : SerializedMonoBehaviour
             else if(winner == Winner.Black)
                 winningTeam = Team.Black;
 
-            if(multiplayer.gameParams.localTeam == winningTeam && !surpressVictoryAudio)
-                audioSource.PlayOneShot(winFanfare);
+            if(!surpressVictoryAudio)
+            {
+                if(winner == Winner.Draw)
+                    audioSource.PlayOneShot(drawAudio);
+                else if(multiplayer.gameParams.localTeam == winningTeam)
+                    audioSource.PlayOneShot(winFanfare);
+                else
+                    audioSource.PlayOneShot(loseKnell);
+            }
         }
         else if(!surpressVictoryAudio)
-            audioSource.PlayOneShot(winFanfare);
+        {
+            if(winner == Winner.Draw)
+                audioSource.PlayOneShot(drawAudio);
+            else
+                audioSource.PlayOneShot(winFanfare);
+        }
 
         gameOver?.Invoke(currentGame);
     }

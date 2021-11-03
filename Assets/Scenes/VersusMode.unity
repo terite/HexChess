@@ -3013,7 +3013,10 @@ MonoBehaviour:
   audioSource: {fileID: 155833292}
   turnHistoryPanel: {fileID: 608341858}
   moveClip: {fileID: 8300000, guid: fa64ceb60193cf345b5ce8cc0ce40834, type: 3}
+  defendClip: {fileID: 8300000, guid: a3dd718865b6cd64d8fbebaf5f74ca30, type: 3}
   winFanfare: {fileID: 8300000, guid: 980b58a23340e49459ef8828a1c6a325, type: 3}
+  loseKnell: {fileID: 8300000, guid: dc7046518ca3604488598411fe2b3bb2, type: 3}
+  drawAudio: {fileID: 8300000, guid: 63953df2db6064547a0e669753d4b692, type: 3}
   jails:
   - {fileID: 0}
   - {fileID: 821376221}
@@ -3023,7 +3026,6 @@ MonoBehaviour:
   gamesToLoadLoc:
   - DefaultBoardState
   lastMoveHighlightColor: {r: 0.059407253, g: 0.57163566, b: 0.8396226, a: 1}
-  turnsSincePawnMovedOrPieceTaken: 0
   surpressVictoryAudio: 0
 --- !u!82 &155833292
 AudioSource:

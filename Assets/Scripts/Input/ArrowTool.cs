@@ -21,6 +21,8 @@ public class ArrowTool : MonoBehaviour
     [ShowInInspector, ReadOnly] public bool arrowsVisible {get; private set;} = false;
     [ShowInInspector, ReadOnly] public Dictionary<(Index, Index), Arrow> arrows {get; private set;} = new Dictionary<(Index, Index), Arrow>();
 
+    public AudioSource pencilDrawSource;
+
     public LayerMask hexMask;
     public float arrowYOffset;
     public Color captureColor;
@@ -63,7 +65,8 @@ public class ArrowTool : MonoBehaviour
         {
             if(hit.collider == null)
                 return;
-
+            
+            pencilDrawSource.Play();
             virtualCursor?.SetCursor(CursorType.Pencil);
             
             if(hit.collider.TryGetComponent(out Hex hitHex))
@@ -73,6 +76,7 @@ public class ArrowTool : MonoBehaviour
 
     private void EndDrawArrow()
     {
+        pencilDrawSource.Stop();
         virtualCursor?.SetCursor(CursorType.Default);
 
         // All arrows must have both a startHex and an end hex
