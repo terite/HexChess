@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Threading;
 using Extensions;
 using Newtonsoft.Json;
 
@@ -142,6 +142,29 @@ public class Game
         AddState(currentState);
 
         onGameOver?.Invoke();
+        KillGame();
+    }
+
+    public void KillGame()
+    {
+        // If the game ends because the timer ran out of time this will be called on that timer's thread. 
+        // If that's the case, we want to terminate the other timekeeper's thread before we kill the thread we're currently on
+        // If it was called from a non-timer thread, we can simply kill both timekeepers.
+        if(whiteTimekeeper != null && Thread.CurrentThread == whiteTimekeeper.trackedThread.Thread)
+        {
+            blackTimekeeper?.Stop();
+            whiteTimekeeper.Stop();
+        }
+        else if(blackTimekeeper != null && Thread.CurrentThread == blackTimekeeper.trackedThread.Thread)
+        {
+            whiteTimekeeper?.Stop();
+            blackTimekeeper.Stop();
+        }
+        else if(whiteTimekeeper != null && blackTimekeeper != null)
+        {
+            whiteTimekeeper.Stop();
+            blackTimekeeper.Stop();
+        }
     }
 
     public BoardState Enprison((Team team, Piece piece) teamedPiece) => 

@@ -68,7 +68,6 @@ public class Board : SerializedMonoBehaviour
 
     public void SetBoardState(BoardState newState, int? turn = null)
     {
-        BoardState defaultBoard = GetGame(defaultBoardStateFileLoc).turnHistory.FirstOrDefault();
         foreach(KeyValuePair<(Team team, Piece piece), GameObject> prefab in piecePrefabs)
         {
             IPiece piece;
@@ -77,7 +76,7 @@ public class Board : SerializedMonoBehaviour
             var prefabTeamedPiece = prefab.Key;
             GameObject prefabGO = prefab.Value;
 
-            defaultBoard.TryGetIndex(prefab.Key, out Index startLoc);
+            BoardState.defaultState.TryGetIndex(prefab.Key, out Index startLoc);
             Vector3 loc = GetHexIfInBounds(startLoc.row, startLoc.col).transform.position + Vector3.up;
 
             if(activePieces.ContainsKey(prefab.Key))
@@ -193,10 +192,7 @@ public class Board : SerializedMonoBehaviour
             if(currentGame.onGameOver != null)
                 currentGame.onGameOver -= HexChessGameEnded;
             
-            if(currentGame.whiteTimekeeper != null)
-                currentGame.whiteTimekeeper.Stop();
-            if(currentGame.blackTimekeeper != null)
-                currentGame.blackTimekeeper.Stop();
+            currentGame.KillGame();
         }
         
         currentGame = toLoad;

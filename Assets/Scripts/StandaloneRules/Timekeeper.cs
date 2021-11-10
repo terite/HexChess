@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading;
+using ThreadTracker;
 
 public class Timekeeper
 {
@@ -10,27 +11,24 @@ public class Timekeeper
 
     public bool paused {get; private set;} = true;
     
-    private Thread thread;
+    public TrackedThread trackedThread {get; private set;}
     public float? duration;
 
     public Timekeeper(float? duration = null)
     {
         this.duration = duration;
-        thread = new Thread(() => Timer());
-        thread.IsBackground = true;
-        thread.Start();
+        trackedThread = new TrackedThread(() => Timer());
+        trackedThread.Thread.IsBackground = true;
+        trackedThread.Thread.Start();
     }
 
     public void Pause() => paused = true;
     public void Play() => paused = false;
     public void Stop()
     {
-        if(thread != null && thread.IsAlive)
-        {
-            try{
-                thread.Abort();
-            }catch{}
-        }
+        try{
+            trackedThread?.StopThread();
+        }catch{}
     }
 
     public void Timer()
