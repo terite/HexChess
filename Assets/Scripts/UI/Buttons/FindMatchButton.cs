@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FindMatchButton : MonoBehaviour
+public class FindMatchButton : TwigglyButton
 {
-    [SerializeField] private Button button;
     [SerializeField] private Networker networker;
     public string dns;
-    private void Awake() =>
-        button.onClick.AddListener(() => networker.TryConnectClient(dns, networker.port, true));
+    private new void Awake()
+    {
+        base.Awake();
+        base.onClick += Clicked;
+    }
+    public void Clicked() => networker.TryConnectClient(dns, networker.port, true);
 }

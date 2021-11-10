@@ -150,7 +150,7 @@ public class Networker : MonoBehaviour
     public void Host()
     {
         isHost = true;
-        host = new Player("Host", Team.White, isHost);
+        host = new Player(PlayerPrefs.GetString("PlayerName", "GUEST"), Team.White, isHost);
 
         Task t = Task.Run(async () => {
             NatDiscoverer discoverer = new NatDiscoverer();
@@ -247,11 +247,10 @@ public class Networker : MonoBehaviour
         this.ip = ip;
         this.port = port;
 
-        IPAddress addy = dns ? Dns.GetHostAddresses(ip).First() : IPAddress.Parse(ip);
-
-        Debug.Log($"Attempting to connect to {ip}:{port}.");
-        client = new TcpClient(addy.AddressFamily);
         try {
+            IPAddress addy = dns ? Dns.GetHostAddresses(ip).First() : IPAddress.Parse(ip);
+            Debug.Log($"Attempting to connect to {ip}:{port}.");
+            client = new TcpClient(addy.AddressFamily);
             client.BeginConnect(addy, port, new AsyncCallback(ClientConnectCallback), this);
         } catch(Exception e) {
             Debug.LogWarning($"Failed to connect to {ip}:{port} with error:\n{e}");
@@ -381,7 +380,8 @@ public class Networker : MonoBehaviour
                 string hostName = Encoding.UTF8.GetString(completeMessage.data);
 
                 host = new Player(string.IsNullOrEmpty(hostName) ? "Host" : hostName, Team.White, true);
-                player = new Player($"{client.IP()}", Team.Black, false);
+                string localName = PlayerPrefs.GetString("PlayerName", "GUEST");
+                player = new Player(localName, Team.Black, false);
 
                 mainThreadActions.Enqueue(() => {
                     SceneManager.sceneLoaded += LoadLobby;
@@ -390,6 +390,8 @@ public class Networker : MonoBehaviour
                     else
                         SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
                 });
+
+                SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(localName)));
             },
             MessageType.Disconnect when isHost => PlayerDisconnected,
             MessageType.Disconnect when !isHost => lobby == null ? (Action)Disconnect : (Action)Shutdown,
@@ -415,6 +417,8 @@ public class Networker : MonoBehaviour
             MessageType.FlagFall when multiplayer => () => multiplayer.ReceiveFlagfall(Flagfall.Deserialize(completeMessage.data)),
             MessageType.Checkmate when multiplayer => () => multiplayer.ReceiveCheckmate(BitConverter.ToSingle(completeMessage.data, 0)),
             MessageType.Stalemate when multiplayer => () => multiplayer.ReceiveStalemate(BitConverter.ToSingle(completeMessage.data, 0)),
+            MessageType.OpponentSearching when multiplayer => () => {},
+            MessageType.OpponentFound when multiplayer => () => {},
             _ => () => Debug.LogWarning($"Ignoring unhandled message {completeMessage.type}"),
         };
 

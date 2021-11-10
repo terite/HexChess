@@ -16,5 +16,5 @@ public enum MessageType : byte {
     Connect = 20,
     Checkmate = 21,
     Stalemate = 22,
-    
+    OpponentSearching = 23, OpponentFound = 24
 }

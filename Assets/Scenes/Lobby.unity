@@ -3854,7 +3854,6 @@ GameObject:
   - component: {fileID: 1895948744}
   - component: {fileID: 1895948743}
   - component: {fileID: 1895948742}
-  - component: {fileID: 1895948745}
   m_Layer: 5
   m_Name: CopyIPButton
   m_TagString: Untagged
@@ -3964,19 +3963,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1895948740}
   m_CullTransparentMesh: 1
---- !u!114 &1895948745
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1895948740}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a8f7e1efdc731b409b3c4362a3d7d76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  button: {fileID: 1895948742}
 --- !u!1 &1909015688
 GameObject:
   m_ObjectHideFlags: 0

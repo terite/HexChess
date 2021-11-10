@@ -2,17 +2,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class ConnectButton : MonoBehaviour
+public class ConnectButton : TwigglyButton
 {
     [SerializeField] private Networker networker;
-    [SerializeField] private Button button;
-    [SerializeField] private TMP_InputField ipInput;
-    private void Awake() 
+    [SerializeField] private IPTextBox ipInput;
+    private new void Awake()
     {
-
-        button.onClick.AddListener(() => {
-            if(!networker.attemptingConnection)
-                networker.TryConnectClient(ipInput.text, networker.port);
-        });
+        base.Awake();
+        base.onClick += Clicked;
     } 
+    public void Clicked()
+    {
+        if(!networker.attemptingConnection)
+            networker.TryConnectClient(ipInput.IP, networker.port);
+    }
 }

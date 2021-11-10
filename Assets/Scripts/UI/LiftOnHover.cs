@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Extensions;
 using UnityEngine;
 
 public class LiftOnHover : MonoBehaviour
@@ -44,7 +45,7 @@ public class LiftOnHover : MonoBehaviour
 
     public void Lift()
     {
-        source.PlayOneShot(clips[UnityEngine.Random.Range(0, clips.Count)]);
+        source.PlayOneShot(clips.ChooseRandom());
         transitioning = true;
         mode = TransitionMode.In;
         orgColor = hex.GetOutlineColor();

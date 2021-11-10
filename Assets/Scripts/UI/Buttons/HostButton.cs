@@ -1,9 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HostButton : MonoBehaviour
+public class HostButton : TwigglyButton
 {
     [SerializeField] private Networker networker;
-    [SerializeField] private Button button;
-    private void Awake() => button.onClick.AddListener(() => networker.Host());
+    private new void Awake()
+    {
+        base.Awake();
+        base.onClick += Clicked;
+    }
+    public void Clicked() => networker.Host();
 }

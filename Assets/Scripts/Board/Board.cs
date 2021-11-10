@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 using System;
 using Extensions;
+using System.Collections;
 
 public class Board : SerializedMonoBehaviour
 {
@@ -21,6 +22,7 @@ public class Board : SerializedMonoBehaviour
     [SerializeField] private TurnHistoryPanel turnHistoryPanel;
     public AudioClip moveClip;
     public AudioClip defendClip;
+    public List<AudioClip> captureClips = new List<AudioClip>();
     public AudioClip winFanfare;
     public AudioClip loseKnell;
     public AudioClip drawAudio;
@@ -282,6 +284,7 @@ public class Board : SerializedMonoBehaviour
     {
         currentGame.AdvanceTurn(newState, isFreeplaced, updateTime);
         newState = currentGame.GetCurrentBoardState();
+        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
 
         Move move = currentGame.GetLastMove(isFreeplaced);
         HighlightMove(move);
@@ -290,6 +293,13 @@ public class Board : SerializedMonoBehaviour
         {
             if(move.defendedPiece.HasValue)
                 audioSource.PlayOneShot(defendClip);
+            else if(move.capturedPiece.HasValue)
+            {
+                audioSource.PlayOneShot(moveClip);
+                // If the last team to play was this player, use a high pitch for captures, else use a low pitch. If it's single player, randomize it.
+                AudioClip captureClip = multiplayer ? multiplayer.gameParams.localTeam == move.lastTeam ? captureClips[0] : captureClips[1] : captureClips.ChooseRandom();
+                StartCoroutine(PlayAudioAfterDelay(captureClip, 0.133f));
+            }
             else
                 audioSource.PlayOneShot(moveClip);
         }
@@ -297,12 +307,17 @@ public class Board : SerializedMonoBehaviour
         newTurn?.Invoke(newState);
 
         // In sandbox mode, flip the camera when the turn passes if the toggle is on
-        Multiplayer multiplayer = GameObject.FindObjectOfType<Multiplayer>();
         if(multiplayer == null)
         {
             if(PlayerPrefs.GetInt("AutoFlipCam", 1).IntToBool())
                 cam.SetToTeam(newState.currentMove);
         }
+    }
+
+    IEnumerator PlayAudioAfterDelay(AudioClip clip, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        audioSource.PlayOneShot(clip);
     }
 
     void ProcessEndGame()
