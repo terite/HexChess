@@ -3,6 +3,7 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Extensions.StandaloneRulesExtensions;
 
 public class IPPanel : MonoBehaviour
 {
@@ -59,7 +60,7 @@ public class IPPanel : MonoBehaviour
     {
         visible = false;
         visibleIconImage.sprite = invisibleIcon;
-        ipText.text = Regex.Replace(IP, "[a-f0-9]", "*");
+        ipText.text = Regex.Replace(IP, IPHidingRegexMatchingPattern, "*");
     }
 
     [Button]

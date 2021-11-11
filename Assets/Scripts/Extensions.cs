@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Extensions
 {
@@ -23,8 +21,6 @@ namespace Extensions
         public static int BoolToInt(this bool val) => val ? 1 : 0;
         public static bool IntToBool(this int val) => val == 0 ? false : true;
 
-        public static string IP(this TcpClient client) => $"{((IPEndPoint)client?.Client.RemoteEndPoint).Address}";
-
         public static string GetStringFromSeconds(this float seconds) => seconds < 60 
             ? @"%s\.f" 
             : seconds < 3600
@@ -44,6 +40,9 @@ namespace Extensions
                 (Mathf.Clamp(from, fromLimit1, fromLimit2) - fromLimit1)/(fromLimit2 - fromLimit1), 
                 toLimit1, toLimit2
             );
+
+        public static void Deselect(this EventSystem eventSystem) => eventSystem.SetSelectedGameObject(null);
+
         public static T ChooseRandom<T>(this List<T> set) => set[UnityEngine.Random.Range(0, set.Count)];
         public static T ChooseRandom<T>(this T[] set) => set[UnityEngine.Random.Range(0, set.Length)];
     }

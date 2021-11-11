@@ -2,14 +2,12 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class NameInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class NameInputField : MonoBehaviour
 {
     [SerializeField] private TMP_InputField input;
     [SerializeField] private TextMeshProUGUI nameErrorStatesText;
-    VirtualCursor virtualCursor;
     private void Awake()
     {
-        virtualCursor = GameObject.FindObjectOfType<VirtualCursor>();
         input.text = PlayerPrefs.GetString("PlayerName", "GUEST");
         
         // should the error state text be on?
@@ -21,8 +19,4 @@ public class NameInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitH
             PlayerPrefs.SetString("PlayerName", newVal.ToUpper());
         });
     }
-
-    public void OnPointerEnter(PointerEventData eventData) => virtualCursor?.SetCursor(CursorType.Pencil);
-
-    public void OnPointerExit(PointerEventData eventData) => virtualCursor?.SetCursor(CursorType.Default);
 }

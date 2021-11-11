@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Extensions
 {
@@ -75,5 +77,9 @@ namespace Extensions
         };
         
         public static Team GetCurrentTurn(this List<BoardState> turnHistory) => turnHistory[turnHistory.Count - 1].currentMove;
+
+        public static string IP(this TcpClient client) => $"{((IPEndPoint)client?.Client.RemoteEndPoint).Address}";
+        public static bool IsDNS(this string input) => Uri.CheckHostName(input) == UriHostNameType.Dns;
+        public static string IPHidingRegexMatchingPattern => "[a-zA-Z0-9]";
     }
 }

@@ -1,10 +1,12 @@
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
+using static Extensions.StandaloneRulesExtensions;
 
 public class IPTextBox : MonoBehaviour
 {
     [SerializeField] private TMP_InputField ipInputField;
+    public TMP_InputField inputField => ipInputField;
     public string IP {get; private set;}
 
     private void Awake() {
@@ -14,13 +16,13 @@ public class IPTextBox : MonoBehaviour
         });
         ipInputField.onEndEdit.AddListener(newIP => {
             IP = newIP;
-            ipInputField.text = Regex.Replace(IP, "[a-f0-9]", "*");
+            ipInputField.text = Regex.Replace(IP, IPHidingRegexMatchingPattern, "*");
         });
     }
     
     public void SetIP(string newIP)
     {
         IP = newIP;
-        ipInputField.text = Regex.Replace(IP, "[a-f0-9]", "*");
+        ipInputField.text = Regex.Replace(IP, IPHidingRegexMatchingPattern, "*");
     }
 }

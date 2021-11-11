@@ -48,6 +48,8 @@ public class Networker : MonoBehaviour
     public bool clientIsReady {get; private set;}
     GameParams gameParams;
     public bool attemptingConnection {get; private set;} = false;
+
+    Action<string> onConnectFail;
     
     private void Awake()
     {
@@ -241,11 +243,12 @@ public class Networker : MonoBehaviour
     }
 
     // Client
-    public void TryConnectClient(string ip, int port, bool dns = false)
+    public void TryConnectClient(string ip, int port, bool dns = false, Action<string> onConnectFail = null)
     {
         attemptingConnection = true;
         this.ip = ip;
         this.port = port;
+        this.onConnectFail = onConnectFail;
 
         try {
             IPAddress addy = dns ? Dns.GetHostAddresses(ip).First() : IPAddress.Parse(ip);
@@ -265,6 +268,8 @@ public class Networker : MonoBehaviour
             stream = client.GetStream();
         } catch(Exception e) {
             Debug.LogWarning($"Failed to connect with error:\n{e}");
+            onConnectFail?.Invoke(e.Message);
+            onConnectFail = null;
             attemptingConnection = false;
             return;
         }
