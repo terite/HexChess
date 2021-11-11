@@ -51,6 +51,8 @@ public class Game
         }
     }
 
+    ~Game() => KillGame();
+
     public Game(SerializeableGame fromGame) : this(fromGame.GetHistory(), fromGame.promotions, fromGame.winner, fromGame.endType, fromGame.timerDuration, fromGame.hasClock){}
 
     public static Game CreateNewGame() => new Game(SerializeableGame.defaultGame);
