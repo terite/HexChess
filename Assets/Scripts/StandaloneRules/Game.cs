@@ -204,8 +204,8 @@ public class Game
             return;
         }
 
-        // When the other team has 0 valid moves, a stalemate has occured
-        var otherTeamValidMoves = GetAllValidMovesForTeam(otherTeam, newState);
+        // When the team who's turn it is becoming has 0 valid moves, a stalemate has occured
+        var otherTeamValidMoves = GetAllValidMovesForTeam(newState.currentMove, newState);
         bool noValidMovesForNextPlayer = !otherTeamValidMoves.Any();
 
         // Check for insufficient material, stalemate if both teams have insufficient material

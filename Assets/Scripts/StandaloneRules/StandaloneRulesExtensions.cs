@@ -62,7 +62,7 @@ namespace Extensions
             Piece p when p.IsPawn() => 4,
             _ => 0
         };
-
+        
         public static Piece[] GetAlternates(this Piece piece) => piece switch{
             Piece.BlackSquire => new Piece[2]{Piece.WhiteSquire, Piece.GraySquire},
             Piece.WhiteSquire => new Piece[2]{Piece.BlackSquire, Piece.GraySquire},
