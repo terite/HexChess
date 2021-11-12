@@ -51,9 +51,7 @@ public class Board : SerializedMonoBehaviour
     bool hexGameOver = false;
 
     private void Awake() => ResetPieces(Game.CreateNewGame());
-
     private void Start() => newTurn?.Invoke(currentGame.GetCurrentBoardState());
-
     private void Update()
     {
         lock(lockObj)

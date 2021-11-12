@@ -10,6 +10,7 @@ public class ConnectButton : TwigglyButton
     [SerializeField] private Networker networker;
     [SerializeField] private IPTextBox ipInput;
     [SerializeField] private TextMeshProUGUI ipErrorStates;
+    [SerializeField] private ModeText modeText;
     public string errorTextToSet;
     private new void Awake()
     {
@@ -48,7 +49,11 @@ public class ConnectButton : TwigglyButton
             // This very well may be a TextMeshProUGUI bug, any time the .text field is changed on a TextMeshProUGUI object, it's supposed to redraw the UI to be accurate.
             // But for some reason setting ipErrorStates.text to error in this callback action changes the text in the inspector but not in the game, thus inaccurate
             // We can work around by setting error to some cached string and checking if an update to the text is needed in the Update call.
-            networker.TryConnectClient(ipInput.IP, networker.port, isDNS, error => errorTextToSet = error);
+            networker.TryConnectClient(ipInput.IP, networker.port, isDNS, error => {
+                modeText.Show("Join a Private Match");
+                if(!string.IsNullOrEmpty(error))
+                    errorTextToSet = error;
+            });
         }
     }
 }

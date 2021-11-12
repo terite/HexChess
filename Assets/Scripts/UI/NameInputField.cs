@@ -1,13 +1,14 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.EventSystems;
 
 public class NameInputField : MonoBehaviour
 {
     [SerializeField] private TMP_InputField input;
     [SerializeField] private TextMeshProUGUI nameErrorStatesText;
+    Networker networker;
     private void Awake()
     {
+        networker = GameObject.FindObjectOfType<Networker>();
         input.text = PlayerPrefs.GetString("PlayerName", "GUEST");
         
         // should the error state text be on?
@@ -15,8 +16,10 @@ public class NameInputField : MonoBehaviour
 
         input.onValueChanged.AddListener(newVal => {
             // should the error state text be on?
-            nameErrorStatesText.gameObject.SetActive(string.IsNullOrEmpty(newVal) || newVal.ToUpper() == "GUEST");
-            PlayerPrefs.SetString("PlayerName", newVal.ToUpper());
+            string newName = newVal.ToUpper();
+            nameErrorStatesText.gameObject.SetActive(string.IsNullOrEmpty(newVal) || newName == "GUEST");
+            PlayerPrefs.SetString("PlayerName", newName);
+            networker.UpdateName(newName);
         });
     }
 }

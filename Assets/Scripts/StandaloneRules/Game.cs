@@ -262,6 +262,9 @@ public class Game
 
     public Piece GetRealPiece((Team team, Piece piece) teamedPiece) =>
         HexachessagonEngine.GetRealPiece(teamedPiece, promotions);
+    
+    public Piece GetRealPiece((Team team, Piece piece) teamedPiece, int turnNumber) =>
+        HexachessagonEngine.GetRealPiece(teamedPiece, promotions, turnNumber);
 
     public bool CheckFiveFoldProgress(BoardState toCheck) => turnHistory.Any(state => state == toCheck);
     public int GetFiveFoldProgress(BoardState toCheck) => turnHistory.Count(state => state == toCheck);

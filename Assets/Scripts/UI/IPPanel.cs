@@ -70,4 +70,10 @@ public class IPPanel : MonoBehaviour
         visibleIconImage.sprite = vibileIcon;
         ipText.text = IP;
     }
+
+    public void SetIP(string newIP)
+    {
+        IP = newIP;
+        HideIP();
+    }
 }

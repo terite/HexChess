@@ -45,8 +45,9 @@ public class LastMoveTracker : MonoBehaviour
         string promoStr = "";
         if(lastPieceString == "Pawn")
         {
-            Piece rp = board.currentGame.GetRealPiece((move.lastTeam, move.lastPiece));
-            promoStr = rp.GetPieceLongString();
+            Piece rp = board.currentGame.GetRealPiece((move.lastTeam, move.lastPiece), move.turn);
+            if(move.lastPiece != rp)
+                promoStr = rp.GetPieceLongString();
         }
         promoStr = string.IsNullOrEmpty(promoStr) ? promoStr : $" promoted to {promoStr}";
 

@@ -8,47 +8,47 @@ using System.Linq;
 public class Lobby : MonoBehaviour
 {
     Networker networker;
+    [SerializeField] private GroupFader fader;
+    [SerializeField] private GroupFader connectionChoiceFader;
     [SerializeField] private PlayerLobby playerLobbyPrefab;
     [SerializeField] private Transform playerContainer;
-    [SerializeField] private TextMeshProUGUI ipText;
+    [SerializeField] public IPPanel ipPanel;
     // [ReadOnly, ShowInInspector] Dictionary<Player, PlayerLobby> lobbyDict = new Dictionary<Player, PlayerLobby>();
     PlayerLobby host;
     PlayerLobby client;
 
     [SerializeField] private GameObject timerPanel;
-    public Toggle noneToggle;
+    // public Toggle noneToggle;
     [SerializeField] private Image noneImage;
     public Toggle clockToggle;
     [SerializeField] private Image clockImage;
     public Toggle timerToggle;
     [SerializeField] private Image timerImage;
+
+    [SerializeField] private GameObject clockObj;
+    [SerializeField] private GameObject timerObj;
+
     [SerializeField] private TMP_InputField timerInputField;
-    [SerializeField] private GameObject minutesPanel;
+    // [SerializeField] private GameObject minutesPanel;
 
     public Color toggleOnColor;
     public Color toggleOffColor;
 
-
     private void Awake() {
         networker = GameObject.FindObjectOfType<Networker>();
-        if(networker == null || !networker.isHost)
-            timerPanel.SetActive(false);
-        else
-            timerPanel.SetActive(true);
-        
-        noneToggle.onValueChanged.AddListener((isOn) => {
-            noneImage.color = GetToggleColor(isOn);
-            if(isOn)
-            {
-                clockToggle.isOn = false;
-                timerToggle.isOn = false;
-            }
-        });
+        // noneToggle.onValueChanged.AddListener((isOn) => {
+        //     noneImage.color = GetToggleColor(isOn);
+        //     if(isOn)
+        //     {
+        //         clockToggle.isOn = false;
+        //         timerToggle.isOn = false;
+        //     }
+        // });
         clockToggle.onValueChanged.AddListener((isOn) => {
             clockImage.color = GetToggleColor(isOn);
             if(isOn)
             {
-                noneToggle.isOn = false;
+                // noneToggle.isOn = false;
                 timerToggle.isOn = false;
             }
 
@@ -57,18 +57,39 @@ public class Lobby : MonoBehaviour
             timerImage.color = GetToggleColor(isOn);
             if(isOn)
             {
-                noneToggle.isOn = false;
+                // noneToggle.isOn = false;
                 clockToggle.isOn = false;
-                minutesPanel.SetActive(true);
+                // minutesPanel.SetActive(true);
                 timerInputField.text = "20";
             }
-            else
-                minutesPanel.SetActive(false);
+            // else
+                // minutesPanel.SetActive(false);
         });
     }
-    private void Start() {
-        noneToggle.isOn = true;
-    }
+    // private void Start() {
+    //     noneToggle.isOn = true;
+    // }
+
+    public void Show()
+    {
+        connectionChoiceFader?.FadeOut();
+        if(networker == null || !networker.isHost)
+        {
+            timerObj.SetActive(false);
+            clockObj.SetActive(false);
+        }
+        else
+        {   
+            timerObj.SetActive(true);
+            clockObj.SetActive(true);
+        }
+        fader.FadeIn();
+    } 
+    public void Hide()
+    {
+        connectionChoiceFader?.FadeIn();
+        fader.FadeOut();
+    } 
 
     public Color GetToggleColor(bool isOn) => isOn ? toggleOnColor : toggleOffColor;
     public float GetTimeInSeconds() => int.Parse(timerInputField.text) * 60;
@@ -105,5 +126,5 @@ public class Lobby : MonoBehaviour
         client.SetPlayer(clientPlayer);
     }
 
-    public void SetIP(string ip, int port) => ipText.text = $"{ip}:{port}";
+    public void SetIP(string ip) => ipPanel.SetIP(ip);
 }

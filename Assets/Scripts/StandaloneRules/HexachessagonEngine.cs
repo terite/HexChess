@@ -29,7 +29,7 @@ public static class HexachessagonEngine
     public static Piece GetRealPiece(Index index, BoardState state, List<Promotion> promotions) => GetRealPiece(state.allPiecePositions[index], promotions);
     public static Piece GetRealPiece((Team team, Piece piece) teamedPiece, List<Promotion> promotions)
     {
-        if(promotions != null && teamedPiece.piece >= Piece.Pawn1)
+        if(promotions != null && teamedPiece.piece.IsPawn())
         {
             foreach(var promotion in promotions)
             {
@@ -38,6 +38,18 @@ public static class HexachessagonEngine
             }
         }
 
+        return teamedPiece.piece;
+    }
+    public static Piece GetRealPiece((Team team, Piece piece) teamedPiece, List<Promotion> promotions, int turnNumber)
+    {
+        if(promotions != null && teamedPiece.piece.IsPawn())
+        {
+            foreach(var promotion in promotions)
+            {
+                if(promotion.from == teamedPiece.piece && promotion.team == teamedPiece.team && promotion.turnNumber <= turnNumber)
+                    return promotion.to;
+            }
+        }
         return teamedPiece.piece;
     }
 
