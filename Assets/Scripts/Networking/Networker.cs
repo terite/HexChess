@@ -404,8 +404,8 @@ public class Networker : MonoBehaviour
             MessageType.FlagFall when multiplayer => () => multiplayer.ReceiveFlagfall(Flagfall.Deserialize(completeMessage.data)),
             MessageType.Checkmate when multiplayer => () => multiplayer.ReceiveCheckmate(BitConverter.ToSingle(completeMessage.data, 0)),
             MessageType.Stalemate when multiplayer => () => multiplayer.ReceiveStalemate(BitConverter.ToSingle(completeMessage.data, 0)),
-            MessageType.OpponentSearching when lobby => () => {},
-            MessageType.OpponentFound when lobby => () => {},
+            MessageType.OpponentSearching when lobby && !isHost => lobby.OpponentSearching,
+            MessageType.OpponentFound when lobby && !isHost => lobby.OpponentFound,
             _ => () => Debug.LogWarning($"Ignoring unhandled message {completeMessage.type}"),
         };
 

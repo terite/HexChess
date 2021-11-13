@@ -1,4 +1,6 @@
+using Extensions;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ProposeTeamChangeButton : MonoBehaviour
@@ -14,7 +16,8 @@ public class ProposeTeamChangeButton : MonoBehaviour
                 if(ready != null && ready.toggle.isOn)
                     ready.toggle.isOn = false;
             }
-            
+
+            EventSystem.current.Deselect();
             networker?.ProposeTeamChange();
         });
     }

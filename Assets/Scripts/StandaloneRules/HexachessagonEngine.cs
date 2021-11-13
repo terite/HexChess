@@ -27,29 +27,18 @@ public static class HexachessagonEngine
     }
 
     public static Piece GetRealPiece(Index index, BoardState state, List<Promotion> promotions) => GetRealPiece(state.allPiecePositions[index], promotions);
-    public static Piece GetRealPiece((Team team, Piece piece) teamedPiece, List<Promotion> promotions)
+    public static Piece GetRealPiece((Team team, Piece piece) teamedPiece, List<Promotion> promotions, int? turnNumber = null)
     {
         if(promotions != null && teamedPiece.piece.IsPawn())
         {
             foreach(var promotion in promotions)
             {
+                // If the turn number isn't passed in, we just want the promoted piece since we have nothing to compare to
                 if(promotion.from == teamedPiece.piece && promotion.team == teamedPiece.team)
-                    return promotion.to;
+                    return turnNumber.HasValue && promotion.turnNumber > turnNumber.Value ? teamedPiece.piece : promotion.to;
             }
         }
 
-        return teamedPiece.piece;
-    }
-    public static Piece GetRealPiece((Team team, Piece piece) teamedPiece, List<Promotion> promotions, int turnNumber)
-    {
-        if(promotions != null && teamedPiece.piece.IsPawn())
-        {
-            foreach(var promotion in promotions)
-            {
-                if(promotion.from == teamedPiece.piece && promotion.team == teamedPiece.team && promotion.turnNumber <= turnNumber)
-                    return promotion.to;
-            }
-        }
         return teamedPiece.piece;
     }
 

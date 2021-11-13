@@ -4,6 +4,8 @@ using TMPro;
 using Sirenix.OdinInspector;
 using UnityEngine.UI;
 using System.Linq;
+using UnityEngine.EventSystems;
+using Extensions;
 
 public class Lobby : MonoBehaviour
 {
@@ -12,79 +14,95 @@ public class Lobby : MonoBehaviour
     [SerializeField] private GroupFader connectionChoiceFader;
     [SerializeField] private PlayerLobby playerLobbyPrefab;
     [SerializeField] private Transform playerContainer;
+    [SerializeField] private GroupFader opponentSearchingPanel;
     [SerializeField] public IPPanel ipPanel;
-    // [ReadOnly, ShowInInspector] Dictionary<Player, PlayerLobby> lobbyDict = new Dictionary<Player, PlayerLobby>();
+    [SerializeField] public ReadyButton readyToggle;
+
     PlayerLobby host;
     PlayerLobby client;
 
-    [SerializeField] private GameObject timerPanel;
-    // public Toggle noneToggle;
-    [SerializeField] private Image noneImage;
     public Toggle clockToggle;
-    [SerializeField] private Image clockImage;
-    public Toggle timerToggle;
-    [SerializeField] private Image timerImage;
-
     [SerializeField] private GameObject clockObj;
-    [SerializeField] private GameObject timerObj;
+    [SerializeField] private TextMeshProUGUI clockText;
 
+    public Toggle timerToggle;
+    [SerializeField] private GameObject timerObj;
+    [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TMP_InputField timerInputField;
-    // [SerializeField] private GameObject minutesPanel;
 
     public Color toggleOnColor;
     public Color toggleOffColor;
 
     private void Awake() {
         networker = GameObject.FindObjectOfType<Networker>();
-        // noneToggle.onValueChanged.AddListener((isOn) => {
-        //     noneImage.color = GetToggleColor(isOn);
-        //     if(isOn)
-        //     {
-        //         clockToggle.isOn = false;
-        //         timerToggle.isOn = false;
-        //     }
-        // });
-        clockToggle.onValueChanged.AddListener((isOn) => {
-            clockImage.color = GetToggleColor(isOn);
-            if(isOn)
-            {
-                // noneToggle.isOn = false;
-                timerToggle.isOn = false;
-            }
+        timerInputField.gameObject.SetActive(false);
 
-        });
-        timerToggle.onValueChanged.AddListener((isOn) => {
-            timerImage.color = GetToggleColor(isOn);
+        clockToggle.onValueChanged.AddListener((isOn) => {
+            SetToggleColor(clockToggle, isOn);
+
             if(isOn)
             {
-                // noneToggle.isOn = false;
+                timerToggle.isOn = false;
+                clockText.text = "Toggle Clock (On)";
+            }
+            else
+                clockText.text = "Toggle Clock (Off)";
+            
+            EventSystem.current.Deselect();
+        });
+
+        timerToggle.onValueChanged.AddListener((isOn) =>
+        {
+            SetToggleColor(timerToggle, isOn);
+
+            if(isOn)
+            {
                 clockToggle.isOn = false;
-                // minutesPanel.SetActive(true);
+                timerText.rectTransform.sizeDelta = new Vector2(150, timerText.rectTransform.sizeDelta.y);
+                timerText.text = "Timer (mins)";
+                timerInputField.gameObject.SetActive(true);
                 timerInputField.text = "20";
             }
-            // else
-                // minutesPanel.SetActive(false);
+            else
+            {
+                timerText.rectTransform.sizeDelta = new Vector2(223, timerText.rectTransform.sizeDelta.y);
+                timerText.text = "Toggle Timer (off)";
+                timerInputField.gameObject.SetActive(false);
+            }
+
+            EventSystem.current.Deselect();
         });
     }
-    // private void Start() {
-    //     noneToggle.isOn = true;
-    // }
+
+    private void SetToggleColor(Toggle toggle, bool isOn)
+    {
+        ColorBlock block = toggle.colors;
+        block.normalColor = GetToggleColor(isOn);
+        block.selectedColor = block.normalColor;
+        block.disabledColor = block.normalColor;
+        toggle.colors = block;
+    }
 
     public void Show()
     {
         connectionChoiceFader?.FadeOut();
         if(networker == null || !networker.isHost)
         {
+            // client
             timerObj.SetActive(false);
             clockObj.SetActive(false);
         }
         else
         {   
+            // host
+            opponentSearchingPanel.FadeIn();
+            readyToggle.gameObject.SetActive(false);
             timerObj.SetActive(true);
             clockObj.SetActive(true);
         }
         fader.FadeIn();
     } 
+
     public void Hide()
     {
         connectionChoiceFader?.FadeIn();
@@ -103,6 +121,7 @@ public class Lobby : MonoBehaviour
         }
         else
         {
+            opponentSearchingPanel.FadeOut();
             client = Instantiate(playerLobbyPrefab, playerContainer);
             client.SetPlayer(player);
         }
@@ -110,6 +129,8 @@ public class Lobby : MonoBehaviour
 
     public void RemovePlayer(Player player)
     {
+        if(!player.isHost)
+            opponentSearchingPanel.FadeIn();
         PlayerLobby lobbyToDestroy = player.isHost ? host : client;
         Destroy(lobbyToDestroy.gameObject);
     }
@@ -127,4 +148,17 @@ public class Lobby : MonoBehaviour
     }
 
     public void SetIP(string ip) => ipPanel.SetIP(ip);
+
+    public void OpponentSearching()
+    {
+        readyToggle.Hide();
+        opponentSearchingPanel.FadeIn();
+        Debug.Log("Opponent Searching...");
+    }
+    public void OpponentFound()
+    {
+        readyToggle.Show();
+        opponentSearchingPanel.FadeOut();
+        Debug.Log("Opponent Found!");
+    }
 }
