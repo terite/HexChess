@@ -647,8 +647,6 @@ public class Networker : MonoBehaviour
         } catch (Exception e) {
             Debug.LogWarning($"Failed to write to socket with error:\n{e}");
         }
-        
-        board.currentGame.EndGame(GameEndType.Draw, Winner.Draw, timestamp);
     }
 
     public void UpdateName(string newName)

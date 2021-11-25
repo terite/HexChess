@@ -282,7 +282,10 @@ public class Game
         return count;
     }
 
-    public int GetTurnCount() => ((float)turnHistory.Count / 2f).FloorToInt();
+    public int GetTurnCount() => 
+        endType == GameEndType.Draw && turnHistory[turnHistory.Count - 2].currentMove == Team.White 
+            ? ((float)turnHistory.Count / 2f).FloorToInt() - 1 
+            : ((float)turnHistory.Count / 2f).FloorToInt();
     public BoardState GetCurrentBoardState() => turnHistory[turnHistory.Count - 1];
     public float GetGameLength() => GetCurrentBoardState().executedAtTime;
     public Team GetCurrentTurn() => GetCurrentBoardState().currentMove;

@@ -161,7 +161,9 @@ public class Board : SerializedMonoBehaviour
             else
             {
                 Debug.Log("No applicable promo found, resetting promoted piece to pawn.");
+                Vector3 pos = piece.obj.transform.position;
                 piece = ResetPieceToPrefab(startLoc, loc, prefabTeamedPiece, prefabGO);
+                piece.obj.transform.position = pos;
             }
         }
         else
