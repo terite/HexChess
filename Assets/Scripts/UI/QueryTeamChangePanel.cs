@@ -28,6 +28,7 @@ public class QueryTeamChangePanel : MonoBehaviour
     public void Close()
     {
         canvasGroup.alpha = 0;
+        canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
         isOpen = false;
     }
@@ -36,6 +37,7 @@ public class QueryTeamChangePanel : MonoBehaviour
     {
         isOpen = true;
         canvasGroup.alpha = 1;
+        canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;
     }
 }
