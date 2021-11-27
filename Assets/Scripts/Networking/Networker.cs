@@ -25,7 +25,6 @@ public class Networker : MonoBehaviour
     Multiplayer multiplayer;
     SceneTransition sceneTransition;
     Latency latency;
-    QueryTeamChangePanel teamChangePanel;
     [ReadOnly, ShowInInspector] public Player host;
     [ReadOnly, ShowInInspector] public Player? player;
 
@@ -210,11 +209,12 @@ public class Networker : MonoBehaviour
         
         mainThreadActions.Enqueue(() => {
             player = new Player($"{client.IP()}", Team.Black, false);
-            lobby.OpponentFound();
+            
+            lobby?.OpponentFound();
+            lobby?.UpdateTeam(player.Value);
+
             SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
             SendMessage(new Message(MessageType.OpponentFound));
-            lobby?.UpdateTeam(player.Value);
-            // lobby?.UpdateTeam(host);
         });
 
         readBuffer = new byte[messageMaxSize];
@@ -385,7 +385,7 @@ public class Networker : MonoBehaviour
                 mainThreadActions.Enqueue(() => 
                 {
                     LoadLobby();
-                    lobby.UpdatePlayerName(host);
+                    lobby?.UpdatePlayerName(host);
                 });
 
                 SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(localName)));
@@ -398,8 +398,8 @@ public class Networker : MonoBehaviour
             MessageType.ApproveTeamChange => () => mainThreadActions.Enqueue(SwapTeams),
             MessageType.Ready when isHost => Ready,
             MessageType.Unready when isHost => Unready,
-            MessageType.HandicapOverlayOn when lobby => HandicapOverlayOn,
-            MessageType.HandicapOverlayOff when lobby => HandicapOverlayOff,
+            MessageType.HandicapOverlayOn when lobby => () => lobby?.ToggleHandicapOverlay(true),
+            MessageType.HandicapOverlayOff when lobby => () => lobby?.ToggleHandicapOverlay(false),
             MessageType.StartMatch when !isHost => () => StartMatch(GameParams.Deserialize(completeMessage.data)),
             MessageType.Surrender when multiplayer => () => multiplayer.Surrender(
                 surrenderingTeam: isHost ? player.Value.team : host.team,
@@ -463,20 +463,7 @@ public class Networker : MonoBehaviour
         Player p = player.Value;
         p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
         player = p;
-        lobby.UpdatePlayerName(p);
-    }
-
-    private void HandicapOverlayOn()
-    {
-        HandicapOverlayToggle handicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
-        if(handicapOverlayToggle != null)
-            handicapOverlayToggle.toggle.isOn = true;
-    }
-    private void HandicapOverlayOff()
-    {
-        HandicapOverlayToggle handicapOverlayToggle = GameObject.FindObjectOfType<HandicapOverlayToggle>();
-        if(handicapOverlayToggle != null)
-            handicapOverlayToggle.toggle.isOn = false;
+        lobby?.UpdatePlayerName(p);
     }
 
     private void PlayerDisconnected()
@@ -496,9 +483,6 @@ public class Networker : MonoBehaviour
         }
 
         lobby?.DisconnectRecieved();
-
-        if(teamChangePanel != null && teamChangePanel.isOpen)
-            teamChangePanel.Close();
         
         // For now, assume a loss when the player disconnects, later we should wait for a potential reconnect
         multiplayer?.Surrender(player.Value.team);
@@ -516,22 +500,7 @@ public class Networker : MonoBehaviour
         }
     }
 
-    private void ReceiveTeamChangeProposal()
-    {
-        mainThreadActions.Enqueue(() =>
-        {
-            if(teamChangePanel == null)
-                teamChangePanel = GameObject.FindObjectOfType<QueryTeamChangePanel>();
-            teamChangePanel?.Query();
-        });
-
-        if(!isHost)
-        {
-            ReadyButton ready = GameObject.FindObjectOfType<ReadyButton>();
-            if(ready != null && ready.toggle.isOn)
-                ready.toggle.isOn = false;
-        }
-    }
+    private void ReceiveTeamChangeProposal() => mainThreadActions.Enqueue(() => lobby?.QueryTeamChange());
 
     public void RespondToTeamChange(MessageType answer)
     {
@@ -658,10 +627,7 @@ public class Networker : MonoBehaviour
             return;
 
         if(isHost)
-        {
             host.name = newName;
-            // lobby.UpdateName(host);
-        }
         else if(player.HasValue)
         {
             Player p = player.Value;

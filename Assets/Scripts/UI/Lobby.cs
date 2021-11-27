@@ -35,6 +35,9 @@ public class Lobby : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TMP_InputField timerInputField;
 
+    [SerializeField] private QueryTeamChangePanel teamChangePanel;
+    [SerializeField] private HandicapOverlayToggle handicapOverlayToggle;
+
     public Color toggleOnColor;
     public Color toggleOffColor;
 
@@ -131,6 +134,24 @@ public class Lobby : MonoBehaviour
         opponentName.text = "";
     }
 
+    public void DisconnectRecieved()
+    {
+        if(teamChangePanel != null && teamChangePanel.isOpen)
+            teamChangePanel.Close();
+
+        Debug.Log("Opponent Disconnected.");
+        readyButtonContextText.text = "";
+        ResetToSearchingPanel();
+
+        if(networker.isHost)
+            startButton.HideButton();
+        else
+        {
+            readyToggle.Hide();
+            readyToggle.gameObject.SetActive(!networker.isHost);
+        }
+    }
+
     public void UpdatePlayerName(Player player) => opponentName.text = player.name;
 
     public void UpdateTeam(Player player)
@@ -222,20 +243,6 @@ public class Lobby : MonoBehaviour
         startButton.ShowDisabledButton();
         readyButtonContextText.text = "Waiting for opponent to ready up";
     }
-    public void DisconnectRecieved()
-    {
-        Debug.Log("Opponent Disconnected.");
-        readyButtonContextText.text = "";
-        ResetToSearchingPanel();
-
-        if (networker.isHost)
-            startButton.HideButton();
-        else
-        {
-            readyToggle.Hide();
-            readyToggle.gameObject.SetActive(!networker.isHost);
-        }
-    }
 
     private void ResetToSearchingPanel()
     {
@@ -254,4 +261,16 @@ public class Lobby : MonoBehaviour
         if(whiteOpponentIconFader.visible)
             whiteOpponentIconFader.FadeOut();
     }
+
+    public void QueryTeamChange()
+    {
+        if(!networker.isHost)
+        {
+            if(readyToggle.toggle.isOn)
+                readyToggle.toggle.isOn = false;
+        }
+        teamChangePanel?.Query();
+    }
+
+    public void ToggleHandicapOverlay(bool isOn) => handicapOverlayToggle.toggle.isOn = isOn;
 }

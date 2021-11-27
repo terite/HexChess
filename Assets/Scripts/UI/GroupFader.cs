@@ -11,7 +11,7 @@ public class GroupFader : MonoBehaviour
     private TriSign sign = TriSign.Zero;
     private bool deactivate = false;
 
-    public bool visible => !(_group.alpha < 1);
+    public bool visible => !(_group != null && _group.alpha < 1);
     public bool visibleOnStart = true;
 
     private void Awake()
