@@ -145,6 +145,7 @@ public class Lobby : MonoBehaviour
 
     public void SetLocalTeam(bool isWhite)
     {
+        Debug.Log("here");
         if(isWhite)
         {
             // if(!whiteLocalIconFader.visible)
@@ -179,7 +180,9 @@ public class Lobby : MonoBehaviour
         readyToggle.Hide();
         readyToggle.gameObject.SetActive(false);
         readyButtonContextText.text = "";
-        opponentSearchingPanel.FadeIn();
+        
+        ResetToSearchingPanel();
+
         Debug.Log("Opponent Searching...");
     }
     public void OpponentFound()
@@ -221,14 +224,34 @@ public class Lobby : MonoBehaviour
     }
     public void DisconnectRecieved()
     {
+        Debug.Log("Opponent Disconnected.");
         readyButtonContextText.text = "";
+        ResetToSearchingPanel();
 
-        if(networker.isHost)
+        if (networker.isHost)
             startButton.HideButton();
         else
         {
             readyToggle.Hide();
             readyToggle.gameObject.SetActive(!networker.isHost);
         }
+    }
+
+    private void ResetToSearchingPanel()
+    {
+        if(!opponentSearchingPanel.visible)
+            opponentSearchingPanel.FadeIn();
+
+        if(!opponentTitleFader.visible)
+            opponentTitleFader.FadeIn();
+        if(!opponentLoadingFader.visible)
+            opponentLoadingFader.FadeIn();
+
+        if(opponentNameFader.visible)
+            opponentNameFader.FadeOut();
+        if(blackOpponentIconFader.visible)
+            blackOpponentIconFader.FadeOut();
+        if(whiteOpponentIconFader.visible)
+            whiteOpponentIconFader.FadeOut();
     }
 }

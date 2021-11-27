@@ -212,6 +212,7 @@ public class Networker : MonoBehaviour
             player = new Player($"{client.IP()}", Team.Black, false);
             lobby.OpponentFound();
             SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
+            SendMessage(new Message(MessageType.OpponentFound));
             lobby?.UpdateTeam(player.Value);
             // lobby?.UpdateTeam(host);
         });
@@ -384,9 +385,7 @@ public class Networker : MonoBehaviour
                 mainThreadActions.Enqueue(() => 
                 {
                     LoadLobby();
-                    lobby.OpponentFound();
                     lobby.UpdatePlayerName(host);
-                    lobby.UpdateTeam(host);
                 });
 
                 SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(localName)));
