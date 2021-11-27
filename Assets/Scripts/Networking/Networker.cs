@@ -112,28 +112,32 @@ public class Networker : MonoBehaviour
 
         NatDiscoverer.ReleaseAll();
 
+        lobby?.DisconnectRecieved();
+
         Debug.Log($"Disconnected.");
     }
 
     private void LoadLobby()
     {
-        lobby?.Show();        
-        
-        lobby?.SpawnPlayer(host);
+        lobby?.Show();
         lobby?.SetIP(isHost ? GetPublicIPAddress() : $"{ip}");
-
-        if(!isHost)
-            lobby?.SpawnPlayer(player.Value);
     }
 
     public static string GetPublicIPAddress()
     {
         String address = "";
         WebRequest request = WebRequest.Create("http://checkip.dyndns.org/");
-        using(WebResponse response = request.GetResponse())
-        using(StreamReader stream = new StreamReader(response.GetResponseStream()))
+        
+        try {
+            using(WebResponse response = request.GetResponse())
+            using(StreamReader stream = new StreamReader(response.GetResponseStream()))
+            {
+                address = stream.ReadToEnd();
+            }
+        } catch (Exception e)
         {
-            address = stream.ReadToEnd();
+            Debug.LogWarning($"Failed to fetch IP with error: {e}");
+            return "Failed to fetch IP.";
         }
 
         //Search for the ip in the html
@@ -206,11 +210,12 @@ public class Networker : MonoBehaviour
         
         mainThreadActions.Enqueue(() => {
             player = new Player($"{client.IP()}", Team.Black, false);
-            lobby?.SpawnPlayer(player.Value);
+            lobby.OpponentFound();
+            SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
+            lobby?.UpdateTeam(player.Value);
+            // lobby?.UpdateTeam(host);
         });
 
-        SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
-        
         readBuffer = new byte[messageMaxSize];
         readBufferStart = 0;
         readBufferEnd = 0;
@@ -376,7 +381,13 @@ public class Networker : MonoBehaviour
                 string localName = PlayerPrefs.GetString("PlayerName", "GUEST");
                 player = new Player(localName, Team.Black, false);
 
-                mainThreadActions.Enqueue(() => LoadLobby());
+                mainThreadActions.Enqueue(() => 
+                {
+                    LoadLobby();
+                    lobby.OpponentFound();
+                    lobby.UpdatePlayerName(host);
+                    lobby.UpdateTeam(host);
+                });
 
                 SendMessage(new Message(MessageType.UpdateName, System.Text.Encoding.UTF8.GetBytes(localName)));
             },
@@ -442,7 +453,7 @@ public class Networker : MonoBehaviour
             return;
 
         host.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
-        lobby.UpdateName(host);
+        lobby.UpdatePlayerName(host);
     }
 
     private void UpdateClientName(Message completeMessage)
@@ -453,7 +464,7 @@ public class Networker : MonoBehaviour
         Player p = player.Value;
         p.name = System.Text.Encoding.UTF8.GetString(completeMessage.data);
         player = p;
-        lobby.UpdateName(p);
+        lobby.UpdatePlayerName(p);
     }
 
     private void HandicapOverlayOn()
@@ -479,15 +490,13 @@ public class Networker : MonoBehaviour
             stream = null;
 
             if(host.team == Team.Black)
-            {
-                lobby.RemovePlayer(host);
                 host.team = Team.White;
-                lobby.SpawnPlayer(host);
-            }
 
             if(clientIsReady)
                 Unready();
         }
+
+        lobby?.DisconnectRecieved();
 
         if(teamChangePanel != null && teamChangePanel.isOpen)
             teamChangePanel.Close();
@@ -551,24 +560,19 @@ public class Networker : MonoBehaviour
         playerModified.team = hostTeam;
         player = playerModified;
 
-        lobby?.SwapTeams(host, player.Value);
+        lobby?.UpdateTeam(player.Value);
     }
 
     private void Ready()
     {
-        Debug.Log("Client Ready.");
         clientIsReady = true;
-
-        StartMatchButton startButton = GameObject.FindObjectOfType<StartMatchButton>();
-        startButton?.ShowButton();
+        lobby?.ReadyRecieved();
     }
 
     private void Unready()
     {
         clientIsReady = false;
-
-        StartMatchButton startButton = GameObject.FindObjectOfType<StartMatchButton>();
-        startButton?.HideButton();
+        lobby?.UnreadyRecieved();
     }
 
     public void HostMatch()
@@ -657,14 +661,14 @@ public class Networker : MonoBehaviour
         if(isHost)
         {
             host.name = newName;
-            lobby.UpdateName(host);
+            // lobby.UpdateName(host);
         }
         else if(player.HasValue)
         {
             Player p = player.Value;
             p.name = newName;
             player = p;
-            lobby.UpdateName(p);
+            lobby.UpdatePlayerName(p);
         }
 
         if(connected)

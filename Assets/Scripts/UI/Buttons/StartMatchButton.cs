@@ -24,10 +24,16 @@ public class StartMatchButton : MonoBehaviour
         group.blocksRaycasts = false;
     }
 
-    public void ShowButton()
+    public void ShowEnabledButton()
     {
         group.alpha = 1;
         group.interactable = true;
         group.blocksRaycasts = true;
+    }
+    public void ShowDisabledButton()
+    {
+        group.alpha = 1;
+        group.interactable = false;
+        group.blocksRaycasts = false;
     }
 }

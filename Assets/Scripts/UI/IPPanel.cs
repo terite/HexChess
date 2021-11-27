@@ -58,6 +58,10 @@ public class IPPanel : MonoBehaviour
     [Button]
     public void HideIP()
     {
+        // If the IP was unable to be fetched, we don't want to hide that information from the player
+        if(IP == "Failed to fetch IP.")
+            return;
+
         visible = false;
         visibleIconImage.sprite = invisibleIcon;
         ipText.text = Regex.Replace(IP, IPHidingRegexMatchingPattern, "*");

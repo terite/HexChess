@@ -91,9 +91,10 @@ public class PieceNameTooltip : MonoBehaviour
     }
     public void Hide()
     {
+        showAtTime = null;
+        hoveredTeamedPiece = null;
         if(visible)
         {
-            hoveredTeamedPiece = null;
             visible = false;
             fader.FadeOut();
         }

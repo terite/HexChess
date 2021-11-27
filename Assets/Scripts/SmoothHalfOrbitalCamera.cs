@@ -35,6 +35,8 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     public bool needsReset {get; private set;} = false;
 
+    private PieceNameTooltip tooltip;
+
     private void OnValidate()
     {
         selectPiece = FindObjectOfType<SelectPiece>();
@@ -52,6 +54,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
 
     private void Start()
     {
+        tooltip = FindObjectOfType<PieceNameTooltip>();
         IsSandboxMode = !FindObjectOfType<Multiplayer>();
         scroll = defaultScroll;
         ResetRotation();
@@ -129,6 +132,7 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         cursor?.SetCursor(CursorType.Default);
         cursor?.Hide();
+        tooltip?.Hide();
         needsReset = true;
     }
 

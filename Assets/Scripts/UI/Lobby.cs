@@ -9,14 +9,22 @@ public class Lobby : MonoBehaviour
     Networker networker;
     [SerializeField] private GroupFader fader;
     [SerializeField] private GroupFader connectionChoiceFader;
-    [SerializeField] private PlayerLobby playerLobbyPrefab;
-    [SerializeField] private Transform playerContainer;
+    [SerializeField] private GroupFader whiteLocalIconFader;
+    [SerializeField] private GroupFader blackLocalIconFader;
     [SerializeField] private GroupFader opponentSearchingPanel;
+    [SerializeField] private TextMeshProUGUI opponentSearchingText;
     [SerializeField] public IPPanel ipPanel;
     [SerializeField] public ReadyButton readyToggle;
+    [SerializeField] public StartMatchButton startButton;
+    [SerializeField] private TextMeshProUGUI readyButtonContextText;
 
-    PlayerLobby host;
-    PlayerLobby client;
+    [SerializeField] private GroupFader opponentTitleFader;
+    [SerializeField] private GroupFader opponentLoadingFader;
+    [SerializeField] private GroupFader opponentNameFader;
+    [SerializeField] private GroupFader blackOpponentIconFader;
+    [SerializeField] private GroupFader whiteOpponentIconFader;
+
+    [SerializeField] private TextMeshProUGUI opponentName;
 
     public Toggle clockToggle;
     [SerializeField] private GameObject clockObj;
@@ -86,19 +94,19 @@ public class Lobby : MonoBehaviour
         if(networker == null || !networker.isHost)
         {
             // client
+            opponentSearchingText.text = "Finding opponent...";
             timerObj.SetActive(false);
             clockObj.SetActive(false);
         }
         else
         {   
             // host
-            opponentSearchingPanel.FadeIn();
-            readyToggle.gameObject.SetActive(false);
+            OpponentSearching();
             timerObj.SetActive(true);
             clockObj.SetActive(true);
         }
         fader.FadeIn();
-    } 
+    }
 
     public void Hide()
     {
@@ -108,54 +116,119 @@ public class Lobby : MonoBehaviour
 
     public Color GetToggleColor(bool isOn) => isOn ? toggleOnColor : toggleOffColor;
     public float GetTimeInSeconds() => int.Parse(timerInputField.text) * 60;
-    
-    public void SpawnPlayer(Player player)
-    {
-        if(player.isHost)
-        {
-            host = Instantiate(playerLobbyPrefab, playerContainer);
-            host.SetPlayer(player);
-        }
-        else
-        {
-            opponentSearchingPanel.FadeOut();
-            client = Instantiate(playerLobbyPrefab, playerContainer);
-            client.SetPlayer(player);
-        }
-    }
 
     public void RemovePlayer(Player player)
     {
         if(!player.isHost)
             opponentSearchingPanel.FadeIn();
-        PlayerLobby lobbyToDestroy = player.isHost ? host : client;
-        Destroy(lobbyToDestroy.gameObject);
+
+        opponentTitleFader.FadeIn();
+        opponentLoadingFader.FadeIn();
+
+        opponentNameFader.FadeOut();
+        blackOpponentIconFader.FadeOut();
+
+        opponentName.text = "";
     }
 
-    public void UpdateName(Player player)
+    public void UpdatePlayerName(Player player) => opponentName.text = player.name;
+
+    public void UpdateTeam(Player player)
     {
-        PlayerLobby toChange = player.isHost ? host : client;
-        toChange.SetPlayer(player);
+        // local
+        if((player.isHost && networker.isHost) || (!player.isHost && !networker.isHost))
+            SetLocalTeam(player.team == Team.White);
+        // opponent
+        else
+            SetLocalTeam(player.team == Team.Black);
     }
 
-    public void SwapTeams(Player hostPlayer, Player clientPlayer)
+    public void SetLocalTeam(bool isWhite)
     {
-        host.SetPlayer(hostPlayer);
-        client.SetPlayer(clientPlayer);
+        if(isWhite)
+        {
+            // if(!whiteLocalIconFader.visible)
+            whiteLocalIconFader.FadeIn();
+            // if(blackLocalIconFader.visible)
+            blackLocalIconFader.FadeOut();
+
+            // if(whiteOpponentIconFader.visible)
+            whiteOpponentIconFader.FadeOut();
+            // if(!blackOpponentIconFader.visible)
+            blackOpponentIconFader.FadeIn();
+        }
+        else
+        {
+            // if(whiteLocalIconFader.visible)
+            whiteLocalIconFader.FadeOut();
+            // if(!blackLocalIconFader.visible)
+            blackLocalIconFader.FadeIn();
+
+            // if(!whiteOpponentIconFader.visible)
+            whiteOpponentIconFader.FadeIn();
+            // if(blackOpponentIconFader.visible)
+            blackOpponentIconFader.FadeOut();
+        }
     }
 
     public void SetIP(string ip) => ipPanel.SetIP(ip);
 
     public void OpponentSearching()
     {
+        opponentSearchingText.text = networker.isHost ? "Waiting for opponent..." : "Finding opponent...";
         readyToggle.Hide();
+        readyToggle.gameObject.SetActive(false);
+        readyButtonContextText.text = "";
         opponentSearchingPanel.FadeIn();
         Debug.Log("Opponent Searching...");
     }
     public void OpponentFound()
     {
-        readyToggle.Show();
-        opponentSearchingPanel.FadeOut();
+        if(!networker.isHost)
+        {
+            if(!readyToggle.gameObject.activeSelf)
+                readyToggle.gameObject.SetActive(true);
+            readyToggle.Show();
+        }
+        else
+            startButton.ShowDisabledButton();
+
+        readyButtonContextText.text = networker.isHost ? "Waiting for opponent to ready up" : "";
+
+        if(!opponentSearchingPanel.visible)
+            opponentSearchingPanel.FadeIn();
+
+        opponentTitleFader.FadeOut();
+        opponentLoadingFader.FadeOut();
+
+        opponentNameFader.FadeIn();
+        blackOpponentIconFader.FadeIn();
+
+        UpdateTeam(networker.host);
+
         Debug.Log("Opponent Found!");
+    }
+
+    public void ReadyRecieved()
+    {
+        startButton.ShowEnabledButton();
+        readyButtonContextText.text = "";
+    }
+    public void UnreadyRecieved()
+    {
+        startButton.ShowDisabledButton();
+        readyButtonContextText.text = "Waiting for opponent to ready up";
+    }
+    public void DisconnectRecieved()
+    {
+        readyButtonContextText.text = "";
+
+        if(networker.isHost)
+            startButton.HideButton();
+        else
+        {
+            readyToggle.Hide();
+            readyToggle.gameObject.SetActive(!networker.isHost);
+        }
     }
 }
