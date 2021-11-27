@@ -48,6 +48,8 @@ public class GroupFader : MonoBehaviour
     [Button]
     public void FadeOut(bool deactivateOnComplete = false)
     {
+        if(group == null)
+            return;
         // Debug.Log($"Closing {gameObject.name}.");
         group.alpha = 1;
         sign = TriSign.Negative;

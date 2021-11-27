@@ -29,7 +29,8 @@ public class ReadyButton : MonoBehaviour
         if(toggle.isOn)
             toggle.isOn = false;
         audioUI.canPlay = false;
-        toggle.interactable = false;
+        if(toggle != null)
+            toggle.interactable = false;
     }
 
     public void Show()

@@ -18,11 +18,11 @@ public class Lobby : MonoBehaviour
     [SerializeField] public StartMatchButton startButton;
     [SerializeField] private TextMeshProUGUI readyButtonContextText;
 
-    [SerializeField] private GroupFader opponentTitleFader;
     [SerializeField] private GroupFader opponentLoadingFader;
     [SerializeField] private GroupFader opponentNameFader;
     [SerializeField] private GroupFader blackOpponentIconFader;
     [SerializeField] private GroupFader whiteOpponentIconFader;
+    [SerializeField] private GroupFader readyFader;
 
     [SerializeField] private TextMeshProUGUI opponentName;
 
@@ -40,6 +40,8 @@ public class Lobby : MonoBehaviour
 
     public Color toggleOnColor;
     public Color toggleOffColor;
+
+    private bool opponentSearching = true;
 
     private void Awake() {
         networker = GameObject.FindObjectOfType<Networker>();
@@ -93,6 +95,8 @@ public class Lobby : MonoBehaviour
 
     public void Show()
     {
+        opponentSearching = true;
+
         connectionChoiceFader?.FadeOut();
         if(networker == null || !networker.isHost)
         {
@@ -125,7 +129,9 @@ public class Lobby : MonoBehaviour
         if(!player.isHost)
             opponentSearchingPanel.FadeIn();
 
-        opponentTitleFader.FadeIn();
+        opponentSearching = true;
+
+        opponentSearchingText.text = networker.isHost ? "Waiting for opponent..." : "Finding opponent...";
         opponentLoadingFader.FadeIn();
 
         opponentNameFader.FadeOut();
@@ -139,7 +145,8 @@ public class Lobby : MonoBehaviour
         if(teamChangePanel != null && teamChangePanel.isOpen)
             teamChangePanel.Close();
 
-        Debug.Log("Opponent Disconnected.");
+        opponentSearching = true;
+
         readyButtonContextText.text = "";
         ResetToSearchingPanel();
 
@@ -166,7 +173,6 @@ public class Lobby : MonoBehaviour
 
     public void SetLocalTeam(bool isWhite)
     {
-        Debug.Log("here");
         if(isWhite)
         {
             // if(!whiteLocalIconFader.visible)
@@ -197,10 +203,14 @@ public class Lobby : MonoBehaviour
 
     public void OpponentSearching()
     {
+        opponentSearching = true;
         opponentSearchingText.text = networker.isHost ? "Waiting for opponent..." : "Finding opponent...";
         readyToggle.Hide();
         readyToggle.gameObject.SetActive(false);
         readyButtonContextText.text = "";
+
+        if(readyFader.visible)
+            readyFader.FadeOut();
         
         ResetToSearchingPanel();
 
@@ -208,6 +218,7 @@ public class Lobby : MonoBehaviour
     }
     public void OpponentFound()
     {
+        opponentSearching = false;
         if(!networker.isHost)
         {
             if(!readyToggle.gameObject.activeSelf)
@@ -221,8 +232,11 @@ public class Lobby : MonoBehaviour
 
         if(!opponentSearchingPanel.visible)
             opponentSearchingPanel.FadeIn();
+        
+        if(readyFader.visible)
+            readyFader.FadeOut();
 
-        opponentTitleFader.FadeOut();
+        opponentSearchingText.text = "Opponent Found!";
         opponentLoadingFader.FadeOut();
 
         opponentNameFader.FadeIn();
@@ -235,13 +249,21 @@ public class Lobby : MonoBehaviour
 
     public void ReadyRecieved()
     {
-        startButton.ShowEnabledButton();
+        Debug.Log("Ready Recieved");
+        if(networker.isHost)
+            startButton.ShowEnabledButton();
         readyButtonContextText.text = "";
+        if(!readyFader.visible)
+            readyFader.FadeIn();
     }
     public void UnreadyRecieved()
     {
-        startButton.ShowDisabledButton();
-        readyButtonContextText.text = "Waiting for opponent to ready up";
+        Debug.Log("Unready Recieved");
+        if(networker.isHost)
+            startButton.ShowDisabledButton();
+        readyButtonContextText.text = opponentSearching ? "" : "Waiting for opponent to ready up";
+        if(readyFader.visible)
+            readyFader.FadeOut();
     }
 
     private void ResetToSearchingPanel()
@@ -249,8 +271,8 @@ public class Lobby : MonoBehaviour
         if(!opponentSearchingPanel.visible)
             opponentSearchingPanel.FadeIn();
 
-        if(!opponentTitleFader.visible)
-            opponentTitleFader.FadeIn();
+        opponentSearchingText.text = networker.isHost ? "Waiting for opponent..." : "Finding opponent...";
+
         if(!opponentLoadingFader.visible)
             opponentLoadingFader.FadeIn();
 
@@ -260,6 +282,9 @@ public class Lobby : MonoBehaviour
             blackOpponentIconFader.FadeOut();
         if(whiteOpponentIconFader.visible)
             whiteOpponentIconFader.FadeOut();
+
+        if(readyFader.visible)
+            readyFader.FadeOut();
     }
 
     public void QueryTeamChange()
