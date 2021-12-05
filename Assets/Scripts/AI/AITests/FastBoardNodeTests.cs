@@ -73,4 +73,36 @@ public class FastBoardNodeTests
         Assert.That(moves, Has.No.Member(new FastMove(new Index(3, 'C'), new Index(2, 'E'), MoveType.Move)));
         Assert.That(moves, Has.No.Member(new FastMove(new Index(3, 'C'), new Index(1, 'G'), MoveType.Attack)));
     }
+
+    [Test]
+    public void IsChecking_KnightAttack_Middle([ValueSource(nameof(Teams))] Team attacker)
+    {
+        Team defender = attacker.Enemy();
+        var board = CreateBoardNode(attacker, new[]
+        {
+            (attacker, Piece.King, new Index(9, 'A')),
+            (defender, Piece.King, new Index(5, 'E')),
+
+            (attacker, Piece.KingsKnight, new Index(3, 'D')),
+        });
+
+        Assert.True(board.IsChecking(attacker));
+        Assert.IsFalse(board.IsChecking(defender));
+    }
+
+    [Test]
+    public void IsChecking_KnightAttack_Bottom([ValueSource(nameof(Teams))] Team attacker)
+    {
+        Team defender = attacker.Enemy();
+        var board = CreateBoardNode(attacker, new[]
+        {
+            (attacker, Piece.King, new Index(9, 'A')),
+            (defender, Piece.King, new Index(1, 'G')),
+
+            (attacker, Piece.KingsKnight, new Index(1, 'D')),
+        });
+
+        Assert.True(board.IsChecking(attacker));
+        Assert.IsFalse(board.IsChecking(defender));
+    }
 }

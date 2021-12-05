@@ -49,14 +49,14 @@ public static class PrecomputedMoveData
             start[HexNeighborDirection.Up][HexNeighborDirection.Up][HexNeighborDirection.UpLeft],
             start[HexNeighborDirection.Up][HexNeighborDirection.Up][HexNeighborDirection.UpRight],
             start[HexNeighborDirection.UpRight][HexNeighborDirection.UpRight][HexNeighborDirection.Up],
-            start[HexNeighborDirection.UpRight][HexNeighborDirection.UpRight][HexNeighborDirection.DownRight],
-            start[HexNeighborDirection.DownRight][HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
+            start[HexNeighborDirection.UpRight][HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
+            start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight][HexNeighborDirection.DownRight],
             start[HexNeighborDirection.DownRight][HexNeighborDirection.DownRight][HexNeighborDirection.Down],
             start[HexNeighborDirection.Down][HexNeighborDirection.Down][HexNeighborDirection.DownRight],
             start[HexNeighborDirection.Down][HexNeighborDirection.Down][HexNeighborDirection.DownLeft],
             start[HexNeighborDirection.DownLeft][HexNeighborDirection.DownLeft][HexNeighborDirection.Down],
-            start[HexNeighborDirection.DownLeft][HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft],
-            start[HexNeighborDirection.UpLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
+            start[HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
+            start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft],
             start[HexNeighborDirection.UpLeft][HexNeighborDirection.UpLeft][HexNeighborDirection.Up],
         };
 
