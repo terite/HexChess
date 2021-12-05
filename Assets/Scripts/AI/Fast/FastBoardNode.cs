@@ -382,10 +382,8 @@ sealed public class FastBoardNode
             FastIndex index = FastIndex.FromByte(i);
             var piece = positions[i];
 
-            if (piece.team != team)
-                continue;
-
-            FastPossibleMoveGenerator.AddAllPossibleMoves(moves, index, piece.piece, team, this, generateQuiet);
+            if (piece.team == team)
+                FastPossibleMoveGenerator.AddAllPossibleMoves(moves, index, piece.piece, team, this, generateQuiet);
         }
     }
 

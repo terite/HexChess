@@ -149,7 +149,7 @@ public class TeriteAI : IHexAI
         OrderMoves(node, moves);
         moveSortTimer.Stop();
 
-        bool isTerminal = true;
+        bool maybeTerminal = true;
         int value = int.MinValue;
 
         foreach (var move in moves)
@@ -170,7 +170,7 @@ public class TeriteAI : IHexAI
                 continue;
             }
 
-            isTerminal = false;
+            maybeTerminal = false;
             int currentValue = QuiescenceSearch(node, plyFromRoot + 1, -beta, -alpha, -color);
 
             applyTimer.Start();
@@ -187,7 +187,7 @@ public class TeriteAI : IHexAI
                 break;
         }
 
-        if (isTerminal)
+        if (maybeTerminal)
         {
             return color * EvaluateMaybeTerminalBoard(node, plyFromRoot);
         }
@@ -405,7 +405,8 @@ public class TeriteAI : IHexAI
             else if (piece.team == Team.Black)
             {
                 blackThreats |= threats;
-                blackPawnThreats |= threats;
+                if (piece.piece == FastPiece.Pawn)
+                    blackPawnThreats |= threats;
             }
         }
     }
