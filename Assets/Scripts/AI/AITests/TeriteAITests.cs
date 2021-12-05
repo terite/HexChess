@@ -314,6 +314,7 @@ public class TeriteAITests
             $"Sorting moves took {ai.moveSortTimer.ElapsedMilliseconds} ms",
             $"Validating moves took {ai.moveValidateTimer.ElapsedMilliseconds} ms",
             $"Applying moves took {ai.applyTimer.ElapsedMilliseconds} ms",
+            $"Quiescence search took {ai.quiescenceTimer.ElapsedMilliseconds} ms",
             $"Evaluating boards took {ai.evalTimer.ElapsedMilliseconds} ms",
             $"  Evaluating board threats took {ai.evalThreatsTimer.ElapsedMilliseconds} ms",
         };

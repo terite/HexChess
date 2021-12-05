@@ -7,6 +7,7 @@ public class TeriteAI : IHexAI
     public readonly Stopwatch moveGenTimer = new Stopwatch();
     public readonly Stopwatch moveSortTimer = new Stopwatch();
     public readonly Stopwatch moveValidateTimer = new Stopwatch();
+    public readonly Stopwatch quiescenceTimer = new Stopwatch();
     public readonly Stopwatch evalTimer = new Stopwatch();
     public readonly Stopwatch evalThreatsTimer = new Stopwatch();
     public readonly Stopwatch applyTimer = new Stopwatch();
@@ -77,7 +78,12 @@ public class TeriteAI : IHexAI
     (int value, FastMove move) Search(FastBoardNode node, int searchDepth, int plyFromRoot, int alpha, int beta, int color)
     {
         if (searchDepth == 0)
-            return (QuiescenceSearch(node, plyFromRoot, alpha, beta, color), FastMove.Invalid);
+        {
+            quiescenceTimer.Start();
+            var res = (QuiescenceSearch(node, plyFromRoot, alpha, beta, color), FastMove.Invalid);
+            quiescenceTimer.Stop();
+            return res;
+        }
 
         var moves = moveCache[searchDepth];
         moves.Clear();
