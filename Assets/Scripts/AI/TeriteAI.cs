@@ -67,8 +67,6 @@ public class TeriteAI : IHexAI
 
             if (moveValue >= (CheckmateValue - searchDepth))
             {
-                int mateDistance = ((CheckmateValue - moveValue) / 2) + 1;
-                UnityEngine.Debug.Log($"{root.currentMove} found mate in {mateDistance}");
                 return bestMove;
             }
         }
@@ -116,7 +114,6 @@ public class TeriteAI : IHexAI
 
             isTerminal = false;
             (int currentValue, FastMove _) = Search(node, searchDepth - 1, plyFromRoot + 1, -beta, -alpha, -color);
-            // UnityEngine.Debug.Log($"Depth:{searchDepth} {move} worth {currentValue}");
 
             applyTimer.Start();
             node.UndoMove(move);
@@ -196,8 +193,6 @@ public class TeriteAI : IHexAI
         }
 
         return value;
-
-        // return color * EvaluateMaybeTerminalBoard(node, plyFromRoot);
     }
 
     private void OrderMoves(FastBoardNode node, List<FastMove> moves)
@@ -235,10 +230,6 @@ public class TeriteAI : IHexAI
         else if (move.moveType == MoveType.EnPassant)
         {
             value += 5;
-        }
-        else if (move.moveType == MoveType.Defend)
-        {
-            // value += 1;
         }
 
         return value;
@@ -279,9 +270,6 @@ public class TeriteAI : IHexAI
     {
         boardEvaluations++;
 
-        // if (newstuff)
-        //     return 0;
-
         evalTimer.Start();
         try
         {
@@ -292,7 +280,7 @@ public class TeriteAI : IHexAI
             bool whiteIsChecking = node.currentMove != Team.White && node.IsChecking(Team.White);
             if (whiteIsChecking)
             {
-                boardValue += CheckBonusValue; // TODO: test for valuing check??
+                boardValue += CheckBonusValue;
             }
 
             bool blackIsChecking = node.currentMove != Team.Black && node.IsChecking(Team.Black);

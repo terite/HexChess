@@ -1,4 +1,4 @@
 public interface IHexAI
 {
-    public HexAIMove GetMove(Board board);
+    HexAIMove GetMove(Board board);
 }

@@ -9,7 +9,6 @@ public class TeriteAITests
     static readonly Team[] Teams = new Team[] { Team.White, Team.Black };
 
     static readonly int[] Depths = new int[] { 3, 4 };
-    // static readonly bool[] TrueFalse = new bool[] { true, false };
     static readonly bool[] TrueFalse = new bool[] { false };
 
     public FastBoardNode CreateBoardNode(Team toMove, (Team team, Piece piece, Index location)[] pieces)
@@ -26,9 +25,7 @@ public class TeriteAITests
     public void MateInOne_Test1([ValueSource(nameof(Teams))] Team attacker)
     {
         var ai = new TeriteAI();
-
         Team defender = attacker.Enemy();
-
         var board = CreateBoardNode(attacker, new[]
         {
             (attacker, Piece.King, new Index(1, 'A')),
@@ -48,9 +45,7 @@ public class TeriteAITests
     public void MateInOne_Test2([ValueSource(nameof(Teams))] Team attacker)
     {
         var ai = new TeriteAI();
-
         Team defender = attacker.Enemy();
-
         var board = CreateBoardNode(attacker, new[]
         {
             (attacker, Piece.King, new Index(1, 'A')),
@@ -67,9 +62,7 @@ public class TeriteAITests
     public void MateInOne_Test3([ValueSource(nameof(Teams))] Team attacker)
     {
         var ai = new TeriteAI();
-
         Team defender = attacker.Enemy();
-
         var board = CreateBoardNode(attacker, new[]
         {
             (attacker, Piece.King, new Index(1, 'A')),
@@ -94,7 +87,6 @@ public class TeriteAITests
     {
         var ai = new TeriteAI();
         Team defender = attacker.Enemy();
-
         var board = CreateBoardNode(attacker, new[]
         {
             (attacker, Piece.King, new Index(1, 'A')),
@@ -149,9 +141,7 @@ public class TeriteAITests
     public void MateInTwo_Test1([ValueSource(nameof(Teams))] Team attacker)
     {
         var ai = new TeriteAI();
-
         Team defender = attacker.Enemy();
-
         var board = CreateBoardNode(attacker, new[]
         {
             (attacker, Piece.King, new Index(1, 'A')),
@@ -186,7 +176,6 @@ public class TeriteAITests
     public void MateInOne_Promotion()
     {
         var ai = new TeriteAI();
-
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
 
@@ -207,7 +196,6 @@ public class TeriteAITests
     public void DoesValuePromotionTest([ValueSource(nameof(TrueFalse))] bool newstuff)
     {
         var ai = new TeriteAI();
-
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
 
@@ -233,64 +221,9 @@ public class TeriteAITests
     }
 
     [Test, Performance]
-    public void ForProfiling_Depth([ValueSource(nameof(Depths))] int searchDepth, [ValueSource(nameof(TrueFalse))] bool newstuff)
-    {
-        var ai = new TeriteAI(searchDepth);
-
-        Team attacker = Team.White;
-        Team defender = attacker.Enemy();
-
-        var board = CreateBoardNode(attacker, new[]
-        {
-            (Team.White, Piece.Pawn1, new Index(2, 'A')),
-            (Team.White, Piece.Pawn2, new Index(3, 'B')),
-            (Team.White, Piece.Pawn3, new Index(2, 'C')),
-            (Team.White, Piece.Pawn4, new Index(3, 'D')),
-            (Team.White, Piece.Pawn5, new Index(3, 'F')),
-            (Team.White, Piece.Pawn6, new Index(2, 'G')),
-            (Team.White, Piece.Pawn7, new Index(3, 'H')),
-            (Team.White, Piece.Pawn8, new Index(2, 'I')),
-            (Team.White, Piece.QueensRook, new Index(1, 'A')),
-            (Team.White, Piece.QueensKnight, new Index(2, 'B')),
-            (Team.White, Piece.Queen, new Index(1, 'C')),
-            (Team.White, Piece.QueensBishop, new Index(2, 'D')),
-            (Team.White, Piece.WhiteSquire, new Index(1, 'E')),
-            (Team.White, Piece.KingsBishop, new Index(2, 'F')),
-            (Team.White, Piece.King, new Index(1, 'G')),
-            (Team.White, Piece.KingsKnight, new Index(2, 'H')),
-            (Team.White, Piece.KingsRook, new Index(1, 'I')),
-            (Team.White, Piece.GraySquire, new Index(2, 'E')),
-            (Team.White, Piece.BlackSquire, new Index(3, 'E')),
-
-            (Team.Black, Piece.Pawn1, new Index(8, 'A')),
-            (Team.Black, Piece.Pawn2, new Index(8, 'B')),
-            (Team.Black, Piece.Pawn3, new Index(8, 'C')),
-            (Team.Black, Piece.Pawn4, new Index(8, 'D')),
-            (Team.Black, Piece.Pawn5, new Index(8, 'F')),
-            (Team.Black, Piece.Pawn6, new Index(8, 'G')),
-            (Team.Black, Piece.Pawn7, new Index(8, 'H')),
-            (Team.Black, Piece.Pawn8, new Index(8, 'I')),
-            (Team.Black, Piece.QueensRook, new Index(9, 'A')),
-            (Team.Black, Piece.QueensKnight, new Index(9, 'B')),
-            (Team.Black, Piece.Queen, new Index(9, 'C')),
-            (Team.Black, Piece.QueensBishop, new Index(9, 'D')),
-            (Team.Black, Piece.WhiteSquire, new Index(9, 'E')),
-            (Team.Black, Piece.KingsBishop, new Index(9, 'F')),
-            (Team.Black, Piece.King, new Index(9, 'G')),
-            (Team.Black, Piece.KingsKnight, new Index(9, 'H')),
-            (Team.Black, Piece.KingsRook, new Index(9, 'I')),
-            (Team.Black, Piece.GraySquire, new Index(8, 'E')),
-            (Team.Black, Piece.BlackSquire, new Index(7, 'E')),
-        });
-
-        ai.GetMove(board);
-        LogDiagnostics(ai);
-    }
-    [Test, Performance]
     public void Performance_Depth([ValueSource(nameof(Depths))] int searchDepth, [ValueSource(nameof(TrueFalse))] bool newstuff)
     {
         var ai = new TeriteAI(searchDepth);
-
         Team attacker = Team.White;
         Team defender = attacker.Enemy();
 

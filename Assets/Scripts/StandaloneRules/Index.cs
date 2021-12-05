@@ -141,30 +141,10 @@ public struct Index
         }
     }
 
-    public override string ToString() => $"{row}, {col} ({GetKey()})";
-
-    public override bool Equals(object obj) => 
-        obj is Index index &&
-        row == index.row &&
-        col == index.col;
-
-    public override int GetHashCode()
-    {
-        int hashCode = -1720622044;
-        hashCode = hashCode * -1521134295 + row.GetHashCode();
-        hashCode = hashCode * -1521134295 + col.GetHashCode();
-        return hashCode;
-    }
-
-    public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
-    public static bool operator !=(Index a, Index b) => !(a==b);
-
     public static Index CalculateFromByte(byte v)
     {
         int rank = (v / 9) + 1;
-
         int fileVal = (v % 9);
-
         char file;
         if (rank == 10)
             file = (char)('B' + (fileVal * 2));
@@ -183,4 +163,23 @@ public struct Index
     {
         return ByteColRowLookup[col, row];
     }
+
+    public override string ToString() => $"{row}, {col} ({GetKey()})";
+
+    public override bool Equals(object obj) =>
+        obj is Index index &&
+        row == index.row &&
+        col == index.col;
+
+    public override int GetHashCode()
+    {
+        int hashCode = -1720622044;
+        hashCode = hashCode * -1521134295 + row.GetHashCode();
+        hashCode = hashCode * -1521134295 + col.GetHashCode();
+        return hashCode;
+    }
+
+    public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
+    public static bool operator !=(Index a, Index b) => !(a==b);
+
 }

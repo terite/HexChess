@@ -200,13 +200,8 @@ sealed public class FastBoardNode
         this[position1] = piece2;
         this[position2] = piece1;
 
-        // TODO: Is checking both necessary? Is the "swapper" always the start?
-        if (whiteKing == move.start)
-            whiteKing = move.target;
-        else if (whiteKing == move.target)
+        if (whiteKing == move.target)
             whiteKing = move.start;
-        else if (blackKing == move.start)
-            blackKing = move.target;
         else if (blackKing == move.target)
             blackKing = move.start;
     }

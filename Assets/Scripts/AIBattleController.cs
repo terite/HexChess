@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Linq;
 using UnityEngine;
@@ -11,14 +10,9 @@ public class AIBattleController : MonoBehaviour
     public static bool asyncMove = true;
 
     public float MinimumTurnTimeSec = 1f;
-
-
-#pragma warning disable CS8618 // Initialized in start
     private Board board;
-#pragma warning restore CS8618 // Initialized in start
-
-    private IHexAI? whiteAI;
-    private IHexAI? blackAI;
+    private IHexAI whiteAI;
+    private IHexAI blackAI;
 
     Team currentMoveFor = Team.None;
     int selectedWhiteAI;
@@ -29,14 +23,14 @@ public class AIBattleController : MonoBehaviour
     float nextMoveTime;
     float moveRequestedAt;
     Team moveRequestedFor;
-    Task<HexAIMove>? pendingMove = null;
+    Task<HexAIMove> pendingMove = null;
 
-    private (string name, Func<IHexAI?> factory)[] AIOptions = Array.Empty<(string, Func<IHexAI?>)>();
+    private (string name, Func<IHexAI> factory)[] AIOptions = Array.Empty<(string, Func<IHexAI>)>();
     private string[] AINames = Array.Empty<string>();
 
     private void Awake()
     {
-        AIOptions = new (string, Func<IHexAI?>)[] {
+        AIOptions = new (string, Func<IHexAI>)[] {
             ("Clueless", () => new RandomAI()),
             ("Bloodthirsty", () => new BloodthirstyAI()),
             ("Terite (depth 2)", () => new TeriteAI(2)),
@@ -180,7 +174,6 @@ public class AIBattleController : MonoBehaviour
 
     private void ApplyMoveOrAttack(IPiece piece, HexAIMove move)
     {
-        // TODO: promote on odd square
         BoardState newState;
         if((piece is Pawn pawn) && !move.promoteTo.IsPawn())
         {
@@ -197,14 +190,11 @@ public class AIBattleController : MonoBehaviour
 
     private void ApplyEnPassant(IPiece piece, HexAIMove move)
     {
-        Team myTeam = piece.team;
+        var state = board.GetCurrentBoardState();
+        Index enemyLoc = move.target.GetNeighborAt(piece.team == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up)!.Value;
+        (Team enemyTeam, Piece enemyType) = state.allPiecePositions[enemyLoc];
 
-        var bs = board.GetCurrentBoardState();
-
-        Index enemyLoc = move.target.GetNeighborAt(myTeam == Team.White ? HexNeighborDirection.Down : HexNeighborDirection.Up)!.Value;
-        (Team enemyTeam, Piece enemyType) = bs.allPiecePositions[enemyLoc];
-
-        BoardState newState = board.EnPassant((Pawn)piece, enemyTeam, enemyType, move.target, bs);
+        BoardState newState = board.EnPassant((Pawn)piece, enemyTeam, enemyType, move.target, state);
         board.AdvanceTurn(newState);
     }
 

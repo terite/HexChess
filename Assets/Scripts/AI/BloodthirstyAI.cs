@@ -21,7 +21,7 @@ public class BloodthirstyAI : IHexAI
 
     private int Evaluate(HexAIMove move, Board board)
     {
-        int score = random.Next(0, 25); // random move bonus for giggles
+        int score = random.Next(0, 25); // avoid making every run the same
         var state = board.GetCurrentBoardState();
         Team ourTeam = state.currentMove;
         Team enemy = ourTeam.Enemy();

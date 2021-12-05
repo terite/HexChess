@@ -30,7 +30,6 @@ public struct BitsBoard
         set {
             if (index > 63)
             {
-                // highbits
                 if (value)
                 {
                     highBits |= ((ulong)1 << index - 64);
@@ -42,7 +41,6 @@ public struct BitsBoard
             }
             else
             {
-                // lowbits
                 if (value)
                 {
                     lowBits |= ((ulong)1 << index);
@@ -194,7 +192,7 @@ public struct BitsBoard
                 return Pack(unpacked);
 
             default:
-                throw new ArgumentException("yo wtf");
+                throw new ArgumentException($"Invalid HexNeighborDirection {(int)direction}");
         }
     }
 

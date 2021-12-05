@@ -140,7 +140,6 @@ public static class PrecomputedMoveData
             yield return targets.ToArray();
         }
 
-        // Down
         yield return GenerateRay(start, HexNeighborDirection.Down).ToArray();
 
         { // Left
