@@ -10,11 +10,7 @@ public static class HexachessagonEngine
         new List<Piece>(){Piece.King, Piece.WhiteSquire},
         new List<Piece>(){Piece.King, Piece.GraySquire},
         new List<Piece>(){Piece.King, Piece.BlackSquire},
-        new List<Piece>(){Piece.King, Piece.WhiteSquire, Piece.GraySquire},
         new List<Piece>(){Piece.King, Piece.WhiteSquire, Piece.BlackSquire},
-        new List<Piece>(){Piece.King, Piece.GraySquire, Piece.BlackSquire},
-        new List<Piece>(){Piece.King, Piece.KingsBishop},
-        new List<Piece>(){Piece.King, Piece.QueensBishop}
     };
     
     public static Index GetStartLocation((Team team, Piece piece) teamedPiece)
