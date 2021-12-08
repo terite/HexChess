@@ -51,25 +51,16 @@ public class Game
         }
     }
 
+    public Game(SerializeableGame fromGame) : this(fromGame.GetHistory(), fromGame.promotions, fromGame.winner, fromGame.endType, fromGame.timerDuration, fromGame.hasClock){}
     ~Game() => KillGame();
 
-    public Game(SerializeableGame fromGame) : this(fromGame.GetHistory(), fromGame.promotions, fromGame.winner, fromGame.endType, fromGame.timerDuration, fromGame.hasClock){}
+    public static implicit operator SerializeableGame(Game game) => new SerializeableGame(game);
+    public static explicit operator Game(SerializeableGame serializeableGame) => new Game(serializeableGame);
+
+    public string Serialize() => ((SerializeableGame)this).Serialize();
+    public static Game Deserialize(string json) => (Game)SerializeableGame.Deserialize(json);
 
     public static Game CreateNewGame() => new Game(SerializeableGame.defaultGame);
-
-    public string Serialize()
-    {
-        List<(Team, List<SerializedPiece>, Team, Team, float)> serializeableBoards = new List<(Team, List<SerializedPiece>, Team, Team, float)>();
-        foreach(BoardState bs in turnHistory)
-        {
-            List<SerializedPiece> serializeableBoardState = bs.GetSerializeable();
-            serializeableBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate, bs.executedAtTime));
-        }
-
-        return JsonConvert.SerializeObject(new SerializeableGame(serializeableBoards, promotions, winner, endType, timerDuration, hasClock));
-    }
-
-    public static Game Deserialize(string json) => new Game(SerializeableGame.Deserialize(json));
 
     public void ChangeTimeParams(bool showClock, float timerDuration)
     {

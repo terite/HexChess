@@ -10,7 +10,6 @@ public class LastMoveTracker : MonoBehaviour
     [SerializeField] private Board board;
 
     private void Awake() {
-        // board = GameObject.FindObjectOfType<Board>();
         text.text = string.Empty;
         gameObject.SetActive(false);
     }

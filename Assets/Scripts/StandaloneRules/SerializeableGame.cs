@@ -6,8 +6,6 @@ using Newtonsoft.Json;
 [System.Serializable]
 public struct SerializeableGame
 {
-    public static readonly string defaultGameFileLoc = "Assets/Resources/DefaultBoardState.json";
-    // public static readonly SerializeableGame defaultGame = SerializeableGame.Deserialize(File.ReadAllText(defaultGameFileLoc));
     public static readonly SerializeableGame defaultGame = SerializeableGame.Deserialize(DefaultBoard.json);
     public static readonly (Team team, List<SerializedPiece> pieces, Team check, Team checkmate, float duration) defaultSerializedBoard = defaultGame.serializedBoards.FirstOrDefault();
 
@@ -18,23 +16,23 @@ public struct SerializeableGame
     public float timerDuration;
     public bool hasClock;
 
-    public SerializeableGame(
-        List<(Team, List<SerializedPiece>, Team, Team, float)> serializedBoards, 
-        List<Promotion> promotions, 
-        Winner winner = Winner.Pending, 
-        GameEndType endType = GameEndType.Pending,
-        float timerDuration = 0,
-        bool hasClock = false
-    )
+    public SerializeableGame(Game game)
     {
-        this.serializedBoards = serializedBoards;
-        this.promotions = promotions;
-        this.winner = winner;
-        this.endType = endType;
-        this.timerDuration = timerDuration;
-        this.hasClock = hasClock;
+        serializedBoards = new List<(Team, List<SerializedPiece>, Team, Team, float)>();
+        foreach(BoardState bs in game.turnHistory)
+        {
+            List<SerializedPiece> serializeableBoardState = bs.GetSerializeable();
+            serializedBoards.Add((bs.currentMove, serializeableBoardState, bs.check, bs.checkmate, bs.executedAtTime));
+        }
+
+        this.promotions = game.promotions;
+        this.winner = game.winner;
+        this.endType = game.endType;
+        this.timerDuration = game.timerDuration;
+        this.hasClock = game.hasClock;
     }
 
+    public string Serialize() => JsonConvert.SerializeObject(this);
     public static SerializeableGame Deserialize(string json) => JsonConvert.DeserializeObject<SerializeableGame>(json);
 
     public List<BoardState> GetHistory()

@@ -68,7 +68,7 @@ public struct Index
     {
         get
         {
-            if (TryGetNeighbor(dir, out Index neighbor))
+            if(TryGetNeighbor(dir, out Index neighbor))
                 return neighbor;
             return Index.invalid;
         }
@@ -104,8 +104,7 @@ public struct Index
     public bool TryGetNeighbor(HexNeighborDirection dir, out Index neighbor)
     {
         bool isEven = row % 2 == 0;
-        (int row, int col) offsets = dir switch
-        {
+        (int row, int col) offsets = dir switch {
             HexNeighborDirection.Up => (2, 0),
             HexNeighborDirection.UpRight => isEven ? (1, 1) : (1, 0),
             HexNeighborDirection.DownRight => isEven ? (-1, 1) : (-1, 0),

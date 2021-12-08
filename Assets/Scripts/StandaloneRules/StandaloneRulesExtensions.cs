@@ -8,6 +8,8 @@ namespace Extensions
     public static class StandaloneRulesExtensions 
     {
         public static int FloorToInt(this float val) => (int)Math.Floor(val);
+        public static int BoolToInt(this bool val) => val ? 1 : 0;
+        public static bool IntToBool(this int val) => val == 0 ? false : true;
         public static HexNeighborDirection OppositeDirection(this HexNeighborDirection direction) =>
             (HexNeighborDirection)(((int)direction + 3) % 6);
 

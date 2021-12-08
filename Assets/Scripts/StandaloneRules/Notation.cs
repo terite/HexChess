@@ -61,7 +61,9 @@ public static class Notation
         if(applicablePromotions.Any())
         {
             Promotion applicablePromo = applicablePromotions.First();
-            promo = applicablePromo.turnNumber == move.turn + (move.lastTeam == Team.Black ? 1 : 0) && move.lastTeam == applicablePromo.team ? $"={applicablePromo.to.GetPieceShortString()}" : "";
+            promo = applicablePromo.turnNumber == move.turn + (move.lastTeam == Team.Black).BoolToInt() && move.lastTeam == applicablePromo.team 
+                ? $"={applicablePromo.to.GetPieceShortString()}" 
+                : "";
         }
         
         string check = boardState.checkmate != Team.None ? "#" : boardState.check != Team.None ? "+" : "";
@@ -154,7 +156,9 @@ public static class Notation
         if(applicablePromotions.Any())
         {
             Promotion applicablePromo = applicablePromotions.First();
-            string result = applicablePromo.turnNumber < move.turn || move.lastTeam != applicablePromo.team ? applicablePromo.to.GetPieceShortString() : potentialPawn.GetPieceShortString();
+            string result = applicablePromo.turnNumber < move.turn || move.lastTeam != applicablePromo.team 
+                ? applicablePromo.to.GetPieceShortString() 
+                : potentialPawn.GetPieceShortString();
             return $"{result}";
         }
         
