@@ -22,6 +22,8 @@ public class PieceNameTooltip : MonoBehaviour
     private float? showAtTime;
     private (Team team, Piece piece)? hoveredTeamedPiece;
 
+    public bool blockDisplay;
+
     bool visible = false;
 
     private void Awake() {
@@ -35,6 +37,9 @@ public class PieceNameTooltip : MonoBehaviour
         if(multiplayer != null && !multiplayer.gameParams.showMovePreviews)
             return;
         else if(singlePlayerHandicapOverlayToggle != null && !singlePlayerHandicapOverlayToggle.toggle.isOn) 
+            return;
+
+        if(blockDisplay)
             return;
 
         if(fader.visible)

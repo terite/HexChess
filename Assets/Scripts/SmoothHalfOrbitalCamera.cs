@@ -132,12 +132,19 @@ public class SmoothHalfOrbitalCamera : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         cursor?.SetCursor(CursorType.Default);
         cursor?.Hide();
-        tooltip?.Hide();
+        if(tooltip != null)
+        {
+            tooltip.Hide();
+            tooltip.blockDisplay = true;
+        }
         needsReset = true;
     }
 
     void StopRotating()
     {
+        if(tooltip != null)
+            tooltip.blockDisplay = false;
+            
         rotating = false;
         
         release_rotation = temp_rotation;
