@@ -108,6 +108,39 @@ public class IndexTests
     }
 
     [Test]
+    public void ToByteTest()
+    {
+        Assert.AreEqual(0,  Indexes.A1.ToByte());
+        Assert.AreEqual(40, Indexes.E5.ToByte());
+        Assert.AreEqual(80, Indexes.I9.ToByte());
+        Assert.AreEqual(81, Indexes.B10.ToByte());
+        Assert.AreEqual(82, Indexes.D10.ToByte());
+        Assert.AreEqual(83, Indexes.F10.ToByte());
+        Assert.AreEqual(84, Indexes.H10.ToByte());
+    }
+    [Test]
+    public void FromByteTest()
+    {
+        Assert.AreEqual(Indexes.A1, Index.FromByte(0));
+        Assert.AreEqual(Indexes.E5, Index.FromByte(40));
+        Assert.AreEqual(Indexes.I9, Index.FromByte(80));
+        Assert.AreEqual(Indexes.B10, Index.FromByte(81));
+        Assert.AreEqual(Indexes.D10, Index.FromByte(82));
+        Assert.AreEqual(Indexes.F10, Index.FromByte(83));
+        Assert.AreEqual(Indexes.H10, Index.FromByte(84));
+    }
+
+    [Test]
+    public void IndexByteAllValuesTest()
+    {
+        for (byte i = 0; i < 85; i++)
+        {
+            Index index = Index.FromByte(i);
+            Assert.AreEqual(i, index.ToByte());
+        }
+    }
+
+    [Test]
     public void Neighbor_Index()
     {
         // Bottom left, short file
