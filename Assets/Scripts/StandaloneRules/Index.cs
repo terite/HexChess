@@ -29,14 +29,14 @@ public struct Index
 
     public Index(int rank, char file)
     {
-        if (rank < 1 || rank > 10)
+        if(rank < 1 || rank > 10)
             throw new ArgumentOutOfRangeException(nameof(rank), "Rank must be between 1-10 inclusive");
-        if (file < 'A' || file > 'I')
+        if(file < 'A' || file > 'I')
             throw new ArgumentOutOfRangeException(nameof(file), "File must be between A-I inclusive");
 
         bool tallFile = file == 'B' || file == 'D' || file == 'F' || file == 'H';
 
-        if (rank == 10 && !tallFile)
+        if(rank == 10 && !tallFile)
             throw new ArgumentOutOfRangeException(nameof(file), $"Only valid rank 10 files are B, D, F, H, not {file}");
 
         this.col = file switch {
@@ -120,7 +120,7 @@ public struct Index
 
     public Index? GetNeighborAt(HexNeighborDirection dir)
     {
-        if (TryGetNeighbor(dir, out Index neighbor))
+        if(TryGetNeighbor(dir, out Index neighbor))
             return neighbor;
 
         return null;
@@ -153,15 +153,9 @@ public struct Index
         return new Index(rank, file);
     }
 
-    public static Index FromByte(byte v)
-    {
-        return IndexByteLookup[v];
-    }
+    public static Index FromByte(byte v) => IndexByteLookup[v];
 
-    public byte ToByte()
-    {
-        return ByteColRowLookup[col, row];
-    }
+    public byte ToByte() => ByteColRowLookup[col, row];
 
     public override string ToString() => $"{row}, {col} ({GetKey()})";
 
@@ -180,5 +174,4 @@ public struct Index
 
     public static bool operator ==(Index a, Index b) => a.row == b.row && a.col == b.col;
     public static bool operator !=(Index a, Index b) => !(a==b);
-
 }

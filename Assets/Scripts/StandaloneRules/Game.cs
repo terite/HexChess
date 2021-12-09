@@ -54,11 +54,8 @@ public class Game
     public Game(SerializeableGame fromGame) : this(fromGame.GetHistory(), fromGame.promotions, fromGame.winner, fromGame.endType, fromGame.timerDuration, fromGame.hasClock){}
     ~Game() => KillGame();
 
-    public static implicit operator SerializeableGame(Game game) => new SerializeableGame(game);
-    public static explicit operator Game(SerializeableGame serializeableGame) => new Game(serializeableGame);
-
-    public string Serialize() => ((SerializeableGame)this).Serialize();
-    public static Game Deserialize(string json) => (Game)SerializeableGame.Deserialize(json);
+    public string Serialize() => new SerializeableGame(this).Serialize();
+    public static Game Deserialize(string json) => new Game(SerializeableGame.Deserialize(json));
 
     public static Game CreateNewGame() => new Game(SerializeableGame.defaultGame);
 
