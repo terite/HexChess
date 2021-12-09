@@ -4,9 +4,9 @@ using System.Linq;
 public class RandomAI : IHexAI
 {
     Random random = new Random();
-    public HexAIMove GetMove(Board board)
+    public HexAIMove GetMove(Game game)
     {
-        var allmoves = HexAIMove.GenerateAllValidMoves(board).ToArray();
+        var allmoves = HexAIMove.GenerateAllValidMoves(game).ToArray();
         return allmoves[random.Next(0, allmoves.Length)];
     }
 }

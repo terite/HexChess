@@ -39,6 +39,8 @@ sealed public class FastBoardNode
             }
         }
     }
+    
+    public FastBoardNode(Game game) : this(game.GetCurrentBoardState(), game.promotions){}
 
     /// <summary>
     /// Is a piece from <paramref name="checkForTeam"/> attacking the enemy king?

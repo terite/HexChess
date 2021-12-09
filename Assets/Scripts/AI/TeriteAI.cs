@@ -33,9 +33,9 @@ public class TeriteAI : IHexAI
         for (int i = 0; i < moveCache.Length; i++)
             moveCache[i] = new List<FastMove>(100);
     }
-    public HexAIMove GetMove(Board board)
+    public HexAIMove GetMove(Game game)
     {
-        var root = new FastBoardNode(board.GetCurrentBoardState(), board.promotions);
+        var root = new FastBoardNode(game);
         return GetMove(root).ToHexMove();
     }
 

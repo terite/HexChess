@@ -6,11 +6,11 @@ public class BloodthirstyAI : IHexAI
 {
     System.Random random = new System.Random();
 
-    public HexAIMove GetMove(Board board)
+    public HexAIMove GetMove(Game game)
     {
-        var moves = HexAIMove.GenerateAllValidMoves(board).ToArray();
+        var moves = HexAIMove.GenerateAllValidMoves(game).ToArray();
         return moves
-            .OrderByDescending(move => Evaluate(move, board))
+            .OrderByDescending(move => Evaluate(move, game))
             .First();
     }
 
@@ -19,14 +19,14 @@ public class BloodthirstyAI : IHexAI
     const int AttackBonus = 100;
     const int EnPassantBonus = 110;
 
-    private int Evaluate(HexAIMove move, Board board)
+    private int Evaluate(HexAIMove move, Game game)
     {
         int score = random.Next(0, 25); // avoid making every run the same
-        var state = board.GetCurrentBoardState();
+        var state = game.GetCurrentBoardState();
         Team ourTeam = state.currentMove;
         Team enemy = ourTeam.Enemy();
 
-        (BoardState newState, List<Promotion> newPromotions) = move.Speculate(board);
+        (BoardState newState, List<Promotion> newPromotions) = move.Speculate(game);
 
         bool weAreChecking = MoveValidator.IsChecking(ourTeam, newState, newPromotions);
         bool enemyHasMoves = MoveValidator.HasAnyValidMoves(enemy, newPromotions, newState, state);
@@ -42,8 +42,8 @@ public class BloodthirstyAI : IHexAI
 
         if (move.moveType == MoveType.Attack)
         {
-            var attacker = HexachessagonEngine.GetRealPiece(move.start, state, board.promotions);
-            var victim = HexachessagonEngine.GetRealPiece(move.target, state, board.promotions);
+            var attacker = HexachessagonEngine.GetRealPiece(move.start, state, game.promotions);
+            var victim = HexachessagonEngine.GetRealPiece(move.target, state, game.promotions);
             score += AttackBonus;
             score += GetPieceValue(victim) - GetPieceValue(attacker);
         }

@@ -2513,6 +2513,7 @@ GameObject:
   - component: {fileID: 155833290}
   - component: {fileID: 155833291}
   - component: {fileID: 155833292}
+  - component: {fileID: 155833293}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -4328,6 +4329,19 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &155833293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155833289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc7709c30a4a6e04fa363a60ecabd019, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MinimumTurnTimeSec: 1
 --- !u!21 &163229609
 Material:
   serializedVersion: 6

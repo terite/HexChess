@@ -4,7 +4,7 @@ using Extensions;
 
 public readonly struct HexAIMove
 {
-    public readonly static HexAIMove Invalid = new HexAIMove(new Index(255, 255), new Index(255, 255), MoveType.None);
+    public readonly static HexAIMove Invalid = new HexAIMove(Index.invalid, Index.invalid, MoveType.None);
     public readonly Index start;
     public readonly Index target;
     public readonly MoveType moveType;
@@ -26,9 +26,9 @@ public readonly struct HexAIMove
         this.promoteTo = promoteTo;
     }
 
-    public (BoardState state, List<Promotion> promotions) Speculate(Board board)
+    public (BoardState state, List<Promotion> promotions) Speculate(Game game)
     {
-        return board.currentGame.QueryMove(start, (target, moveType), board.GetCurrentBoardState(), promoteTo);
+        return game.QueryMove(start, (target, moveType), game.GetCurrentBoardState(), promoteTo);
     }
 
     public override string ToString()
@@ -36,14 +36,14 @@ public readonly struct HexAIMove
         return $"{moveType}({start.GetKey()} -> {target.GetKey()})";
     }
 
-    public static IEnumerable<HexAIMove> GenerateAllValidMoves(Board board)
+    public static IEnumerable<HexAIMove> GenerateAllValidMoves(Game game)
     {
-        var state = board.currentGame.turnHistory[board.currentGame.turnHistory.Count - 1];
-        BoardState previousState = board.currentGame.turnHistory.Count > 1
-            ? board.currentGame.turnHistory[board.currentGame.turnHistory.Count - 2]
+        var state = game.turnHistory[game.turnHistory.Count - 1];
+        BoardState previousState = game.turnHistory.Count > 1
+            ? game.turnHistory[game.turnHistory.Count - 2]
             : default;
 
-        foreach (var move in MoveGenerator.GenerateAllValidMoves(state.currentMove, board.promotions, state, previousState))
+        foreach (var move in MoveGenerator.GenerateAllValidMoves(state.currentMove, game.promotions, state, previousState))
         {
             yield return new HexAIMove(move.start, move.target, move.moveType, move.promoteTo);
         }

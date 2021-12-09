@@ -8,6 +8,8 @@ public class AIBattleController : MonoBehaviour
 {
     // Turn to false for easier debugging
     public static bool asyncMove = true;
+    
+    public bool debugControls = false;
 
     public float MinimumTurnTimeSec = 1f;
     private Board board;
@@ -51,6 +53,9 @@ public class AIBattleController : MonoBehaviour
 
     void OnGUI()
     {
+        if(!debugControls)
+            return;
+            
         GUI.enabled = !needsReset;
         GUILayout.BeginHorizontal();
         GUILayout.Label("White: ");
@@ -123,11 +128,11 @@ public class AIBattleController : MonoBehaviour
 
             if (!asyncMove)
             {
-                pendingMove = Task.FromResult(ai.GetMove(board));
+                pendingMove = Task.FromResult(ai.GetMove(board.currentGame));
             }
             else
             {
-                pendingMove = Task.Run(() => ai.GetMove(board));
+                pendingMove = Task.Run(() => ai.GetMove(board.currentGame));
             }
         }
     }
