@@ -78,14 +78,21 @@ public static class PrecomputedMoveData
 
     static IEnumerable<FastIndex> GenerateAllPossibleSquireMoves(FastIndex start)
     {
+        FastIndex InBounds(FastIndex idx1, FastIndex idx2)
+        {
+            return idx1.IsInBounds ? idx1 : idx2;
+        }
+
         var possibleMoves = new FastIndex[]
         {
             start[HexNeighborDirection.Up][HexNeighborDirection.UpLeft],
             start[HexNeighborDirection.UpRight][HexNeighborDirection.Up],
-            start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
+            InBounds(start[HexNeighborDirection.DownRight][HexNeighborDirection.UpRight],
+                     start[HexNeighborDirection.UpRight][HexNeighborDirection.DownRight]),
             start[HexNeighborDirection.Down][HexNeighborDirection.DownRight],
             start[HexNeighborDirection.DownLeft][HexNeighborDirection.Down],
-            start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
+            InBounds(start[HexNeighborDirection.UpLeft][HexNeighborDirection.DownLeft],
+                     start[HexNeighborDirection.DownLeft][HexNeighborDirection.UpLeft]),
         };
 
         foreach (var index in possibleMoves)
