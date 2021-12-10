@@ -4341,6 +4341,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc7709c30a4a6e04fa363a60ecabd019, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugControls: 0
   MinimumTurnTimeSec: 1
 --- !u!21 &163229609
 Material:

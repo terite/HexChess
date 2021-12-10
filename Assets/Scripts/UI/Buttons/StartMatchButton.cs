@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class StartMatchButton : MonoBehaviour
 {
     [SerializeField] private Button button;
     [SerializeField] private CanvasGroup group;
+    [SerializeField] private Lobby lobby;
     private void Awake()
     {
         HideButton();
@@ -14,6 +16,9 @@ public class StartMatchButton : MonoBehaviour
             Networker networker = GameObject.FindObjectOfType<Networker>();
             if(networker != null && networker.clientIsReady && networker.isHost)
                 networker.HostMatch();
+            // If networker is null, we should load into an AI match with whatever AI settings the player set
+            else if(networker == null)
+                lobby.LoadAIGame();
         });
     }
 

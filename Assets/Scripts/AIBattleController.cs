@@ -79,13 +79,23 @@ public class AIBattleController : MonoBehaviour
         }
     }
 
-    void StartGame()
+    public void StartGame()
     {
         whiteAI = AIOptions[selectedWhiteAI].factory();
         blackAI = AIOptions[selectedBlackAI].factory();
         Debug.Log($"Starting Game! White: {whiteAI}, Black: {blackAI}");
         isGameRunning = true;
         needsReset = true;
+    }
+
+    public void SetAI(Team team, int aiID)
+    {
+        if(team == Team.None)
+            return;
+        else if(team == Team.White)
+            selectedWhiteAI = aiID;
+        else
+            selectedBlackAI = aiID;
     }
 
     void Update()

@@ -70,4 +70,13 @@ public class GroupFader : MonoBehaviour
         group.blocksRaycasts = true;
         group.interactable = true;
     }
+
+    public void Disable()
+    {
+        group.alpha = 0;
+        sign = TriSign.Zero;
+        startFadeTime = null;
+        group.blocksRaycasts = false;
+        group.interactable = false;
+    }
 }

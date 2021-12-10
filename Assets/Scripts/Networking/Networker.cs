@@ -116,9 +116,9 @@ public class Networker : MonoBehaviour
         Debug.Log($"Disconnected.");
     }
 
-    private void LoadLobby()
+    private void LoadLobby(Lobby.Type lobbyType)
     {
-        lobby?.Show();
+        lobby?.Show(lobbyType);
         lobby?.SetIP(isHost ? GetPublicIPAddress() : $"{ip}");
     }
 
@@ -176,7 +176,7 @@ public class Networker : MonoBehaviour
             Debug.LogWarning($"Failed to host on {ip}:{port} with error:\n{e}");
         }
 
-        LoadLobby();
+        LoadLobby(Lobby.Type.Host);
     }
 
     private void AcceptClientCallback(IAsyncResult ar)
@@ -210,7 +210,7 @@ public class Networker : MonoBehaviour
         mainThreadActions.Enqueue(() => {
             player = new Player($"{client.IP()}", Team.Black, false);
             
-            lobby?.OpponentFound();
+            lobby?.OpponentFound(host);
             lobby?.UpdateTeam(player.Value);
 
             SendMessage(new Message(MessageType.Connect, Encoding.UTF8.GetBytes(host.name)));
@@ -384,7 +384,7 @@ public class Networker : MonoBehaviour
 
                 mainThreadActions.Enqueue(() => 
                 {
-                    LoadLobby();
+                    LoadLobby(Lobby.Type.Client);
                     lobby?.UpdatePlayerName(host);
                 });
 
@@ -415,7 +415,7 @@ public class Networker : MonoBehaviour
             MessageType.Checkmate when multiplayer => () => multiplayer.ReceiveCheckmate(BitConverter.ToSingle(completeMessage.data, 0)),
             MessageType.Stalemate when multiplayer => () => multiplayer.ReceiveStalemate(BitConverter.ToSingle(completeMessage.data, 0)),
             MessageType.OpponentSearching when lobby && !isHost => lobby.OpponentSearching,
-            MessageType.OpponentFound when lobby && !isHost => lobby.OpponentFound,
+            MessageType.OpponentFound when lobby && !isHost => () => lobby.OpponentFound(host),
             _ => () => Debug.LogWarning($"Ignoring unhandled message {completeMessage.type}"),
         };
 
@@ -633,7 +633,7 @@ public class Networker : MonoBehaviour
             Player p = player.Value;
             p.name = newName;
             player = p;
-            lobby.UpdatePlayerName(p);
+            // lobby.UpdatePlayerName(p);
         }
 
         if(connected)

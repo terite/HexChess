@@ -33,6 +33,7 @@ public class SceneTransition : MonoBehaviour
             }
             else if(ellapsedTime >= transitionTime)
             {
+                transitioning = false;
                 group.interactable = false;
                 group.blocksRaycasts = false;
                 group.alpha = 0;
@@ -49,6 +50,8 @@ public class SceneTransition : MonoBehaviour
 
     public void Transition(string sceneName)
     {
+        if(transitioning)
+            return;
         toLoad = sceneName;
         mode = TransitionMode.Out;
         ellapsedTime = 0;

@@ -9,6 +9,7 @@ public class IPPanel : MonoBehaviour
 {
     [SerializeField] private Button copyIPButton;
     [SerializeField] private GroupFader copiedText;
+    [SerializeField] private GroupFader ipFader;
     [SerializeField] private Toggle ipvisibleToggle;
     [SerializeField] private Toggle ipvisibleTextToggle;
     [SerializeField] private Image visibleIconImage;
@@ -80,4 +81,7 @@ public class IPPanel : MonoBehaviour
         IP = newIP;
         HideIP();
     }
+
+    public void FadeIn() => ipFader.FadeIn();
+    public void FadeOut() => ipFader.FadeOut();
 }
