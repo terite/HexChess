@@ -33,13 +33,15 @@ public class AIBattleController : MonoBehaviour
     private void Awake()
     {
         AIOptions = new (string, Func<IHexAI>)[] {
+            ("None", () => null),
             ("Clueless", () => new RandomAI()),
             ("Bloodthirsty", () => new BloodthirstyAI()),
+            ("Terite (depth 1)", () => new TeriteAI(1)),
             ("Terite (depth 2)", () => new TeriteAI(2)),
+            ("Terite (depth 3)", () => new TeriteAI(3)),
             ("Terite (depth 4)", () => new TeriteAI(4)),
             ("Terite (depth 5)", () => new TeriteAI(5)),
-            ("Terite (depth 6)", () => new TeriteAI(6)),
-            ("None", () => null)
+            ("Terite (depth 6)", () => new TeriteAI(6))
         };
         AINames = AIOptions.Select(ai => ai.name).ToArray();
     }

@@ -14,6 +14,7 @@ public class Lobby : MonoBehaviour
     [SerializeField] private GroupFader whiteLocalIconFader;
     [SerializeField] private GroupFader blackLocalIconFader;
     [SerializeField] private GroupFader opponentSearchingPanel;
+    [SerializeField] private GroupFader aiSettingsFader;
     [SerializeField] private TextMeshProUGUI opponentSearchingText;
     [SerializeField] public IPPanel ipPanel;
     [SerializeField] public ReadyButton readyToggle;
@@ -27,6 +28,7 @@ public class Lobby : MonoBehaviour
     [SerializeField] private GroupFader blackOpponentIconFader;
     [SerializeField] private GroupFader whiteOpponentIconFader;
     [SerializeField] private GroupFader readyFader;
+    [SerializeField] private GroupFader aiWarningText;
 
     [SerializeField] private TextMeshProUGUI opponentName;
 
@@ -41,6 +43,9 @@ public class Lobby : MonoBehaviour
 
     [SerializeField] private QueryTeamChangePanel teamChangePanel;
     [SerializeField] private HandicapOverlayToggle handicapOverlayToggle;
+
+    [SerializeField] private AIDifficultySlider aiDifficultySlider;
+    [SerializeField] private SliderTicks sliderTicks;
 
     public Color toggleOnColor;
     public Color toggleOffColor;
@@ -115,23 +120,18 @@ public class Lobby : MonoBehaviour
     {
         this.lobbyType = lobbyType;
 
+        timerObj.SetActive(lobbyType == Type.Host || lobbyType == Type.AI);
+        clockObj.SetActive(lobbyType == Type.Host || lobbyType == Type.AI);
+
         Action lobbyAction = lobbyType switch {
-            Type.Host => () => {
-                OpponentSearching();
-                timerObj.SetActive(true);
-                clockObj.SetActive(true);
-            },
+            Type.Host => OpponentSearching,
             Type.Client => () => {
                 opponentSearching = true;
                 SetSearchingText();
-                timerObj.SetActive(false);
-                clockObj.SetActive(false);
             },
             Type.AI => () => {
                 SetAIPanel();
                 startButton.ShowEnabledButton();
-                timerObj.SetActive(true);
-                clockObj.SetActive(true);
             },
             _ => null
         };
@@ -199,18 +199,14 @@ public class Lobby : MonoBehaviour
     public void StartAIGame(Scene arg0, Scene arg1)
     {
         AIBattleController aiController = GameObject.FindObjectOfType<AIBattleController>();
-        aiController.SetAI(AITeam, 2);
-        aiController.SetAI(AITeam.Enemy(), 6);
+        aiController.SetAI(AITeam, aiDifficultySlider.AILevel);
+        aiController.SetAI(AITeam.Enemy(), 0); // 0 is None, meaning the player can play that team
         aiController.StartGame();
 
         SceneManager.activeSceneChanged -= StartAIGame;
     }
 
-
-    public void UpdatePlayerName(Player player)
-    {
-        opponentName.text = player.name;
-    } 
+    public void UpdatePlayerName(Player player) => opponentName.text = player.name;
 
     public void UpdateTeam(Player player)
     {
@@ -229,26 +225,18 @@ public class Lobby : MonoBehaviour
         
         if(isWhite)
         {
-            // if(!whiteLocalIconFader.visible)
             whiteLocalIconFader.FadeIn();
-            // if(blackLocalIconFader.visible)
             blackLocalIconFader.FadeOut();
 
-            // if(whiteOpponentIconFader.visible)
             whiteOpponentIconFader.FadeOut();
-            // if(!blackOpponentIconFader.visible)
             blackOpponentIconFader.FadeIn();
         }
         else
         {
-            // if(whiteLocalIconFader.visible)
             whiteLocalIconFader.FadeOut();
-            // if(!blackLocalIconFader.visible)
             blackLocalIconFader.FadeIn();
 
-            // if(!whiteOpponentIconFader.visible)
             whiteOpponentIconFader.FadeIn();
-            // if(blackOpponentIconFader.visible)
             blackOpponentIconFader.FadeOut();
         }
     }
@@ -348,21 +336,32 @@ public class Lobby : MonoBehaviour
 
     private void SetAIPanel()
     {
+        
+        SetSearchingText();
+
         if(!opponentSearchingPanel.visible)
             opponentSearchingPanel.FadeIn();
+        if(!aiSettingsFader.visible)
+            aiSettingsFader.FadeIn();
+        if(!blackOpponentIconFader.visible)
+            blackOpponentIconFader.FadeIn();
+        
+        sliderTicks.AddTicks();
 
-        SetSearchingText();
+        aiDifficultySlider.difficultySlider.onValueChanged.AddListener(newVal => {
+            if(newVal > 4 && !aiWarningText.visible)
+                aiWarningText.FadeIn();
+            else if(newVal <= 4 && aiWarningText.group != null && aiWarningText.group.alpha > 0)
+                aiWarningText.FadeOut();
+        });
+
+        ipPanel?.FadeOut();
 
         opponentLoadingFader.Disable();
 
-        if(!blackOpponentIconFader.visible)
-            blackOpponentIconFader.FadeIn();
         AITeam = Team.Black;
-        
-        ipPanel?.FadeOut();
 
         readyButtonContextText.text = "";
-
         proposeTeamChangeText.text = "SWAP TEAMS";
     }
 
