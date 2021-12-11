@@ -61,7 +61,7 @@ public static class HexachessagonEngine
             BoardState lastState = history[history.Count - 2];
             BoardState nowState = history[history.Count - 1];
             
-            foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions)
+            foreach(KeyValuePair<(Team team, Piece piece), Index> kvp in lastState.allPiecePositions.Where(k => k.Key.team == lastState.currentMove))
             {
                 Piece piece = kvp.Key.piece;
 
