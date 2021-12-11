@@ -13,9 +13,14 @@ public static class Notation
         string toIndex = move.to.GetKey();
         string piece = GetStringForPiece(move.lastPiece, move.lastTeam, promotions, move);
         string type = move.capturedPiece.HasValue ? "x" : move.defendedPiece.HasValue ? "d" : "m";
+        
+        // When using freeplace mode, you can swap non-rook pieces, we want to clearly label that as a swap and not a defend unless a rook is involved
+        if(type == "d" && !HexachessagonEngine.GetRealPiece((move.lastTeam, move.lastPiece), promotions).IsRook())
+            type = "-";
+
         string otherPiece = type switch{
             "x" => GetStringForPiece(move.capturedPiece.Value, move.lastTeam.Enemy(), promotions, move),
-            "d" => GetStringForPiece(move.defendedPiece.Value, move.lastTeam, promotions, move),
+            string t when (t == "d" || t == "-") => GetStringForPiece(move.defendedPiece.Value, move.lastTeam, promotions, move),
             _ => ""
         };
 
@@ -74,9 +79,12 @@ public static class Notation
             if(piece == "p")
             {
                 piece = "";
-                otherPiece = "";
-                type = type == "x" ? type : "";
-                fromIndex = type == "x" ? $"{fromIndex.First()}" : "";
+                if(type != "-")
+                {
+                    otherPiece = "";
+                    type = type == "x" ? type : "";
+                    fromIndex = type == "x" ? $"{fromIndex.First()}" : "";
+                }
             }
             else
             {
