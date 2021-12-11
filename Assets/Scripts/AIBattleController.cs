@@ -17,8 +17,8 @@ public class AIBattleController : MonoBehaviour
     private IHexAI blackAI;
 
     Team currentMoveFor = Team.None;
-    int selectedWhiteAI;
-    int selectedBlackAI;
+    public int selectedWhiteAI {get; private set;}
+    public int selectedBlackAI {get; private set;}
     bool isGameRunning;
     bool needsReset = false;
 
