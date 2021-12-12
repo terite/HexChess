@@ -16,12 +16,17 @@ public class Bishop : MonoBehaviour, IPiece
     public ushort value {get => 3; set{}}
     private Vector3? targetPos = null;
     public float speed = 15f;
+
+    [SerializeField] private MeshRenderer _meshRenderer;
+    public MeshRenderer meshRenderer { get => _meshRenderer; set{}}
+    private Color defaultHighlightColor;
     
     public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
         this.piece = piece;
         this.location = startingLocation;
+        defaultHighlightColor = meshRenderer.material.GetColor("_HighlightColor");
     }
 
     public void MoveTo(Hex hex, Action<Piece> action = null)
@@ -51,4 +56,7 @@ public class Bishop : MonoBehaviour, IPiece
     }
 
     public string GetPieceString() => "Bishop";
+
+    public void ResetHighlight() => meshRenderer.material.SetColor("_HighlightColor", defaultHighlightColor);
+    public void HighlightWithColor(Color color) => meshRenderer.material.SetColor("_HighlightColor", color);
 }

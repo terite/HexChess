@@ -15,14 +15,21 @@ public class King : MonoBehaviour, IPiece
     public bool captured { get{ return _captured; } set{ _captured = value; } }
     private bool _captured = false;
     public ushort value {get => 7; set{}}
+
+    [SerializeField] private MeshRenderer _meshRenderer;
+    public MeshRenderer meshRenderer { get => _meshRenderer; set{}}
+    private Color defaultHighlightColor;
+
     private Vector3? targetPos = null;
     public float speed;
+
     
     public void Init(Team team, Piece piece, Index startingLocation)
     {
         this.team = team;
         this.piece = piece;
         this.location = startingLocation;
+        defaultHighlightColor = meshRenderer.material.GetColor("_HighlightColor");
     }
 
     public void MoveTo(Hex hex, Action<Piece> action = null)
@@ -51,4 +58,7 @@ public class King : MonoBehaviour, IPiece
     }
 
     public string GetPieceString() => "King";
+
+    public void ResetHighlight() => meshRenderer.material.SetColor("_HighlightColor", defaultHighlightColor);
+    public void HighlightWithColor(Color color) => meshRenderer.material.SetColor("_HighlightColor", color);
 }

@@ -16,6 +16,8 @@ public class Jail : MonoBehaviour
     {
         if(prisonedPieces.Contains(piece))
             return;
+        
+        piece.ResetHighlight();
 
         piece.CancelMove();
         piece.captured = true;

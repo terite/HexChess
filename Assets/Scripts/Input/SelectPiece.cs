@@ -43,7 +43,6 @@ public class SelectPiece : MonoBehaviour
     public Color yellowColor;
     [ShowInInspector, ReadOnly] List<Index> attacksConcerningHex = new List<Index>();
     Dictionary<IPiece, List<Index>> attacksConcerningHexDict = new Dictionary<IPiece, List<Index>>();
-    MeshRenderer lastChangedRenderer;
     IPiece lastChangedPiece;
 
     private Hex lastHoveredHex = null;
@@ -292,11 +291,11 @@ public class SelectPiece : MonoBehaviour
                     {
                         SetOnMouseColor(hex);
 
-                        if(hitPiece.obj.TryGetComponentInChildren<MeshRenderer>(out MeshRenderer hitRenderer) && hitPiece != selectedPiece)
+                        if(hitPiece != selectedPiece)
                         {
-                            if(hitRenderer != lastChangedRenderer)
+                            if(hitPiece != lastChangedPiece)
                             {
-                                if(lastChangedRenderer != null)
+                                if(lastChangedPiece != null)
                                     ResetLastChangedRenderer();
 
                                 Color toSet = hitPiece.team == Team.White ? whiteColor : blackColor;
@@ -305,12 +304,11 @@ public class SelectPiece : MonoBehaviour
                                 else if(pieceMoves.Contains((hex, MoveType.Defend)) || pieceMoves.Contains((hex, MoveType.Move)))
                                     toSet = greenColor;
 
-                                hitRenderer.material.SetColor("_HighlightColor", toSet);
+                                hitPiece.HighlightWithColor(toSet);
                                 lastChangedPiece = hitPiece;
-                                lastChangedRenderer = hitRenderer;
                             }
                         }
-                        else if(lastChangedRenderer != null)
+                        else if(lastChangedPiece != null)
                             ResetLastChangedRenderer();
                     }
                 }
@@ -328,9 +326,9 @@ public class SelectPiece : MonoBehaviour
                                 IPiece piece = board.activePieces[teamedPiece];
                                 if(piece != selectedPiece)
                                 {
-                                    if(piece.obj.TryGetComponentInChildren<MeshRenderer>(out MeshRenderer hitPieceRenderer) && hitPieceRenderer != lastChangedRenderer)
+                                    if(piece != lastChangedPiece)
                                     {
-                                        if(lastChangedRenderer != null)
+                                        if(lastChangedPiece != null)
                                             ResetLastChangedRenderer();
 
                                         Color toSet = piece.team == Team.White ? whiteColor : blackColor;
@@ -339,18 +337,17 @@ public class SelectPiece : MonoBehaviour
                                         else if(pieceMoves.Contains((hitHex, MoveType.Defend)) || pieceMoves.Contains((hitHex, MoveType.Move)))
                                             toSet = greenColor;
 
-                                        hitPieceRenderer.material.SetColor("_HighlightColor", toSet);
+                                        piece.HighlightWithColor(toSet);
                                         lastChangedPiece = piece;
-                                        lastChangedRenderer = hitPieceRenderer;
                                     }
                                 }
-                                else if(lastChangedRenderer != null)
+                                else if(lastChangedPiece != null)
                                     ResetLastChangedRenderer();
                             }
-                            else if(lastChangedRenderer != null)
+                            else if(lastChangedPiece != null)
                                 ResetLastChangedRenderer();
                         }
-                        else if(lastChangedRenderer != null)
+                        else if(lastChangedPiece != null)
                             ResetLastChangedRenderer();
                     }
                     else
@@ -392,9 +389,8 @@ public class SelectPiece : MonoBehaviour
 
     private void ResetLastChangedRenderer()
     {
-        lastChangedRenderer?.material.SetColor("_HighlightColor", lastChangedPiece?.team == Team.White ? whiteColor : blackColor);
+        lastChangedPiece?.ResetHighlight();
         lastChangedPiece = null;
-        lastChangedRenderer = null;
     }
 
     private void HandicapOverlayOnHover()
@@ -494,9 +490,8 @@ public class SelectPiece : MonoBehaviour
                 // We know IPiece is only added to MonoBehaviours, so we can safely cast
                 if((MonoBehaviour)piece == null)
                     continue;
-                    
-                MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-                renderer.material.SetColor("_HighlightColor", piece.team == hoveredPiece.team ? greenColor : orangeColor);
+
+                piece.HighlightWithColor(piece.team == hoveredPiece.team ? greenColor : orangeColor);
             }
         }
     }
@@ -516,9 +511,8 @@ public class SelectPiece : MonoBehaviour
                 // We know IPiece is only added to MonoBehaviours, so we can safely cast
                 if((MonoBehaviour)piece == null)
                     continue;
-
-                MeshRenderer renderer = piece.obj.GetComponentInChildren<MeshRenderer>();
-                renderer.material.SetColor("_HighlightColor", piece.team == Team.White ? whiteColor : blackColor);
+                
+                piece.ResetHighlight();
             }
         }
     }
@@ -617,7 +611,7 @@ public class SelectPiece : MonoBehaviour
 
     private void ReleaseMouse(BoardState currentBoardState)
     {
-        if(lastChangedRenderer != null)
+        if(lastChangedPiece != null)
             ResetLastChangedRenderer();
         
         bool ignoreHexToggle = true;

@@ -4,6 +4,7 @@ using UnityEngine;
 public interface IPiece
 {
     GameObject obj {get; set;}
+    MeshRenderer meshRenderer {get; set;}
     Team team {get; set;}
     Piece piece {get; set;}
     Index location {get; set;}
@@ -13,4 +14,6 @@ public interface IPiece
     void CancelMove();
     void Init(Team team, Piece piece, Index startingLocation);
     string GetPieceString();
+    void ResetHighlight();
+    void HighlightWithColor(Color color);
 }

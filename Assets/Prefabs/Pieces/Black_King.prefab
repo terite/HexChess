@@ -127,6 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef247bb16f22ec84ba57347e3786a595, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _meshRenderer: {fileID: 4810906304063582797}
   speed: 15
 --- !u!65 &2276959399253638839
 BoxCollider:
