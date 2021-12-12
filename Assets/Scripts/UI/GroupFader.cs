@@ -8,7 +8,7 @@ public class GroupFader : MonoBehaviour
     public CanvasGroup group => _group;
     [SerializeField] private float fadeDuration;
     private float? startFadeTime;
-    private TriSign sign = TriSign.Zero;
+    public TriSign sign {get; private set;} = TriSign.Zero;
     private bool deactivate = false;
 
     public bool visible => !(_group != null && _group.alpha < 1);

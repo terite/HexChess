@@ -48,9 +48,6 @@ EditorBuildSettings:
     path: Assets/Scenes/ConnectionChoice.unity
     guid: 3cdfed9fb0d159e4eb58ab4dbfd968fd
   - enabled: 1
-    path: Assets/Scenes/Lobby.unity
-    guid: 8ef8fde1a657fc64fae92ff9d02b1014
-  - enabled: 1
     path: Assets/Scenes/VersusMode.unity
     guid: 890ffe2102f34ed4db6c7c00604e48cc
   - enabled: 1

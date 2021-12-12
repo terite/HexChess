@@ -47,9 +47,6 @@ public class Lobby : MonoBehaviour
     [SerializeField] private AIDifficultySlider aiDifficultySlider;
     [SerializeField] private SliderTicks sliderTicks;
 
-    public Color toggleOnColor;
-    public Color toggleOffColor;
-
     private bool opponentSearching = true;
 
     public Type lobbyType {get; private set;} = Type.None;
@@ -68,8 +65,6 @@ public class Lobby : MonoBehaviour
     {
         clockToggle.onValueChanged.AddListener((isOn) =>
         {
-            SetToggleColor(clockToggle, isOn);
-
             if(isOn)
             {
                 timerToggle.isOn = false;
@@ -86,8 +81,6 @@ public class Lobby : MonoBehaviour
     {
         timerToggle.onValueChanged.AddListener((isOn) =>
         {
-            SetToggleColor(timerToggle, isOn);
-
             if(isOn)
             {
                 clockToggle.isOn = false;
@@ -105,15 +98,6 @@ public class Lobby : MonoBehaviour
 
             EventSystem.current.Deselect();
         });
-    }
-
-    private void SetToggleColor(Toggle toggle, bool isOn)
-    {
-        ColorBlock block = toggle.colors;
-        block.normalColor = GetToggleColor(isOn);
-        block.selectedColor = block.normalColor;
-        block.disabledColor = block.normalColor;
-        toggle.colors = block;
     }
 
     public void Show(Type lobbyType)
@@ -148,7 +132,6 @@ public class Lobby : MonoBehaviour
         fader.FadeOut();
     } 
 
-    public Color GetToggleColor(bool isOn) => isOn ? toggleOnColor : toggleOffColor;
     public float GetTimeInSeconds() => int.Parse(timerInputField.text) * 60;
 
     public void RemovePlayer(Player player)
@@ -349,9 +332,9 @@ public class Lobby : MonoBehaviour
         sliderTicks.AddTicks();
 
         aiDifficultySlider.difficultySlider.onValueChanged.AddListener(newVal => {
-            if(newVal > 4 && !aiWarningText.visible)
+            if(newVal > 4 && aiWarningText.group != null && aiWarningText.group.alpha < 1 && aiWarningText.sign != TriSign.Positive)
                 aiWarningText.FadeIn();
-            else if(newVal <= 4 && aiWarningText.group != null && aiWarningText.group.alpha > 0)
+            else if(newVal <= 4 && aiWarningText.group != null && aiWarningText.group.alpha > 0 && aiWarningText.sign != TriSign.Negative)
                 aiWarningText.FadeOut();
         });
 

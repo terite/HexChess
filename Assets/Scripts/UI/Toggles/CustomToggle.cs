@@ -2,18 +2,17 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CustomToggle : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+public class CustomToggle : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    public Graphic targetGraphic;
-    public Color onColor;
-    public Color offColor;
-    public Color hoverColor;
-    public Color pressedColor;
+    public Image image;
+    public Sprite on;
+    public Sprite off;
+    public Sprite hover;
     public delegate void OnValueChanged(bool isOn);
     public OnValueChanged onValueChanged;
     public bool isOn {get; private set;} = false;
     private bool hovered = false;
-    private void Start() => targetGraphic.color = isOn ? onColor : offColor;
+    private void Start() => image.sprite = isOn ? on : off;
     public void OnPointerClick(PointerEventData eventData)
     {
         if(isOn)
@@ -27,32 +26,19 @@ public class CustomToggle : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if(isOn == val)
             return;
         isOn = val;
-        targetGraphic.color = isOn ? onColor : offColor;
+        image.sprite = isOn ? on : off;
         onValueChanged?.Invoke(isOn);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         hovered = true;
-        targetGraphic.color = hoverColor;
+        image.sprite = hover;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
-        targetGraphic.color = isOn ? onColor : offColor;
-    }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        targetGraphic.color = pressedColor;
-    }
-
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        if(hovered)
-            targetGraphic.color = hoverColor;
-        else
-            targetGraphic.color = isOn ? onColor : offColor;
+        image.sprite = isOn ? on : off;
     }
 }
